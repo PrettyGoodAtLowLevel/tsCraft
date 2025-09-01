@@ -17,7 +17,6 @@
 
         //thread safety
         private readonly object queueLock = new();
-        private readonly AutoResetEvent taskAvailable = new(false);
         private volatile bool stopFlag = false;
 
         //create a list of set threads and start their worker loop

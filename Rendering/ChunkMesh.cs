@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using OurCraft.Blocks;
 using OurCraft.Physics;
+using OurCraft.World;
 using System.Runtime.InteropServices;
 
 namespace OurCraft.Rendering
@@ -46,7 +47,7 @@ namespace OurCraft.Rendering
         }
 
         //send mesh data to gpu
-        public void SetupMesh(List<Vertex> vertices, List<uint> indices)
+        public void SetupMesh(List<BlockVertex> vertices, List<uint> indices)
         {           
             if (vertices.Count == 0 || meshcount != 0) return; //dont draw if empty
             //delete gl objects if already created
@@ -57,26 +58,32 @@ namespace OurCraft.Rendering
             vao.Create();
             vao.Bind();
 
-            vbo.Create(vertices);
-            ebo.Create(indices);
+            vbo.CreateEmpty(vertices.Count * BlockVertex.GetSize());
+            vbo.SubData(0, vertices.ToArray());
+            ebo.CreateEmpty(indices.Count * sizeof(uint));
+            ebo.SubData(0, indices.ToArray());
            
-            int stride = Vertex.GetSize();
-            IntPtr posOffset = Marshal.OffsetOf<Vertex>(nameof(Vertex.position));
-            IntPtr uvOffset = Marshal.OffsetOf<Vertex>(nameof(Vertex.texUV));
-            IntPtr normalOffset = Marshal.OffsetOf<Vertex>(nameof(Vertex.normal));
-            IntPtr aoOffset = Marshal.OffsetOf<Vertex>(nameof(Vertex.ao));
+            int stride = BlockVertex.GetSize();
+            IntPtr xPosOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.x));
+            IntPtr yPosOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.y));
+            IntPtr zPosOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.z));
+            IntPtr uvOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.texUV));
+            IntPtr normalOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.normal));
 
-            //position (vec3)
-            vao.LinkAttrib(vbo, 0, 3, VertexAttribPointerType.Float, stride, posOffset);
+            //x position (2 bytes)
+            vao.LinkAttrib(vbo, 0, 1, VertexAttribPointerType.Short, false, stride, xPosOffset);
 
-            //texUV (vec2)
-            vao.LinkAttrib(vbo, 1, 2, VertexAttribPointerType.Float, stride, uvOffset);
+            //y position (4 bytes full float)
+            vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.Float, false, stride, yPosOffset);
+
+            //z position (2 bytes)
+            vao.LinkAttrib(vbo, 2, 1, VertexAttribPointerType.Short, false, stride, zPosOffset);
+
+            //texUV (vec2h)
+            vao.LinkAttrib(vbo, 3, 2, VertexAttribPointerType.HalfFloat, false, stride, uvOffset);
 
             //normal (unsigned byte, integer attribute)
-            vao.LinkAttribInt(vbo, 2, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
-
-            //ao (unsigned byte, integer attribute)
-            vao.LinkAttribInt(vbo, 3, 1, VertexAttribIntegerType.UnsignedByte, stride, aoOffset);
+            vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
 
             vao.Unbind();
             vbo.Unbind();
@@ -84,6 +91,12 @@ namespace OurCraft.Rendering
             indexSize = (uint)indices.Count;
             vertexCount = (uint)vertices.Count;
             meshcount = 1;     
+        }
+        
+        public void SetDataCount(List<BlockVertex> vertices, List<uint> indices)
+        {
+            indexSize = (uint)indices.Count;
+            vertexCount = (uint)vertices.Count;
         }
 
         //clear mesh and rebuild as empty

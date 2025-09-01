@@ -1,64 +1,85 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OurCraft.World;
 using System.Runtime.InteropServices;
 
 namespace OurCraft
 {
-    //base vertex settings
+    //base vertex settings for blocks
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct Vertex
+    public struct BlockVertex
     {
-        public Vertex(Vector3 position, Vector2 texUV, byte normal, byte ao = 0)
+        //assumes in local chunk coordinates
+        public BlockVertex(Vector3 pos, Vector2 uv, byte normal)
         {
-            this.position = position;
-            this.texUV = texUV;
+            x = EncodeToShort(pos.X);
+            y = pos.Y;
+            z = EncodeToShort(pos.Z);
+            texUV = new Vector2h(uv);
             this.normal = normal;
-            this.ao = ao;
         }
 
         //byte location = 0
-        public Vector3 position;
+        public short x; //since only 0-31 coords, short works fine
+        public float y; //but since 0-383 coords, float would be better
+        public short z;
+
+        //byte location = 8
+        public Vector2h texUV; //since only 0-1 coords, half precision float works fine
 
         //byte location = 12
-        public Vector2 texUV;
-
-        //byte location = 21
         public byte normal;
 
-        //byte location = 22
-        public byte ao;
+        //byte location = 13
+        public byte ao = 0;
+
+        //byte location = 14
+        public byte lighting = 0;
+
+        //byte location = 15
+        public byte flags = 0;
 
         //always updates when adding new vertex properties
         public static int GetSize()
         {
-            return Marshal.SizeOf<Vertex>();
+            return Marshal.SizeOf<BlockVertex>();
+        }
+
+        //converts float values from 0-chunksize to shorts, which are then converted again in the shader
+        static short EncodeToShort(float value, float chunkSize = (float)SubChunk.SUBCHUNK_SIZE)
+        {
+            //normalize [0, chunkSize) -> [0, 1)
+            float normalized = value / chunkSize;
+            //scale to short range
+            return (short)(normalized * short.MaxValue);
         }
     }
 
     //holds vertex data for openGL
-    internal class VBO
+    public class VBO
     {
-        private int ID;
+        public int ID { get; private set; }
+        public int Capacity { get; private set; }
 
         public VBO() { ID = 0; }
 
         //uploads vertex data
-        public void Create(List<Vertex> vertices)
+        public void CreateEmpty(int sizeInBytes, BufferUsageHint usage = BufferUsageHint.DynamicDraw)
         {
-            if (vertices.Count == 0) return;
-
             ID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * Vertex.GetSize(), vertices.ToArray(), BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, sizeInBytes, IntPtr.Zero, usage);
+            Capacity = sizeInBytes;
         }
 
-        public void Update(List<Vertex> vertices)
+        public void SubData<T>(int offsetInBytes, T[] data) where T : struct
         {
-            if (vertices.Count == 0) return;
+            int sizeInBytes = Marshal.SizeOf<T>() * data.Length;
+            if (offsetInBytes + sizeInBytes > Capacity)
+                throw new InvalidOperationException("Data upload exceeds VBO capacity!");
 
-            ID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * Vertex.GetSize(), vertices.ToArray(), BufferUsageHint.DynamicDraw);
+            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offsetInBytes, sizeInBytes, data);
         }
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);

@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
 using OurCraft.Rendering;
+using System.Security.Cryptography;
 using static OurCraft.Rendering.Camera;
 
 namespace OurCraft.World
@@ -79,14 +80,14 @@ namespace OurCraft.World
         //chunks are collections of subchunks (which hold the block and mesh data)
         //chunks are treated as sections of the world that group voxel and mesh data together
         //this is so that every block is not treated as an individiual (that would then mean many draw calls, which is bad for gpu)
-        //the chunks are 16 by 16 subchunks, that are then stacked on top of each other 16 times, this creates the total chunk of 16 * 256 * 16
+        //the chunks are 32 by 32 subchunks, that are then stacked on top of eachother 12 times, this creates a 32 by 384 by 32 chunk column
 
         //---data---
-        //shader - drawing info for subchunks
         //Pos - global position of chunk for subchunks to use when building meshes
         //subchunk count and chunk height - already explained
         //subChunks - the actual collection of subchunks
         //state - chunks generation state (intialized, only block ids, ready to mesh, meshed, deleted) useful for synchronization
+        //cam, batchedMesh - rendering info, batchedMesh combines mesh data into one big buffer, mesh data is seperate so update times are fast, with minimal draw calls
 
         //rendering
         readonly Camera cam;
@@ -158,7 +159,7 @@ namespace OurCraft.World
             state = ChunkState.Meshed;
         }
 
-        //builds all subchunk meshes to openGL
+        //builds the combined subchunk mesh data
         public void SendMeshToOpenGL()
         {
             if (state == ChunkState.Deleted || state == ChunkState.VoxelOnly || state == ChunkState.Initialized)
@@ -167,7 +168,7 @@ namespace OurCraft.World
             state = ChunkState.Built;
         }
 
-        //combines the vertex data into one big mesh for solid geo
+        //combines the vertex data into one big mesh for solid geometry
         private void UploadSolidMesh()
         {
             //compute size upfront
@@ -181,8 +182,11 @@ namespace OurCraft.World
             }
 
             //preallocate size
-            var totalVertices = new List<Vertex>(totalVertexCount);
+            var totalVertices = new List<BlockVertex>(totalVertexCount);
             var totalIndices = new List<uint>(totalIndexCount);
+
+            int vertexOffset = 0;
+            int indexOffset = 0;
 
             //append mesh data
             foreach (var subChunk in subChunks)
@@ -190,20 +194,19 @@ namespace OurCraft.World
                 var geo = subChunk.SolidGeo;
                 if (geo.vertices.Count == 0 || geo.indices.Count == 0)
                     continue;
-
-                uint baseIndex = (uint)totalVertices.Count;
+                uint baseIndex = (uint)vertexOffset;
 
                 //append vertices
                 totalVertices.AddRange(geo.vertices);
 
-                //fast index transform using a temporary array
-                int indexCount = geo.indices.Count;
-                var adjustedIndices = new uint[indexCount];
-                for (int i = 0; i < indexCount; i++)
-                {
+                //adjust indices relative to baseIndex
+                var adjustedIndices = new uint[geo.indices.Count];
+                for (int i = 0; i < geo.indices.Count; i++)
                     adjustedIndices[i] = geo.indices[i] + baseIndex;
-                }
                 totalIndices.AddRange(adjustedIndices);
+
+                vertexOffset += geo.vertices.Count;
+                indexOffset += geo.indices.Count;
             }
 
             //mesh upload
@@ -310,9 +313,9 @@ namespace OurCraft.World
             int localY = globalY % SubChunk.SUBCHUNK_SIZE;
 
             //remesh this subchunk and adjacent subchunks if on a subchunk edge
-            subChunks[subChunkY].Remesh(leftC, rightC, frontC, backC);
-            if (localY == SubChunk.SUBCHUNK_SIZE - 1 && subChunks[subChunkY + 1] != null) subChunks[subChunkY + 1].Remesh(leftC, rightC, frontC, backC);
-            if (localY == 0 && subChunkY - 1 >= 0) subChunks[subChunkY - 1].Remesh(leftC, rightC, frontC, backC);
+            subChunks[subChunkY].RemeshGPU(leftC, rightC, frontC, backC);
+            if (localY == SubChunk.SUBCHUNK_SIZE - 1 && subChunks[subChunkY + 1] != null) subChunks[subChunkY + 1].RemeshGPU(leftC, rightC, frontC, backC);
+            if (localY == 0 && subChunkY - 1 >= 0) subChunks[subChunkY - 1].RemeshGPU(leftC, rightC, frontC, backC);
 
             batchedMesh.ClearMesh();
             SendMeshToOpenGL();
@@ -331,20 +334,20 @@ namespace OurCraft.World
 
         //---data---
         //subchunk size - how big a subchunk is in blocks^3
-        //blocks - the actual refrence to the block states in the chunk
+        //blocksPalette - all the different blocks in this subchunk
+        //blockIndices - way of computing the data for the blockPalette
+        //isAllAir - determines if all the blocks are just the AIR_BLOCK id
         //yPos, in which part of the parent chunk is this subchunk located in
         //parent - the chunk that contains this subchunk
-        //shader - for drawing meshes
-        //chunkmesh - for the geometry and calling openGL functions
+        //chunkmesh - for geometry data the combined parent batched mesh can use
 
         public const int SUBCHUNK_SIZE = 32;
         private IBlockIndexStorage blockIndices;
         private readonly BlockPalette palette;
         private bool isAllAir = true;
         public int YPos { get; private set; } = 0;
-        Chunk parent;
+        readonly Chunk parent;
         public ChunkMeshData SolidGeo { get; private set; }
-        public Vector3 Center { get; private set; }
 
         //basic constructor
         public SubChunk(Chunk parent, int yPos)
@@ -353,14 +356,7 @@ namespace OurCraft.World
             YPos = yPos;
             palette = new BlockPalette();
             blockIndices = new ByteBlockStorage(SUBCHUNK_SIZE * SUBCHUNK_SIZE * SUBCHUNK_SIZE);
-
             SolidGeo = new ChunkMeshData();
-
-            Center = new Vector3(
-                 parent.Pos.X * SUBCHUNK_SIZE + SUBCHUNK_SIZE / 2.0f,
-                 yPos * SUBCHUNK_SIZE + SUBCHUNK_SIZE / 2.0f,
-                 parent.Pos.Z * SUBCHUNK_SIZE + SUBCHUNK_SIZE / 2.0f
-            );
         }
 
         //fills in the block id array of the chunk
@@ -394,7 +390,7 @@ namespace OurCraft.World
             }
         }
 
-        //tries to create the first mesh
+        //tries to create the mesh data
         public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
         {
             if (isAllAir) return; //dont create mesh if chunk is completely air
@@ -405,6 +401,8 @@ namespace OurCraft.World
                     {
                         AddVoxelDataToChunk(new Vector3(x, y, z), new Vector3(x, YPos * SUBCHUNK_SIZE + y, z), leftC, rightC, frontC, backC);
                     }
+            SolidGeo.vertices.TrimExcess();
+            SolidGeo.indices.TrimExcess();
         }
 
         //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks
@@ -425,10 +423,11 @@ namespace OurCraft.World
         }
 
         //rebuilds the subchunk mesh data when modifying a block
-        public void Remesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
+        public void RemeshGPU(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
         {
+            //rebuild CPU lists like before
             ClearMesh();
-            CreateChunkMesh(leftC, rightC, frontC, backC);
+            CreateChunkMesh(leftC, rightC, frontC, backC);          
         }
 
         //clears the mesh data
@@ -437,7 +436,7 @@ namespace OurCraft.World
             SolidGeo.ClearMesh();
         }
 
-        //clears all the chunk mesh data and disposes the openGL mesh
+        //clears all the chunk mesh data
         public void Delete()
         {
             SolidGeo.ClearMesh();
@@ -456,7 +455,7 @@ namespace OurCraft.World
         {
             int index = Flatten(x, y, z);
             int paletteIndex = palette.GetOrAddIndex(state);
-            if (state.BlockID != BlockIDs.AIR_BLOCK) isAllAir = false;
+            if (state.BlockID != BlockIDs.AIR_BLOCK) isAllAir = false; //update if not all air anymore
 
             //auto-upgrade to ushort
             if (paletteIndex > byte.MaxValue && blockIndices is ByteBlockStorage)

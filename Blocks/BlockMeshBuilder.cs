@@ -138,10 +138,7 @@ namespace OurCraft.Blocks
                     leftTex, (byte)CubeFaces.LEFT.GetHashCode(), mesh);
         }
 
-        public static void BuildXShapeBlock(Vector3 pos,
-        BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisState,
-        int texID,
-        ChunkMeshData mesh)
+        public static void BuildXShapeBlock(Vector3 pos, int texID, ChunkMeshData mesh)
         {
             float eps = 0.001f; //small inset to avoid z-fighting
 
@@ -278,16 +275,16 @@ namespace OurCraft.Blocks
         //specifies exact vertex coordinates for adding a quad
         private static void AddQuad(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh)
         {
-            mesh.AddChunkMeshData(new Vertex(pos + v0,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v0,
             new Vector2(GetTextureX(texID), GetTextureY(texID)), normal));
 
-            mesh.AddChunkMeshData(new Vertex(pos + v1,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v1,
             new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID)), normal));
 
-            mesh.AddChunkMeshData(new Vertex(pos + v2,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v2,
             new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID) + NormalizedBlockTextureY()), normal));
 
-            mesh.AddChunkMeshData(new Vertex(pos + v3,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v3,
             new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY()), normal));
 
             mesh.AddQuadIndices();
@@ -296,16 +293,16 @@ namespace OurCraft.Blocks
         //helps adding sides of slabs
         private static void AddSlabSide(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh)
         {
-            mesh.AddChunkMeshData(new Vertex(pos + v0,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v0,
             new Vector2(GetTextureX(texID), GetTextureY(texID)), normal));
 
-            mesh.AddChunkMeshData(new Vertex(pos + v1,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v1,
             new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID)), normal));
 
-            mesh.AddChunkMeshData(new Vertex(pos + v2,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v2,
             new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID) + NormalizedBlockTextureY() / 2), normal));
 
-            mesh.AddChunkMeshData(new Vertex(pos + v3,
+            mesh.AddChunkMeshData(new BlockVertex(pos + v3,
             new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY() / 2), normal));
 
             mesh.AddQuadIndices();

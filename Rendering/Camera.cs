@@ -19,7 +19,7 @@ namespace OurCraft.Rendering
             }
         }
 
-        public FrustumPlane[] ExtractFrustumPlanes(Matrix4 matrix)
+        public static FrustumPlane[] ExtractFrustumPlanes(Matrix4 matrix)
         {
             FrustumPlane[] planes = new FrustumPlane[6];
 

@@ -18,16 +18,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="openGL objects\WBOITFramebuffer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Game Heirarchy\" />
+    <Folder Include="Shaders\OIT\" />
   </ItemGroup>
 
 </Project>

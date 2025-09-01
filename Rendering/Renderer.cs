@@ -129,8 +129,8 @@ namespace OurCraft.Rendering
             //-----set up block shaders-----
             shader.Activate();
             shader.SetVector3("fogColor", new Vector3(0.5f, 0.7f, 0.8f));
-            shader.SetFloat("fogStart", chunks.renderDistance * SubChunk.SUBCHUNK_SIZE - 20);
-            shader.SetFloat("fogEnd", chunks.renderDistance * SubChunk.SUBCHUNK_SIZE);
+            shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE - 20);
+            shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE);
             shader.SetFloat("fogDensity", 0.5f);
 
             

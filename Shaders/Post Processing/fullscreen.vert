@@ -5,6 +5,7 @@ layout(location = 1) in vec2 aTexCoords;
 
 out vec2 TexCoords;
 
+//just renders a full quad ontop of the screen with no transformations
 void main()
 {
     TexCoords = aTexCoords;

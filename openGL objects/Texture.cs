@@ -3,6 +3,8 @@ using StbImageSharp;
 
 namespace OurCraft
 {
+
+    //picture data mapped onto mesh vertices
     public class Texture
     {
         //members

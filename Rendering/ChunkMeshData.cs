@@ -4,27 +4,29 @@
     public class ChunkMeshData
     {
         //mesh data
-        public readonly List<Vertex> vertices = [];
+        public readonly List<BlockVertex> vertices = [];
         public readonly List<uint> indices = [];
-        private uint indexSize = 0;
+        public uint IndexCount { get; private set; } = 0;
+        public uint VertexCount { get; private set; } = 0;
 
         //add a vertex safely to vertices
-        public void AddChunkMeshData(Vertex v)
+        public void AddChunkMeshData(BlockVertex v)
         {
             vertices.Add(v);
+            VertexCount++;
         }
 
         //adds all the indices for a cube face
         public void AddQuadIndices()
         {
-            indices.Add(indexSize + 0);
-            indices.Add(indexSize + 1);
-            indices.Add(indexSize + 2);
-            indices.Add(indexSize + 2);
-            indices.Add(indexSize + 3);
-            indices.Add(indexSize + 0);
+            indices.Add(IndexCount + 0);
+            indices.Add(IndexCount + 1);
+            indices.Add(IndexCount + 2);
+            indices.Add(IndexCount + 2);
+            indices.Add(IndexCount + 3);
+            indices.Add(IndexCount + 0);
 
-            indexSize = (uint)vertices.Count;
+            IndexCount = (uint)vertices.Count;
         }
 
         //clear mesh and rebuild as empty
@@ -37,7 +39,7 @@
                 vertices.Capacity = 0;
                 indices.Capacity = 0;
             }
-            indexSize = 0;
+            IndexCount = 0;
         }
     }
 }

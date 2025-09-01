@@ -3,7 +3,6 @@ using OurCraft.Blocks;
 using OurCraft.Rendering;
 using OurCraft.utility;
 using System.Collections.Concurrent;
-using System.Security.Cryptography.X509Certificates;
 
 namespace OurCraft.World
 {
@@ -49,23 +48,23 @@ namespace OurCraft.World
 
         //containers (no copies), the byte is reduntant in the other dictionaries
         public ConcurrentDictionary<ChunkCoord, Chunk> chunkMap { get; private set; } = new();
-        ConcurrentDictionary<ChunkCoord, byte> meshQueuedChunks = new();
-        ConcurrentDictionary<ChunkCoord, byte> meshTriedChunks = new();
-        ConcurrentDictionary<ChunkCoord, byte> deletionQueuedChunks = new();
-        ConcurrentDictionary<ChunkCoord, byte> meshDeletionQueuedChunks = new();
+        readonly ConcurrentDictionary<ChunkCoord, byte> meshQueuedChunks = new();
+        readonly ConcurrentDictionary<ChunkCoord, byte> meshTriedChunks = new();
+        readonly ConcurrentDictionary<ChunkCoord, byte> deletionQueuedChunks = new();
+        readonly ConcurrentDictionary<ChunkCoord, byte> meshDeletionQueuedChunks = new();
 
         //chunk queues (actual queues)
-        ConcurrentQueue<ChunkCoord> chunkGenQueue = new();
-        ConcurrentQueue<ChunkCoord> tryMeshQueue = new();
-        ConcurrentQueue<ChunkCoord> chunkMeshQueue = new();
-        ConcurrentQueue<Chunk> chunkUploadQueue = new();
-        ConcurrentQueue<ChunkCoord> meshDeletionQueue = new();
-        ConcurrentQueue<ChunkCoord> deletionQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> chunkGenQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> tryMeshQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> chunkMeshQueue = new();
+        readonly ConcurrentQueue<Chunk> chunkUploadQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> meshDeletionQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> deletionQueue = new();
 
         //world settings
-        public int renderDistance { get; private set; } = 0; //how far chunks draw
-        public int worldDistance { get; private set; } = 0; //how far chunks generate
-        public float maxChunkBuildPerFrame { get; private set; } = 0.0001f;
+        public int RenderDistance { get; private set; } = 0; //how far chunks draw
+        public int WorldDistance { get; private set; } = 0; //how far chunks generate
+        public float MaxChunkBuildPerFrame { get; private set; } = 0.0001f;
         float chunkUploadTimer = 0;
 
         //refrences
@@ -81,8 +80,8 @@ namespace OurCraft.World
             this.player = player;
             threadPool = tp;
             int worldSize = renderDistance.GetHashCode() + 2;
-            this.renderDistance = worldSize;
-            worldDistance = worldSize + 1;                 
+            this.RenderDistance = worldSize;
+            WorldDistance = worldSize + 1;                 
             lastPlayerChunk = new ChunkCoord(0, 0);        
         }
 
@@ -91,9 +90,9 @@ namespace OurCraft.World
         {
             ChunkCoord playerChunk = GetPlayerChunk();
 
-            for (int x = playerChunk.X - worldDistance; x <= playerChunk.X + worldDistance; x++)
+            for (int x = playerChunk.X - WorldDistance; x <= playerChunk.X + WorldDistance; x++)
             {
-                for (int z = playerChunk.Z - worldDistance; z <= playerChunk.Z + worldDistance; z++)
+                for (int z = playerChunk.Z - WorldDistance; z <= playerChunk.Z + WorldDistance; z++)
                 {
                     ChunkCoord coord = new(x, z);
                     if (chunkMap.TryAdd(coord, new Chunk(coord, player)))
@@ -220,7 +219,7 @@ namespace OurCraft.World
             if (chunkUploadQueue.TryDequeue(out Chunk? chunk))
             {
                 //if chunk is meshed but no voxel data, then build and stay popped
-                if (chunk != null && chunk.GetState() == ChunkState.Meshed && chunkUploadTimer > maxChunkBuildPerFrame)
+                if (chunk != null && chunk.GetState() == ChunkState.Meshed && chunkUploadTimer > MaxChunkBuildPerFrame)
                 {
                     chunk.SendMeshToOpenGL();
                     chunkUploadTimer = 0;
@@ -303,8 +302,8 @@ namespace OurCraft.World
 
             if (globalTime > 20)
             {
-                if (renderDistance > 12) maxChunkBuildPerFrame = 0.005f;
-                else maxChunkBuildPerFrame = 0.001f;
+                if (RenderDistance > 12) MaxChunkBuildPerFrame = 0.005f;
+                else MaxChunkBuildPerFrame = 0.001f;
             }
         }
 
@@ -389,14 +388,14 @@ namespace OurCraft.World
         private bool ChunkOutOfRenderDistance(ChunkCoord coord, ChunkCoord playerChunk)
         {
 
-            return MathF.Abs(coord.Z - playerChunk.Z) > renderDistance || MathF.Abs(coord.X - playerChunk.X) > renderDistance;
+            return MathF.Abs(coord.Z - playerChunk.Z) > RenderDistance || MathF.Abs(coord.X - playerChunk.X) > RenderDistance;
         }
 
         //checks if a chunk is fully out of generation range
         private bool ChunkOutOfBounds(ChunkCoord coord, ChunkCoord playerChunk)
         {
 
-            return MathF.Abs(coord.Z - playerChunk.Z) > worldDistance || MathF.Abs(coord.X - playerChunk.X) > worldDistance;
+            return MathF.Abs(coord.Z - playerChunk.Z) > WorldDistance || MathF.Abs(coord.X - playerChunk.X) > WorldDistance;
         }
 
         //checks if a chunk has neighbors with voxel data around them

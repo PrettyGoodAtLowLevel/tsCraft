@@ -1,7 +1,7 @@
 ﻿using OurCraft;
 
 //entry point (actually durr)
-internal static class Program
+static class Program
 {
     private static void Main()
     {

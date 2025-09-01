@@ -1,25 +1,34 @@
 ﻿using OpenTK.Graphics.OpenGL4;
+using System.Runtime.InteropServices;
 
 namespace OurCraft
 {
     //specifies order of verticies to be drawn in
     internal class EBO
     {
-        private int ID = 0;
+        public int ID { get; private set; }
+        public int capacity { get; private set; }
 
         //methods
         public EBO() { ID = 0; }
 
         //create ebo with list of vertex order
-        public void Create(List<uint> indices)
+        public void CreateEmpty(int sizeInBytes, BufferUsageHint usage = BufferUsageHint.DynamicDraw)
         {
             ID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, sizeInBytes, IntPtr.Zero, usage);
+            capacity = sizeInBytes;
+        }
 
-            // Convert the list to an array for GL.BufferData
-            uint[] indexArray = indices.ToArray();
+        public void SubData<T>(int offsetInBytes, T[] data) where T : struct
+        {
+            int sizeInBytes = Marshal.SizeOf<T>() * data.Length;
+            if (offsetInBytes + sizeInBytes > capacity)
+                throw new InvalidOperationException("Data upload exceeds VBO capacity!");
 
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indexArray.Length * sizeof(uint), indexArray, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
+            GL.BufferSubData(BufferTarget.ElementArrayBuffer, (IntPtr)offsetInBytes, sizeInBytes, data);
         }
 
         //activate current ebo

@@ -25,7 +25,7 @@ namespace OurCraft.Blocks.Block_Implementations
         //mesh implementation for a full block
         public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState state)
         {
-            BlockMeshBuilder.BuildXShapeBlock(pos, bottom, top, front, back, right, left, state, bottomFaceTex, mesh);
+            BlockMeshBuilder.BuildXShapeBlock(pos, bottomFaceTex, mesh);
         }
 
         //nothing special just add the block on the face the player is looking at

@@ -4,12 +4,10 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
+//not really done anything here yet, next update is big improvements to this
 namespace OurCraft.World
 {
-    //regional values of a part in the world
-    //con represents land vs water region
-    //ero represents flatlands vs mountains
-    //crazy represnents weird 3d noise terrain vs normal region terrain
+    //represents a region of the world
     public readonly struct NoiseRegion
     {
         public readonly float baseHeight, erosion, crazy;
@@ -37,17 +35,9 @@ namespace OurCraft.World
 
         //noise maps
         private static readonly FastNoiseLite continentalNoise;
-        private static readonly FastNoiseLite erosionNoise;
-        private static readonly FastNoiseLite crazyNoise;       
-
-        private static readonly FastNoiseLite threeDNoise;
-        private static readonly FastNoiseLite threeDDetailnoise;
 
         //---noisemap settings----
         private static readonly float conNoiseFreq = 0.00075f;
-        private static readonly float eroNoiseFreq = 0.0005f;
-        private static readonly float mountainNoiseFreq = 0.0005f;
-        private static readonly float mountainNoiseWarpAmt = 300;
 
         //initialise all the noises and height layers
         static NoiseGenerator()
@@ -64,27 +54,6 @@ namespace OurCraft.World
             //base overall height of terrain
             continentalNoise = new FastNoiseLite(seed);
             continentalNoise.SetFrequency(conNoiseFreq); //large continents and oceans
-
-            //flattens terrain overall
-            erosionNoise = new FastNoiseLite(seed + 1);
-            erosionNoise.SetFrequency(eroNoiseFreq); //adds hills and lakes
-
-            //adds large mountains
-            crazyNoise = new FastNoiseLite(seed + 2);
-            crazyNoise.SetFrequency(mountainNoiseFreq);
-            crazyNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
-            crazyNoise.SetDomainWarpAmp(mountainNoiseWarpAmt);
-
-            //--------3d detail noisemaps------
-            threeDNoise = new FastNoiseLite(seed + 3);
-            threeDNoise.SetFrequency(0.01f);
-            threeDNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
-            threeDNoise.SetDomainWarpAmp(2000);
-
-            threeDDetailnoise = new FastNoiseLite(seed + 4);
-            threeDDetailnoise.SetFrequency(0.005f);
-            threeDDetailnoise.SetFractalType(FastNoiseLite.FractalType.FBm);
-            threeDDetailnoise.SetFractalOctaves(4);
         }
 
         //determines base terrain height
@@ -110,7 +79,7 @@ namespace OurCraft.World
         {
             float baseDensity = control.baseHeight - y;
 
-            return Math.Clamp(baseDensity, -1, 1); //*135f: multiplier here for more amplififed terrain and "3d"
+            return Math.Clamp(baseDensity, -1, 1);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System;
+using System.Diagnostics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -26,11 +27,11 @@ namespace OurCraft
 
         Chunkmanager world;
         Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 135, 0.5f), 7.5f, 25);   
-        ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(16); //threads for initial chunk generation
+        ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(8); //threads for initial chunk generation
         Renderer renderer;
         byte currentBlock = 1;
         double timer = 0;
-        double rawTime = 0;      
+        double rawTime = 0;
 
         //first load
         protected override void OnLoad()
@@ -127,7 +128,7 @@ namespace OurCraft
 
             if (timer >= 1)
             {
-                Title = "OurCraft, fps: " + (int)(1 / args.Time) + ", camera position (" + (int)cam.Position.X + ", " + (int)cam.Position.Y + ", " + (int)cam.Position.Z + "), max draw calls: " +
+                Title = "TsCraft, fps: " + (int)(1 / args.Time) + ", camera position (" + (int)cam.Position.X + ", " + (int)cam.Position.Y + ", " + (int)cam.Position.Z + "), max draw calls: " +
                     world.chunkMap.Count * 3;
                 timer = 0;
             }

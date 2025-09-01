@@ -8,11 +8,11 @@
     //represents a block ids current state in a subchunk
     public readonly struct BlockState
     {
-        public readonly byte BlockID; // the id in the global block array
+        public readonly ushort BlockID; // the id in the global block array
         public readonly ushort MetaData; //up to 16 bits of custom data
 
         //default constructor
-        public BlockState(byte id, ushort metadata = 0)
+        public BlockState(ushort id, ushort metadata = 0)
         {
             BlockID = id;
             MetaData = metadata;

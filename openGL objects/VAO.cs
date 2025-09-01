@@ -11,11 +11,11 @@ namespace OurCraft
         public void Create() => ID = GL.GenVertexArray();
 
         //float attribute (vec2/vec3...)
-        public void LinkAttrib(VBO vbo, int layout, int numComponents, VertexAttribPointerType type, int stride, IntPtr offset)
+        public void LinkAttrib(VBO vbo, int layout, int numComponents, VertexAttribPointerType type, bool normalize, int stride, IntPtr offset)
         {
             vbo.Bind();
             //use the IntPtr overload so offset is interpreted as a byte offset, not a pointer value accidentally.
-            GL.VertexAttribPointer(layout, numComponents, type, false, stride, offset);
+            GL.VertexAttribPointer(layout, numComponents, type, normalize, stride, offset);
             GL.EnableVertexAttribArray(layout);
             vbo.Unbind();
         }

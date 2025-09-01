@@ -3,10 +3,8 @@
 //we also can change the saturation, which is how much the colors pop, high saturation means very colorful, and vice versa
 //vignette makes the screen slightly darker on the edges for a realistic veiwing expierence
 //the tint literally just tints the screen, used for underwater effects, or damaging or what not
-
 #version 330 core
-
-uniform sampler2D sceneTex;
+uniform sampler2D sceneTex;        //framebuffer texture
 uniform float caStrength;          //chromatic aberration intensity
 uniform float saturation;          //1.0 = normal, >1 = more saturated
 uniform float vignetteStrength;    //0 = no vignette, 1 = full dark edges
