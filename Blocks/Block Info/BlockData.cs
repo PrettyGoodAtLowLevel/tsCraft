@@ -45,6 +45,11 @@ namespace OurCraft.Blocks
            new BlockLog("birch_log", TextureIDs.birchLogTopTex, TextureIDs.birchLogSideTex, BlockIDs.BIRCH_LOG_BLOCK),
            new SlabBlock("birch_slab", TextureIDs.birchPlanksTex, BlockIDs.BIRCH_SLAB_BLOCK),
            new LeavesBlock("birch_leaves", TextureIDs.birchLeavesTex, BlockIDs.BIRCH_LEAVES_BLOCK),
+
+           //sand and snow
+           new FullBlock("sand", TextureIDs.sandTex, BlockIDs.SAND_BLOCK),
+           new FullBlock("snow", TextureIDs.snowTex, BlockIDs.SNOW_BLOCK),
+           new FullBlock("snowy_grass_block", TextureIDs.dirtTex, TextureIDs.snowTex, TextureIDs.snowGrassSideTex, BlockIDs.SNOWY_GRASS_BLOCK),
         };
         
         //get block from id
@@ -89,6 +94,12 @@ namespace OurCraft.Blocks
         public static readonly byte BIRCH_PLANKS_BLOCK = 17;
         public static readonly byte BIRCH_LOG_BLOCK = 18;
         public static readonly byte BIRCH_SLAB_BLOCK = 19;
-        public static readonly byte BIRCH_LEAVES_BLOCK = 20;        
+        public static readonly byte BIRCH_LEAVES_BLOCK = 20;
+
+
+        //sand and snow
+        public static readonly byte SAND_BLOCK = 21;
+        public static readonly byte SNOW_BLOCK = 22;
+        public static readonly byte SNOWY_GRASS_BLOCK = 23;
     }
 }

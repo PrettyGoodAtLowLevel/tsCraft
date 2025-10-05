@@ -7,10 +7,11 @@
 
         //grass
         public static readonly int grassTopTex = 2;
-        public static readonly int snowGrassTopTex = 1;
+        public static readonly int snowGrassSideTex = 1;
         public static readonly int dirtTex = 50;
         public static readonly int grassSideTex = 3;
         public static readonly int snowTex = 172;
+        public static readonly int sandTex = 37;
 
         //stones
         public static readonly int stoneTex = 19;

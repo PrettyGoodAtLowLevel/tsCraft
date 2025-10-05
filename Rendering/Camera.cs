@@ -82,7 +82,7 @@ namespace OurCraft.Rendering
         //handles transformations in the shader
         private Matrix4 cameraMatrix;
 
-        private float Speed = 10.0f;
+        public float Speed = 10.0f;
         private float Sensitivity = 100.0f;
 
         //methods
@@ -101,13 +101,6 @@ namespace OurCraft.Rendering
             var view = Matrix4.LookAt(Position, Position + Orientation, Up);
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(fovDeg), (float)width / height, nearPlane, farPlane);
             cameraMatrix = view * projection;
-        }
-
-        // This gives you a float offset for a chunk or model origin
-        public Vector3 GetRelativeOrigin(Vector3d worldOrigin)
-        {
-            Vector3d diff = worldOrigin - Position;
-            return new Vector3((float)diff.X, (float)diff.Y, (float)diff.Z);
         }
 
         public FrustumPlane[] GetFrustum() { return ExtractFrustumPlanes(cameraMatrix); }
@@ -165,6 +158,8 @@ namespace OurCraft.Rendering
             float angle = MathHelper.RadiansToDegrees(MathF.Acos(Vector3.Dot(newOrientation, Up)));
             if (angle > 1f && angle < 179f)
                 Orientation = newOrientation;
+            if (Speed < 0)
+                Speed = 0;
 
             // Horizontal rotation (yaw)
             Orientation = Vector3.Transform(Orientation, Quaternion.FromAxisAngle(Up, MathHelper.DegreesToRadians(-rotY)));

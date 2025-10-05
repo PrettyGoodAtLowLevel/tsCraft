@@ -47,7 +47,7 @@ namespace OurCraft.World
         //each queue has a set/dictionary corresponding to them so no copies happen
 
         //containers (no copies), the byte is reduntant in the other dictionaries
-        public ConcurrentDictionary<ChunkCoord, Chunk> chunkMap { get; private set; } = new();
+        public ConcurrentDictionary<ChunkCoord, Chunk> ChunkMap { get; private set; } = new();
         readonly ConcurrentDictionary<ChunkCoord, byte> meshQueuedChunks = new();
         readonly ConcurrentDictionary<ChunkCoord, byte> meshTriedChunks = new();
         readonly ConcurrentDictionary<ChunkCoord, byte> deletionQueuedChunks = new();
@@ -80,7 +80,7 @@ namespace OurCraft.World
             this.player = player;
             threadPool = tp;
             int worldSize = renderDistance.GetHashCode() + 2;
-            this.RenderDistance = worldSize;
+            RenderDistance = worldSize;
             WorldDistance = worldSize + 1;                 
             lastPlayerChunk = new ChunkCoord(0, 0);        
         }
@@ -95,11 +95,11 @@ namespace OurCraft.World
                 for (int z = playerChunk.Z - WorldDistance; z <= playerChunk.Z + WorldDistance; z++)
                 {
                     ChunkCoord coord = new(x, z);
-                    if (chunkMap.TryAdd(coord, new Chunk(coord, player)))
+                    if (ChunkMap.TryAdd(coord, new Chunk(coord, player)))
                     {
                         chunkGenQueue.Enqueue(coord);
 
-                        // try to add to mesh queue
+                        //try to add to mesh queue
                         TryMeshEnqueue(coord);
                     }
                 }
@@ -110,7 +110,7 @@ namespace OurCraft.World
         private void UpdateFarChunks()
         {
             ChunkCoord playerChunk = GetPlayerChunk();
-            foreach (var pair in chunkMap)
+            foreach (var pair in ChunkMap)
             {
                 //full deletion
                 if (ChunkOutOfBounds(pair.Key, playerChunk))
@@ -242,7 +242,7 @@ namespace OurCraft.World
                     if (chunk != null)
                     {
                         //check if we can remove chunk
-                        if (chunkMap.TryRemove(coord, out chunk))
+                        if (ChunkMap.TryRemove(coord, out chunk))
                         {
                             //delete vram data if successful
                             deletionQueuedChunks.TryRemove(coord, out byte thing);
@@ -310,12 +310,12 @@ namespace OurCraft.World
         //clears chunk map
         public void Delete()
         {
-            foreach(var pair in chunkMap)
+            foreach(var pair in ChunkMap)
             {
                 //delete chunk data
                 pair.Value.Delete();
             }
-            chunkMap.Clear();
+            ChunkMap.Clear();
         }
 
         //---utility---
@@ -359,9 +359,9 @@ namespace OurCraft.World
         //safely fetch a chunk from chunk coordinates
         private Chunk? GetChunk(ChunkCoord coord)
         {
-            if (chunkMap.ContainsKey(coord))
+            if (ChunkMap.ContainsKey(coord))
             {
-                return chunkMap[coord];
+                return ChunkMap[coord];
             }
             return null;
         }
@@ -431,7 +431,7 @@ namespace OurCraft.World
             int ly = (int)MathF.Floor(pos.Y);
             int lz = Mod((int)MathF.Floor(pos.Z), SubChunk.SUBCHUNK_SIZE);
 
-            return chunk.GetBlock(lx, ly, lz);
+            return chunk.GetBlockSafe(lx, ly, lz);
         }
 
         //try set block in a chunk

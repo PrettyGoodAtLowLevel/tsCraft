@@ -9,6 +9,7 @@ using OurCraft.Rendering;
 using OurCraft.utility;
 using OurCraft.World;
 using static OurCraft.Physics.VoxelPhysics;
+using OurCraft.World.Terrain_Generation;
 
 namespace OurCraft
 {
@@ -26,7 +27,7 @@ namespace OurCraft
         }) { }
 
         Chunkmanager world;
-        Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 135, 0.5f), 7.5f, 25);   
+        Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 70.5f, 25);   
         ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(8); //threads for initial chunk generation
         Renderer renderer;
         byte currentBlock = 1;
@@ -38,7 +39,7 @@ namespace OurCraft
         {
             base.OnLoad();
             CursorState = CursorState.Grabbed;
-            world = new Chunkmanager(RenderDistances.SIX_CHUNKS, ref cam, ref worldGenThreads);
+            world = new Chunkmanager(RenderDistances.TEN_CHUNKS, ref cam, ref worldGenThreads);
             renderer = new Renderer(ref world, ref cam, screenWidth, screenHeight);
             world.Generate();          
         }
@@ -118,6 +119,7 @@ namespace OurCraft
             if (KeyboardState.IsKeyPressed(Keys.R))
             {
                 Console.Clear();
+                WorldGenerator.DebugValues((int)cam.Position.X, (int)cam.Position.Z);
             }
 
             if (KeyboardState.IsKeyDown(Keys.Z)) renderer.fov = 20;
@@ -128,8 +130,7 @@ namespace OurCraft
 
             if (timer >= 1)
             {
-                Title = "TsCraft, fps: " + (int)(1 / args.Time) + ", camera position (" + (int)cam.Position.X + ", " + (int)cam.Position.Y + ", " + (int)cam.Position.Z + "), max draw calls: " +
-                    world.chunkMap.Count * 3;
+                Title = "TsCraft, fps: " + (int)(1 / args.Time) + ", camera position (" + (int)cam.Position.X + ", " + ((int)cam.Position.Y) + ", " + (int)cam.Position.Z + ")";
                 timer = 0;
             }
         }

@@ -138,11 +138,11 @@ namespace OurCraft.Rendering
             //tweak for weird screen effects
             postShader.Activate();
             postShader.SetInt("sceneTex", 0);
-            postShader.SetFloat("caStrength", 0.005f);
+            postShader.SetFloat("caStrength", 0.01f);
             postShader.SetFloat("vignetteStrength", 1.0f);
-            postShader.SetFloat("saturation", 1.5f);
+            postShader.SetFloat("saturation", 1.35f);
             postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.1f)); 
-            postShader.SetFloat("tintIntensity", 0.0f);
+            postShader.SetFloat("tintIntensity", 0.1f);
         }
 
         //configure openGL properly
@@ -158,7 +158,7 @@ namespace OurCraft.Rendering
         //gets all the visible chunks
         private List<Chunk> GetVisibleChunks()
         {
-            return chunks.chunkMap.Values.Where(c => c.GetState() == ChunkState.Built &&
+            return chunks.ChunkMap.Values.Where(c => c.GetState() == ChunkState.Built &&
             Chunk.IsBoxInFrustum(sceneCamera.GetFrustum(), c.chunkMin, c.chunkMax)).ToList();
         }
     }
