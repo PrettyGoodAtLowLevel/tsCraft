@@ -60,6 +60,12 @@ namespace OurCraft.Blocks
             leftFaceTex = l;          
         }
 
+        //set id of block
+        public void SetID(int id)
+        {
+            this.id = id;
+        }
+
         //each block defines their own mesh based on block state and neighbor data
         public virtual void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top,
         BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState state) { }

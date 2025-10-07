@@ -437,6 +437,7 @@ namespace OurCraft.World
         //try set block in a chunk
         public void SetBlock(Vector3 pos, BlockState state)
         {
+            if (pos.Y < 0 || pos.Y >= SubChunk.SUBCHUNK_SIZE * Chunk.SUBCHUNK_COUNT) return;
             //world to chunk coord
             int chunkX = (int)MathF.Floor(pos.X / SubChunk.SUBCHUNK_SIZE);
             int chunkZ = (int)MathF.Floor(pos.Z / SubChunk.SUBCHUNK_SIZE);
@@ -500,4 +501,4 @@ namespace OurCraft.World
             return (a % b + b) % b;
         }
     }
-}
+}  

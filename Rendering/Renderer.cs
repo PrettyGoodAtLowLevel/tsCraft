@@ -42,6 +42,7 @@ namespace OurCraft.Rendering
         //draws a frame in a current world
         public void RenderSceneFrame(float time)
         {
+            
             //render all chunks to postFBO
             postFBO.Bind();
             ClearScene();
@@ -53,8 +54,8 @@ namespace OurCraft.Rendering
             postShader.Activate();
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, postFBO.ColorTexture);
-
             postProcessingQuad.Draw();
+            
         }
 
         //draws chunks without any post processing
@@ -95,6 +96,9 @@ namespace OurCraft.Rendering
         {
             screenHeight = height;
             screenWidth = width;
+
+            postShader.Activate();
+            postShader.SetVector2("uResolution", new Vector2(width, height));
         }
 
         //update camera matrix for shader
@@ -143,6 +147,8 @@ namespace OurCraft.Rendering
             postShader.SetFloat("saturation", 1.35f);
             postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.1f)); 
             postShader.SetFloat("tintIntensity", 0.1f);
+            postShader.SetVector2("uResolution", new Vector2(screenWidth, screenHeight));
+            postShader.SetFloat("aaStrength", 0.2f);
         }
 
         //configure openGL properly

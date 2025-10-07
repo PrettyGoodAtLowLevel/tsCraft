@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -9,14 +7,13 @@ using OurCraft.Rendering;
 using OurCraft.utility;
 using OurCraft.World;
 using static OurCraft.Physics.VoxelPhysics;
-using OurCraft.World.Terrain_Generation;
 
 namespace OurCraft
 {
     public class Game : GameWindow
     {
-        static int screenWidth = 1920;
-        static int screenHeight = 1080;
+        static readonly int screenWidth = 1920;
+        static readonly int screenHeight = 1080;
 
         public Game() : base(GameWindowSettings.Default, new NativeWindowSettings()
         {
@@ -27,10 +24,10 @@ namespace OurCraft
         }) { }
 
         Chunkmanager world;
-        Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 70.5f, 25);   
+        Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 7.5f, 25);   
         ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(8); //threads for initial chunk generation
         Renderer renderer;
-        byte currentBlock = 1;
+        ushort currentBlock;
         double timer = 0;
         double rawTime = 0;
 
@@ -39,9 +36,11 @@ namespace OurCraft
         {
             base.OnLoad();
             CursorState = CursorState.Grabbed;
-            world = new Chunkmanager(RenderDistances.TEN_CHUNKS, ref cam, ref worldGenThreads);
+            BlockData.InitBlocks();
+            world = new Chunkmanager(RenderDistances.SIX_CHUNKS, ref cam, ref worldGenThreads);
             renderer = new Renderer(ref world, ref cam, screenWidth, screenHeight);
-            world.Generate();          
+            world.Generate();
+            currentBlock = BlockRegistry.GetBlock("Grass Block");
         }
 
         //when drawing things
@@ -114,13 +113,6 @@ namespace OurCraft
             //switch blocks
             if (MouseState.ScrollDelta.Y < 0) TryCurrentBlockDecrease();
             if (MouseState.ScrollDelta.Y > 0) TryCurrentBlockIncrease();
-
-
-            if (KeyboardState.IsKeyPressed(Keys.R))
-            {
-                Console.Clear();
-                WorldGenerator.DebugValues((int)cam.Position.X, (int)cam.Position.Z);
-            }
 
             if (KeyboardState.IsKeyDown(Keys.Z)) renderer.fov = 20;
             else renderer.fov = 90;

@@ -41,6 +41,16 @@
                    MetaData == other.MetaData;
         }
 
+        public static bool operator ==(BlockState left, BlockState right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(BlockState left, BlockState right)
+        {
+            return !(left == right);
+        }
+
         public override int GetHashCode()
         {
             return HashCode.Combine(BlockID, MetaData);

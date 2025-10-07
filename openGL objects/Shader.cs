@@ -91,6 +91,13 @@ namespace OurCraft
             GL.Uniform3(loc, value);
         }
 
+        //changes a uniform vector2 value
+        public void SetVector2(string name, Vector2 value)
+        {
+            int loc = GL.GetUniformLocation(ID, name);
+            GL.Uniform2(loc, value);
+        }
+
         //check shader errors
         private void CheckShaderCompile(int shader, string type)
         {

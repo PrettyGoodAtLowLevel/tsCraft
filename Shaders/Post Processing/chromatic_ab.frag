@@ -1,33 +1,32 @@
-﻿//adds very small effects ontop of the screen for a final nice rendering result
-//chromatic aberration creates realistic light refractions on the edge of the screen
-//we also can change the saturation, which is how much the colors pop, high saturation means very colorful, and vice versa
-//vignette makes the screen slightly darker on the edges for a realistic veiwing expierence
-//the tint literally just tints the screen, used for underwater effects, or damaging or what not
-#version 330 core
-uniform sampler2D sceneTex;        //framebuffer texture
-uniform float caStrength;          //chromatic aberration intensity
-uniform float saturation;          //1.0 = normal, >1 = more saturated
-uniform float vignetteStrength;    //0 = no vignette, 1 = full dark edges
-uniform vec3 tintColor;            //RGB tint, e.g., red flash on damage
-uniform float tintIntensity;       //0 = no tint, 1 = full tint
+﻿#version 330 core
+
+uniform sampler2D sceneTex;
+uniform float caStrength;
+uniform float saturation;
+uniform float vignetteStrength;
+uniform vec3 tintColor;
+uniform float tintIntensity;
+
+uniform vec2 uResolution; // screen resolution
+uniform float aaStrength; // how much smoothing to apply
 
 in vec2 TexCoords;
 out vec4 FragColor;
 
 void main()
 {
-    //compute normalized distance from screen center
+    //chromatic aberration
     vec2 center = vec2(0.5, 0.5);
     vec2 dir = TexCoords - center;
-    float dist = length(dir); //0 at center, ~0.707 at corners
+    float dist = length(dir);
 
-    //chromatic aberration offsets
-    vec2 offset = dir * caStrength * dist;
+    //optional edge fade to make aberration stable
+    float edgeFade = smoothstep(0.0, 0.8, 0.8 - dist);
+    vec2 offset = dir * caStrength * dist * edgeFade;
 
     float r = texture(sceneTex, TexCoords + offset).r;
     float g = texture(sceneTex, TexCoords).g;
     float b = texture(sceneTex, TexCoords - offset).b;
-
     vec3 color = vec3(r, g, b);
 
     //saturation
@@ -39,8 +38,19 @@ void main()
     vignette = clamp(vignette, 0.0, 1.0);
     color *= vignette;
 
-    //tint (multiply or lerp)
+    //tint
     color = mix(color, tintColor, tintIntensity);
+
+    //apply fxaa
+    vec2 texelSize = 1.0 / uResolution;
+    vec3 c = color;
+    vec3 tl = texture(sceneTex, TexCoords + texelSize * vec2(-1.0, -1.0)).rgb;
+    vec3 tr = texture(sceneTex, TexCoords + texelSize * vec2(1.0, -1.0)).rgb;
+    vec3 bl = texture(sceneTex, TexCoords + texelSize * vec2(-1.0, 1.0)).rgb;
+    vec3 br = texture(sceneTex, TexCoords + texelSize * vec2(1.0, 1.0)).rgb;
+
+    vec3 blur = (tl + tr + bl + br) * 0.25;
+    color = mix(color, blur, aaStrength);
 
     FragColor = vec4(color, 1.0);
 }

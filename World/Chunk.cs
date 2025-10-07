@@ -2,6 +2,7 @@
 using OurCraft.Blocks;
 using OurCraft.Rendering;
 using OurCraft.World.Terrain_Generation;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using static OurCraft.Rendering.Camera;
 
@@ -149,18 +150,6 @@ namespace OurCraft.World
                 subChunk.CreateDensityMap(terrainHeights);
             }
 
-            //paint surface blocks with biome surface blocks
-            foreach (var subChunk in subChunks)
-            {
-                subChunk.SurfacePaint();
-            }
-
-            //add small deco
-            foreach(var subchunk in subChunks)
-            {
-                subchunk.Decorate();
-            }
-
             //update state
             state = ChunkState.VoxelOnly;     
         }
@@ -187,7 +176,7 @@ namespace OurCraft.World
 
         //combines the vertex data into one big mesh for solid geometry
         private void UploadSolidMesh()
-        {          
+        {         
             //compute size upfront
             int totalVertexCount = 0;
             int totalIndexCount = 0;
@@ -359,9 +348,10 @@ namespace OurCraft.World
             //get subchunk position for remeshing
             int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
             int localY = globalY % SubChunk.SUBCHUNK_SIZE;
+
             //remesh this subchunk and adjacent subchunks if on a subchunk edge
             subChunks[subChunkY].Remesh(leftC, rightC, frontC, backC);
-            if (localY == SubChunk.SUBCHUNK_SIZE - 1 && subChunks[subChunkY + 1] != null) subChunks[subChunkY + 1].Remesh(leftC, rightC, frontC, backC);
+            if (localY == SubChunk.SUBCHUNK_SIZE - 1 && subChunkY >= SUBCHUNK_COUNT) subChunks[subChunkY + 1].Remesh(leftC, rightC, frontC, backC);
             if (localY == 0 && subChunkY - 1 >= 0) subChunks[subChunkY - 1].Remesh(leftC, rightC, frontC, backC);
 
             batchedMesh.ClearMesh();
@@ -409,7 +399,6 @@ namespace OurCraft.World
         //create base density map - stone vs air
         public void CreateDensityMap(NoiseRegion[,] terrainHeights)
         {
-            Biome biome = WorldGenerator.GetBiome();
             for (int z = 0; z < SUBCHUNK_SIZE; z++)
             {             
                 for (int x = 0; x < SUBCHUNK_SIZE; x++)
@@ -423,6 +412,7 @@ namespace OurCraft.World
                         int globalZ = parent.Pos.Z * SUBCHUNK_SIZE + z;
                         float density = WorldGenerator.GetDensity(globalX, globalY, globalZ, terrainHeight);
 
+                        //we use raw block ids for extra performance
                         BlockState state = new BlockState(BlockIDs.AIR_BLOCK);                
                         if (density > 0) state = new BlockState(BlockIDs.STONE_BLOCK);
                         SetBlock(x, y, z, state);
@@ -430,115 +420,8 @@ namespace OurCraft.World
                         //fill air blocks below sea level with water
                         if (GetBlockState(x, y, z).BlockID == BlockIDs.AIR_BLOCK && globalY <= WorldGenerator.SEA_LEVEL)
                         {
-                            BlockState state2 = new BlockState(biome.waterBlock);
+                            BlockState state2 = new BlockState(BlockIDs.WATER_BLOCK);
                             SetBlock(x, y, z, state2);
-                        }
-                    }
-                }
-            }         
-        }
-
-        //paint the stone and air with surface blocks
-        public void SurfacePaint()
-        {
-            Biome biome = WorldGenerator.GetBiome();
-            for (int x = 0; x < SUBCHUNK_SIZE; x++)
-            {
-                for (int z = 0; z < SUBCHUNK_SIZE; z++)
-                {
-                    int depth = 0;
-
-                    for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--)
-                    {
-                        BlockState current = GetBlockState(x, y, z);
-
-                        //find the above block and calcualate the depth to find if its a surface
-                        if (current.BlockID == BlockIDs.STONE_BLOCK)
-                        {
-                            BlockState above;
-                            
-                            if (y + 1 < SUBCHUNK_SIZE)
-                            {
-                                above = GetBlockState(x, y + 1, z);
-                            }
-                            else
-                            {
-                                above = parent.GetBlockUnsafe(x, (YPos * SUBCHUNK_SIZE) + y + 1, z);
-                            }
-
-                            if (above.BlockID == BlockIDs.AIR_BLOCK || above.BlockID == BlockIDs.WATER_BLOCK)
-                            {
-                                //this is a surface block
-                                SetBlock(x, y, z, WorldGenerator.GetSurface(biome, (YPos * SUBCHUNK_SIZE) + y));
-                                depth = 1; //reset depth below surface
-                            }
-                            else if (depth > 0 && depth <= 3)
-                            {
-                                //subsurface filler
-                                SetBlock(x, y, z, WorldGenerator.GetSubsurface(biome, (YPos * SUBCHUNK_SIZE) + y));
-                                depth++;
-                            }
-                            else
-                            {
-                                depth = 0;
-                            }
-                        }
-                        else
-                        {
-                            depth = 0;
-                        }
-                    }
-                }
-            }
-        }
-
-        //add small decorations to chunk after surface paint
-        public void Decorate()
-        {
-            Biome biome = WorldGenerator.GetBiome();
-            for (int x = 0; x < SUBCHUNK_SIZE; x++)
-            {
-                for (int z = 0; z < SUBCHUNK_SIZE; z++)
-                {
-                    int depth = 0;
-
-                    for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--)
-                    {
-                        BlockState current = GetBlockState(x, y, z);
-
-                        //find the above block and calcualate the depth to find if its a surface
-                        if (current.BlockID != BlockIDs.AIR_BLOCK)
-                        {
-                            BlockState above;
-                            int globalY = (YPos * SUBCHUNK_SIZE) + y;
-                            if (y + 1 < SUBCHUNK_SIZE)
-                            {
-                                above = GetBlockState(x, y + 1, z);
-                            }
-                            else
-                            {
-                                above = parent.GetBlockUnsafe(x, globalY + 1, z);
-                            }
-
-                            if (above.BlockID == BlockIDs.AIR_BLOCK && current.BlockID == biome.applyDecoOn)
-                            {
-                                //this is a surface block
-                                BlockState state = WorldGenerator.GetDecoBlock(biome, globalY + 1);
-                                parent.SetBlockUnsafe(x, globalY + 1, z, state);
-                                depth = 1; //reset depth below surface
-                            }
-                            else if (depth > 0 && depth <= 3)
-                            {
-                                depth++;
-                            }
-                            else
-                            {
-                                depth = 0;
-                            }
-                        }
-                        else
-                        {
-                            depth = 0;
                         }
                     }
                 }
