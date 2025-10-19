@@ -8,7 +8,6 @@ using OurCraft.utility;
 using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 using static OurCraft.Physics.VoxelPhysics;
-using System.Diagnostics;
 using OurCraft.World.Terrain_Generation;
 
 namespace OurCraft
@@ -27,7 +26,7 @@ namespace OurCraft
         }) { }
 
         Chunkmanager world;
-        Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 7.5f, 25);   
+        Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 35.5f, 25);   
         ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(8); //threads for initial chunk generation
         Renderer renderer;
         ushort currentBlock;

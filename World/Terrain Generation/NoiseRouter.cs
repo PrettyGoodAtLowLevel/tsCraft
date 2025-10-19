@@ -2,7 +2,9 @@
 
 namespace OurCraft.World.Terrain_Generation
 {
-    //contains all the perlin noise data for terrain gen
+    //provides methods to get noise values for terrain generation
+    //allows to customize the noise map values to your desire 
+    //also lets you debug the world gen if you want to see why you are in a certain terrain
     public static class NoiseRouter
     {
         //terrain shaping noises
@@ -11,7 +13,9 @@ namespace OurCraft.World.Terrain_Generation
         static readonly FastNoiseLite riverNoise;
         static readonly FastNoiseLite weirdnessNoise;
         static readonly FastNoiseLite fractureNoise;
-        static readonly FastNoiseLite detailNoise; //3d
+
+        //creates the detailed terrain shape
+        static readonly FastNoiseLite detailNoise;
 
         //biome noise
         static readonly FastNoiseLite temperatureNoise;
@@ -71,6 +75,7 @@ namespace OurCraft.World.Terrain_Generation
         //set up all of the noises
         static NoiseRouter()
         {
+            //create random seeds for noisemaps
             seed = RandomNumberGenerator.GetInt32(int.MaxValue);
             Random rand = new(seed);
             offsetX = rand.Next(10000);
@@ -84,6 +89,7 @@ namespace OurCraft.World.Terrain_Generation
             int humiditySeed = rand.Next();
             int vegetationSeed = rand.Next();
 
+            //initialize noises
             regionalNoise = new FastNoiseLite(regionalSeed);
             erosionNoise = new FastNoiseLite(erosionSeed);
             riverNoise = new FastNoiseLite(riverSeed);
@@ -94,6 +100,7 @@ namespace OurCraft.World.Terrain_Generation
             humidityNoise = new FastNoiseLite(humiditySeed);
             vegetationNoise = new FastNoiseLite(vegetationSeed);
 
+            //actually set their noise settings to desired value
             ConfigureRegionNoise();
             ConfigureErosionNoise();
             ConfigureRiverNoise();
@@ -106,6 +113,8 @@ namespace OurCraft.World.Terrain_Generation
         }
 
         //noise configurations
+
+        //creates large oceans and land masses
         static void ConfigureRegionNoise()
         {
             regionalNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -115,6 +124,7 @@ namespace OurCraft.World.Terrain_Generation
             regionalNoise.SetDomainWarpAmp(regionalNoiseWarp);
         }
 
+        //creates highlands or low lands
         static void ConfigureErosionNoise()
         {
             erosionNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -124,6 +134,7 @@ namespace OurCraft.World.Terrain_Generation
             erosionNoise.SetDomainWarpAmp(erosionNoiseWarp);
         }
 
+        //carves rivers into the world
         static void ConfigureRiverNoise()
         {
             riverNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -133,6 +144,7 @@ namespace OurCraft.World.Terrain_Generation
             riverNoise.SetDomainWarpAmp(riverNoiseWarp);
         }
 
+        //creates weird terrain
         static void ConfigureWierdnessNoise()
         {
             weirdnessNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -143,6 +155,7 @@ namespace OurCraft.World.Terrain_Generation
             weirdnessNoise.SetDomainWarpAmp(weirdnessNoiseWarp);
         }
 
+        //creates crazy terrain
         static void ConfigureFractureNoise()
         {
             fractureNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -153,6 +166,7 @@ namespace OurCraft.World.Terrain_Generation
             fractureNoise.SetDomainWarpAmp(fractureNoiseWarp);
         }
 
+        //creates rugged terrain shape
         static void ConfigureDetailNoise()
         {
             detailNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -161,6 +175,7 @@ namespace OurCraft.World.Terrain_Generation
             detailNoise.SetFractalOctaves(detailNoiseOctaves);
         }
 
+        //how hot is this area?
         static void ConfigureTemperatureNoise()
         {
             temperatureNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -171,6 +186,7 @@ namespace OurCraft.World.Terrain_Generation
             temperatureNoise.SetDomainWarpAmp(temperatureNoiseWarp);
         }
 
+        //how much rainfall in this area?
         static void ConfigureHumidityNoise()
         {
             humidityNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -181,6 +197,7 @@ namespace OurCraft.World.Terrain_Generation
             humidityNoise.SetDomainWarpAmp(humidityNoiseWarp);
         }
 
+        //how much plants are in this area?
         static void ConfigureVegetationNoise()
         {
             vegetationNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -264,21 +281,27 @@ namespace OurCraft.World.Terrain_Generation
             return vegetationNoise.GetNoise(wx, wz);
         }
 
+        //shows all of the noisemap values at a certain point
         public static void DebugPrint(int x, int z)
         {
+            //find terrain shaper noise values
             float reg = GetRegionalNoise(x, z);
             float ero = GetErosionNoise(x, z);
             float riv = GetRiverNoise(x, z);
             float w = GetWeirdnessNoise(x, z);
             float fracture = GetFractureNoise(x, z);
+
+            //find biome noise values
             float temp = GetTemperatureNoise(x, z);
             float humid = GetHumidityNoise(x, z);
             float veg = GetVegetationNoise(x, z);
 
+            //convert into a less messy float format
             string formattedReg = reg.ToString("F3");
             string formattedEro = ero.ToString("F3");
             string formattedRiv = riv.ToString("F3");
 
+            //find the current biome based on noisemap values
             float ft = TerrainSplines.temperatureSpline.Evaluate(temp);
             float fh = TerrainSplines.humiditySpline.Evaluate(humid);
             float fv = TerrainSplines.vegetationSpline.Evaluate(veg);
@@ -288,6 +311,7 @@ namespace OurCraft.World.Terrain_Generation
             (TerrainSplines.weirdnessSpline.Evaluate(w) + 
             TerrainSplines.fractureSpline.Evaluate(fracture)).ToString("F3");
 
+            //print
             Console.WriteLine("========Terrain Builder========");
             Console.WriteLine("regional: " + formattedReg);
             Console.WriteLine("erosion: " + formattedEro);
@@ -305,9 +329,16 @@ namespace OurCraft.World.Terrain_Generation
     //represents a section of noise in the world
     public readonly struct NoiseRegion
     {
-        public readonly float heightOffset, amplification;
+        //height offset = base height of terrain
+        public readonly float heightOffset;
+
+        //amplification = how much the terrain can vary from base height
+        public readonly float amplification;
+
+        //what region of the world you are in
         public readonly Biome biome;
 
+        //dflt constructor
         public NoiseRegion(float heightOffset, float amplification, Biome biome) : this()
         {
             this.heightOffset = heightOffset;

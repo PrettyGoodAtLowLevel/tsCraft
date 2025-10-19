@@ -3,6 +3,11 @@
 namespace OurCraft.World.Terrain_Generation
 {
     //contains all the spline points for terrain generation
+    //these splines allow us to manipulate values on a custom graph
+    //these are useful since not every noise conributes to something linearly
+    //things like rivers could only sample middle values of noise to create carves in the terrain
+    //some noises could be mainly stagnant untill reaching the high values, which it skyrockets
+    //you see the point
     public static class TerrainSplines
     {
         //determines land vs ocean

@@ -31,7 +31,11 @@ namespace OurCraft.World.Terrain_Generation
         DENSE       //forest
     }
 
-    //holds all the biomes
+    //the biome data class holds all of the biomes and initializes them
+    //it also provides a fast lookup table for searching through and finding biomes
+    //the lookup table uses the temperature, humidity, and vegetation, to index into an array
+    //this array provides as a quick way to search for biomes with o(1) time, and being clean,
+    //rather than use a million -if statements
     public static class BiomeData
     {
         public static Biome Plains { get; private set; }
@@ -39,10 +43,14 @@ namespace OurCraft.World.Terrain_Generation
         public static Biome Tundra { get; private set; }
         public static Biome ColdDesert { get; private set; }
         public static Biome Taiga { get; private set; }
+        public static Biome FrozenPeaks { get; private set; }
+        public static Biome Jungle { get; private set; }
+        public static Biome Forest { get; private set; }
 
         public readonly static List<Biome> biomes = [];
         static readonly Biome[,,] biomeTable;
 
+        //create all the biomes
         static BiomeData()
         {
             //initialize the biome table and biomes
@@ -51,6 +59,9 @@ namespace OurCraft.World.Terrain_Generation
             Tundra = new Biome();
             ColdDesert = new Biome();
             Taiga = new Biome();
+            FrozenPeaks = new Biome();
+            Jungle = new Biome();
+            Forest = new Biome();
 
             biomeTable = new Biome[TemperatureIndex.HOT.GetHashCode() + 1,
             HumidityIndex.WET.GetHashCode() + 1,
@@ -61,8 +72,7 @@ namespace OurCraft.World.Terrain_Generation
             InitializeBiomeTable();
             PropagateBiomeTable();
 
-            //debug test for biome table propagation
-            /*
+            //debug test for biome table propagation          
             for (int t = 0; t < 5; t++)
             {
                 for (int h = 0; h < 5; h++)
@@ -72,8 +82,7 @@ namespace OurCraft.World.Terrain_Generation
                         Console.WriteLine($"{(TemperatureIndex)t}, {(HumidityIndex)h}, {(VegetationIndex)v} = {biomeTable[t, h, v].Name}");
                     }
                 }
-            }
-            */
+            }           
         }
 
         //get the biome
@@ -89,6 +98,9 @@ namespace OurCraft.World.Terrain_Generation
             InitTundra();
             InitColdDesert();
             InitTaiga();
+            InitFrozenPeaks();
+            InitJungle();
+            InitForest();
         }
 
         //create biomes
@@ -185,16 +197,21 @@ namespace OurCraft.World.Terrain_Generation
             return bestBiome;
         }
 
+        //----biome initializations----
+        //will move this to another file later one
+        //basic biome
         public static void InitPlains()
         {
             Plains.Name = "Plains";
             Plains.TempIndex = TemperatureIndex.WARM.GetHashCode();
-            Plains.HumidIndex = HumidityIndex.NORMAL.GetHashCode();
-            Plains.VegetationIndex = VegetationIndex.SPARSE.GetHashCode();
+            Plains.HumidIndex = HumidityIndex.DRY.GetHashCode();
+            Plains.VegetationIndex = VegetationIndex.BARREN.GetHashCode();
+
             Plains.RegularHeight = 130;
             Plains.OceanHeight = 100;
             Plains.ShoreHeight = 127;
             Plains.PeakHeight = 230;
+
             Plains.WaterBlock = BlockRegistry.GetBlock("Water");
             Plains.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
             Plains.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
@@ -204,19 +221,23 @@ namespace OurCraft.World.Terrain_Generation
             Plains.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Plains.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Plains.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
+
             biomes.Add(Plains);
         }
 
+        //the hot biome
         public static void InitDesert()
         {
             Desert.Name = "Desert";
             Desert.TempIndex = TemperatureIndex.HOT.GetHashCode();
             Desert.HumidIndex = HumidityIndex.ARID.GetHashCode();
             Desert.VegetationIndex = VegetationIndex.SPARSE.GetHashCode();
+
             Desert.RegularHeight = 130;
             Desert.OceanHeight = 100;
             Desert.ShoreHeight = 127;
             Desert.PeakHeight = 230;
+
             Desert.WaterBlock = BlockRegistry.GetBlock("Water");
             Desert.SurfaceBlock = BlockRegistry.GetBlock("Sand");
             Desert.SubSurfaceBlock = BlockRegistry.GetBlock("Sand");
@@ -226,19 +247,23 @@ namespace OurCraft.World.Terrain_Generation
             Desert.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Desert.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Desert.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
+
             biomes.Add(Desert);
         }
 
+        //the cold biome
         public static void InitTundra()
         {
             Tundra.Name = "Tundra";
             Tundra.TempIndex = TemperatureIndex.COLD.GetHashCode();
             Tundra.HumidIndex = HumidityIndex.NORMAL.GetHashCode();
             Tundra.VegetationIndex = VegetationIndex.SPARSE.GetHashCode();
+
             Tundra.RegularHeight = 130;
             Tundra.OceanHeight = 100;
             Tundra.ShoreHeight = 127;
             Tundra.PeakHeight = 240;
+
             Tundra.WaterBlock = BlockRegistry.GetBlock("Water");
             Tundra.SurfaceBlock = BlockRegistry.GetBlock("Snowy Grass Block");
             Tundra.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
@@ -246,21 +271,25 @@ namespace OurCraft.World.Terrain_Generation
             Tundra.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
             Tundra.ShoreSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Tundra.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Tundra.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Tundra.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            Tundra.OceanSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
+            Tundra.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
+
             biomes.Add(Tundra);
         }
 
+        //rare cold biome
         public static void InitColdDesert()
         {
-            ColdDesert.Name = "ColdDesert";
+            ColdDesert.Name = "Cold Desert";
             ColdDesert.TempIndex = TemperatureIndex.FREEZING.GetHashCode();
             ColdDesert.HumidIndex = HumidityIndex.ARID.GetHashCode();
             ColdDesert.VegetationIndex = VegetationIndex.BARREN.GetHashCode();
+
             ColdDesert.RegularHeight = 130;
             ColdDesert.OceanHeight = 100;
             ColdDesert.ShoreHeight = 127;
             ColdDesert.PeakHeight = 180;
+
             ColdDesert.WaterBlock = BlockRegistry.GetBlock("Water");
             ColdDesert.SurfaceBlock = BlockRegistry.GetBlock("Snow");
             ColdDesert.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
@@ -270,19 +299,23 @@ namespace OurCraft.World.Terrain_Generation
             ColdDesert.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Snow");
             ColdDesert.OceanSurfaceBlock = BlockRegistry.GetBlock("Snow");
             ColdDesert.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
+
             biomes.Add(ColdDesert);
         }
 
+        //the middle biome
         public static void InitTaiga()
         {
             Taiga.Name = "Taiga";
             Taiga.TempIndex = TemperatureIndex.TEMPERATE.GetHashCode();
             Taiga.HumidIndex = HumidityIndex.HUMID.GetHashCode();
             Taiga.VegetationIndex = VegetationIndex.DENSE.GetHashCode();
+
             Taiga.RegularHeight = 130;
             Taiga.OceanHeight = 100;
             Taiga.ShoreHeight = 127;
             Taiga.PeakHeight = 235;
+
             Taiga.WaterBlock = BlockRegistry.GetBlock("Water");
             Taiga.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
             Taiga.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
@@ -292,7 +325,87 @@ namespace OurCraft.World.Terrain_Generation
             Taiga.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
             Taiga.OceanSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
             Taiga.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+
             biomes.Add(Taiga);
+        }
+
+        //the cold alternative
+        public static void InitFrozenPeaks()
+        {
+            FrozenPeaks.Name = "Frozen Peaks";
+            FrozenPeaks.TempIndex = TemperatureIndex.FREEZING.GetHashCode();
+            FrozenPeaks.HumidIndex = HumidityIndex.HUMID.GetHashCode();
+            FrozenPeaks.VegetationIndex = VegetationIndex.SPARSE.GetHashCode();
+
+            FrozenPeaks.RegularHeight = 130;
+            FrozenPeaks.OceanHeight = 100;
+            FrozenPeaks.ShoreHeight = 127;
+            FrozenPeaks.PeakHeight = 225;
+
+            FrozenPeaks.WaterBlock = BlockRegistry.GetBlock("Water");
+            FrozenPeaks.WaterSurfaceBlock = BlockRegistry.GetBlock("Ice Block");
+            FrozenPeaks.SurfaceBlock = BlockRegistry.GetBlock("Snowy Grass Block");
+            FrozenPeaks.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            FrozenPeaks.PeakSurfaceBlock = BlockRegistry.GetBlock("Ice Block");
+            FrozenPeaks.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
+            FrozenPeaks.ShoreSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
+            FrozenPeaks.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            FrozenPeaks.OceanSurfaceBlock = BlockRegistry.GetBlock("Snow");
+            FrozenPeaks.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
+
+            biomes.Add(FrozenPeaks);
+        }
+
+        //hot biome alternative
+        public static void InitJungle()
+        {
+            Jungle.Name = "Jungle";
+            Jungle.TempIndex = TemperatureIndex.HOT.GetHashCode();
+            Jungle.HumidIndex = HumidityIndex.HUMID.GetHashCode();
+            Jungle.VegetationIndex = VegetationIndex.DENSE.GetHashCode();
+
+            Jungle.RegularHeight = 130;
+            Jungle.OceanHeight = 100;
+            Jungle.ShoreHeight = 127;
+            Jungle.PeakHeight = 235;
+
+            Jungle.WaterBlock = BlockRegistry.GetBlock("Water");
+            Jungle.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
+            Jungle.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            Jungle.PeakSurfaceBlock = BlockRegistry.GetBlock("Stone");
+            Jungle.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
+            Jungle.ShoreSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
+            Jungle.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            Jungle.OceanSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
+            Jungle.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+
+            biomes.Add(Jungle);
+        }
+
+        //basic biome alternative
+        public static void InitForest()
+        {
+            Forest.Name = "Forest";
+            Forest.TempIndex = TemperatureIndex.WARM.GetHashCode();
+            Forest.HumidIndex = HumidityIndex.NORMAL.GetHashCode();
+            Forest.VegetationIndex = VegetationIndex.DENSE.GetHashCode();
+
+            Forest.RegularHeight = 130;
+            Forest.OceanHeight = 100;
+            Forest.ShoreHeight = 127;
+            Forest.PeakHeight = 230;
+
+            Forest.WaterBlock = BlockRegistry.GetBlock("Water");
+            Forest.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
+            Forest.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            Forest.PeakSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
+            Forest.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            Forest.ShoreSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
+            Forest.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
+            Forest.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
+            Forest.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
+
+            biomes.Add(Forest);
         }
     }
 }

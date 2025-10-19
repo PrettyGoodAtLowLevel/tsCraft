@@ -21,6 +21,7 @@ namespace OurCraft.World.Terrain_Generation
 
         //block data
         public ushort WaterBlock { get; set; } = BlockIDs.WATER_BLOCK;
+        public ushort WaterSurfaceBlock { get; set; } = BlockIDs.WATER_BLOCK;
         public ushort SurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
         public ushort SubSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
 

@@ -48,6 +48,8 @@ namespace OurCraft.Blocks
             BlockIDs.BIRCH_LOG_BLOCK = RegisterBlock(new BlockLog("Birch Logs", TextureIDs.birchLogTopTex, TextureIDs.birchLogSideTex, BlockIDs.BIRCH_LOG_BLOCK));
             BlockIDs.BIRCH_SLAB_BLOCK = RegisterBlock(new SlabBlock("Birch Slab", TextureIDs.birchPlanksTex, BlockIDs.BIRCH_SLAB_BLOCK));
             BlockIDs.BIRCH_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Birch Leaves", TextureIDs.birchLeavesTex, BlockIDs.BIRCH_LEAVES_BLOCK));    
+            BlockIDs.ICE_BLOCK = RegisterBlock(new FullBlock("Ice Block", TextureIDs.iceTex, BlockIDs.ICE_BLOCK));
+            BlockIDs.GRAVEL_BLOCK = RegisterBlock(new FullBlock("Gravel Block", TextureIDs.gravelTex, BlockIDs.GRAVEL_BLOCK));
         }
 
         //get block from id
@@ -101,7 +103,9 @@ namespace OurCraft.Blocks
         public static ushort BIRCH_SLAB_BLOCK = 0;
         public static ushort BIRCH_LEAVES_BLOCK = 0;
         public static ushort SAND_BLOCK = 0;
-        public static ushort SNOW_BLOCK = 0;      
+        public static ushort SNOW_BLOCK = 0;
+        public static ushort ICE_BLOCK = 0;
+        public static ushort GRAVEL_BLOCK = 0;
     }
 
     //dictionary for mapping ids to strings

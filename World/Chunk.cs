@@ -426,7 +426,7 @@ namespace OurCraft.World
                         //fill air blocks below sea level with water
                         if (GetBlockState(x, y, z).BlockID == BlockIDs.AIR_BLOCK && globalY <= WorldGenerator.SEA_LEVEL)
                         {
-                            BlockState state2 = new(noiseRegion.biome.WaterBlock);
+                            BlockState state2 = globalY == WorldGenerator.SEA_LEVEL ? new(noiseRegion.biome.WaterSurfaceBlock) : new(noiseRegion.biome.WaterBlock);
                             SetBlock(x, y, z, state2);
                         }
                     }
@@ -448,8 +448,8 @@ namespace OurCraft.World
                         BlockState current = GetBlockState(x, y, z);
                         BlockState above = (y + 1 < SUBCHUNK_SIZE) ? GetBlockState(x, y + 1, z) : parent.GetBlockUnsafe(x, (y + YPos * SUBCHUNK_SIZE) + 1, z);
 
-                        bool currentEligible = current.BlockID != BlockIDs.AIR_BLOCK && current.BlockID != noiseRegion.biome.WaterBlock;
-                        bool aboveEligible = above.BlockID == BlockIDs.AIR_BLOCK || above.BlockID == noiseRegion.biome.WaterBlock;
+                        bool currentEligible = current.BlockID != BlockIDs.AIR_BLOCK && current.BlockID != noiseRegion.biome.WaterBlock && current.BlockID != noiseRegion.biome.WaterSurfaceBlock;
+                        bool aboveEligible = above.BlockID == BlockIDs.AIR_BLOCK || above.BlockID == noiseRegion.biome.WaterBlock || above.BlockID == noiseRegion.biome.WaterSurfaceBlock;
 
                         //only consider blocks with air above (i.e., surface or overhang)
                         if (currentEligible && aboveEligible)

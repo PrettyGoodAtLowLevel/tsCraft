@@ -11,26 +11,22 @@ namespace OurCraft.World.Terrain_Generation
         public const int MIN_HEIGHT = 90;
         public const int MAX_HEIGHT = 320;
 
-        //initialise all the noises
-        static WorldGenerator()
-        {       
-        }
-
         //determines low fidelity shape of terrain
         public static NoiseRegion GetTerrainRegion(int x, int z)
         {
-            //get noises
+            //get terrain shaping noises
             float continentalness = NoiseRouter.GetRegionalNoise(x, z);
             float erosion = NoiseRouter.GetErosionNoise(x, z);
             float river = NoiseRouter.GetRiverNoise(x, z);
             float weirdness = NoiseRouter.GetWeirdnessNoise(x, z);
             float fracture = NoiseRouter.GetFractureNoise(x, z);
 
+            //get the biome map noises
             float rawTemperature = NoiseRouter.GetTemperatureNoise(x, z);
             float rawHumididity = NoiseRouter.GetHumidityNoise(x, z);
             float rawVegetation = NoiseRouter.GetVegetationNoise(x, z);
 
-            //evaluate splines
+            //evaluate splines for terrain shape
             float conOffset = TerrainSplines.regionSpline.Evaluate(continentalness);
             float eroOffset = TerrainSplines.erosionSpline.Evaluate(erosion);
             float rivOffset = TerrainSplines.riverSpline.Evaluate(river);
@@ -38,6 +34,7 @@ namespace OurCraft.World.Terrain_Generation
             float amplification =
             TerrainSplines.weirdnessSpline.Evaluate(weirdness) + TerrainSplines.fractureSpline.Evaluate(fracture);
 
+            //clamp raw biome noise to proper indexes
             int finalTemp = (int)TerrainSplines.temperatureSpline.Evaluate(rawTemperature);
             int finalHumid = (int)TerrainSplines.humiditySpline.Evaluate(rawHumididity);
             int finalVeg = (int)TerrainSplines.vegetationSpline.Evaluate(rawVegetation);
@@ -47,7 +44,7 @@ namespace OurCraft.World.Terrain_Generation
             return new NoiseRegion(offset, amplification, GetBiome(finalTemp, finalHumid, finalVeg));
         }
 
-        //get the current biome (doesnt do anything for now)
+        //indexes into the biome table with the current temp, humidity, and vegetation
         public static Biome GetBiome(int temp, int humid, int veg)
         {
             return BiomeData.FindBiome(temp,humid,veg);
@@ -66,6 +63,7 @@ namespace OurCraft.World.Terrain_Generation
             return Math.Clamp(finalDensity, -1, 1);
         }
 
+        //finds the surface block of the world based on biome and height
         public static ushort GetSurfaceBlock(Biome biome, int height)
         {
             if (height < biome.OceanHeight) return biome.OceanSurfaceBlock;
@@ -74,6 +72,7 @@ namespace OurCraft.World.Terrain_Generation
             else return biome.PeakSurfaceBlock;
         }
 
+        //finds the subsurface block based on biome and height
         public static ushort GetSubSurfaceBlock(Biome biome, int height)
         {
             if (height < biome.OceanHeight) return biome.OceanSubSurfaceBlock;
