@@ -1,13 +1,15 @@
-﻿namespace OurCraft.Blocks.Block_Implementations
+﻿using OurCraft.Blocks.Block_Properties;
+
+namespace OurCraft.Blocks.Block_Implementations
 {
     //full block with alpha test blending and different face culling
     public class LeavesBlock : FullBlock
     {
-        public LeavesBlock(string name, int bm, int t, int f, int b, int r, int l, int id) :
+        public LeavesBlock(string name, int bm, int t, int f, int b, int r, int l, ushort id) :
         base(name, bm, t, f, b, r, l, id)
         { }
 
-        public LeavesBlock(string name, int t, int id) :
+        public LeavesBlock(string name, int t, ushort id) :
         base(name, t, t, t, t, t, t, id)
         { }
 

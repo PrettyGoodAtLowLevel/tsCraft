@@ -19,10 +19,10 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //default constructor
-        public SlabBlock(string name, int bm, int t, int f, int b, int r, int l, int id)
+        public SlabBlock(string name, int bm, int t, int f, int b, int r, int l, ushort id)
         : base(name, bm, t, f, b, r, l, id) { }
 
-        public SlabBlock(string name, int t, int id) :
+        public SlabBlock(string name, int t, ushort id) :
         base(name, t, t, t, t, t, t, id){ }
 
         //adds the correct block mesh of the slab to the world
@@ -41,27 +41,27 @@ namespace OurCraft.Blocks.Block_Implementations
             SlabType thisBlockState = thisBlock.GetProperty(SLAB_TYPE);
             if (hitNormal.Y == 1 && thisBlock.BlockID == id && thisBlockState == SlabType.Bottom)
             {
-                world.SetBlock(globalPos, new BlockState((byte)id).WithProperty(SLAB_TYPE, SlabType.Double));
+                world.SetBlock(globalPos, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Double));
                 return;
             }
             else if (hitNormal.Y == -1 && thisBlock.BlockID == id && thisBlockState == SlabType.Top)
             {
-                world.SetBlock(globalPos, new BlockState((byte)id).WithProperty(SLAB_TYPE, SlabType.Double));
+                world.SetBlock(globalPos, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Double));
                 return;
             }
             else if (hitNormal.Y == 1)
             {
-                world.SetBlock(globalPos + hitNormal, new BlockState((byte)id).WithProperty(SLAB_TYPE, SlabType.Bottom));
+                world.SetBlock(globalPos + hitNormal, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Bottom));
                 return;
             }
             else if (hitNormal.Y == -1)
             {
-                world.SetBlock(globalPos + hitNormal, new BlockState((byte)id).WithProperty(SLAB_TYPE, SlabType.Top));
+                world.SetBlock(globalPos + hitNormal, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Top));
                 return;
             }
             else
             {
-                world.SetBlock(globalPos + hitNormal, new BlockState((byte)id).WithProperty(SLAB_TYPE, SlabType.Bottom));
+                world.SetBlock(globalPos + hitNormal, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Bottom));
                 return;
             }
         }

@@ -19,8 +19,8 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //default constructor
-        public BlockLog(string name, int bm, int t, int f, int b, int r, int l, int id) : base(name, bm, t, f, b, r, l, id) { }
-        public BlockLog(string name, int tt, int st, int id) : base(name, tt, tt, st, st, st, st, id) { }
+        public BlockLog(string name, int bm, int t, int f, int b, int r, int l, ushort id) : base(name, bm, t, f, b, r, l, id) { }
+        public BlockLog(string name, int tt, int st, ushort id) : base(name, tt, tt, st, st, st, st, id) { }
 
         //mesh implementation for a log block
         public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState state)

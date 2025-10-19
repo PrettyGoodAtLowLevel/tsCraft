@@ -1,4 +1,4 @@
-﻿namespace OurCraft.Blocks
+﻿namespace OurCraft.Blocks.Block_Properties
 {
     //block states use a property system to encode their values
     //values can be stuff like "facing:north", "powered:true"

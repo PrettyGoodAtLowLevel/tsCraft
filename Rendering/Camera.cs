@@ -103,7 +103,10 @@ namespace OurCraft.Rendering
             cameraMatrix = view * projection;
         }
 
-        public FrustumPlane[] GetFrustum() { return ExtractFrustumPlanes(cameraMatrix); }
+        public FrustumPlane[] GetFrustum()
+        {
+            return ExtractFrustumPlanes(cameraMatrix);
+        }
         //updates the uniform matrix value in the shader
         public void SendToShader(Shader shader, string uniformName)
         {

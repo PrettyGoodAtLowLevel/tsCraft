@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Rendering;
 using OurCraft.World;
+using OurCraft.Blocks.Block_Properties;
 
 namespace OurCraft.Blocks
 {
@@ -37,7 +38,7 @@ namespace OurCraft.Blocks
     {
         //block data
         protected string name = "";       
-        protected int id = 0;
+        protected ushort id = 0;
 
         //texture ids
         protected int bottomFaceTex = 0;
@@ -48,7 +49,7 @@ namespace OurCraft.Blocks
         protected int leftFaceTex = 0;
 
         //ctr
-        public Block(string name, int bm, int t, int f, int b, int r, int l, int id)
+        public Block(string name, int bm, int t, int f, int b, int r, int l, ushort id)
         {
             this.name = name;
             this.id = id;
@@ -61,7 +62,7 @@ namespace OurCraft.Blocks
         }
 
         //set id of block
-        public void SetID(int id)
+        public void SetID(ushort id)
         {
             this.id = id;
         }

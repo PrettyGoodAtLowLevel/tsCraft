@@ -2,6 +2,7 @@
 using OurCraft.Blocks;
 using OurCraft.Rendering;
 using OurCraft.utility;
+using OurCraft.Blocks.Block_Properties;
 using System.Collections.Concurrent;
 
 namespace OurCraft.World

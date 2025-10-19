@@ -107,7 +107,7 @@ namespace OurCraft.Blocks
     //dictionary for mapping ids to strings
     public static class BlockRegistry
     {
-        static Dictionary<string, ushort> blockRegistry = new Dictionary<string, ushort>();
+        static readonly Dictionary<string, ushort> blockRegistry = [];
 
         public static void AddBlock(string name, ushort id)
         {

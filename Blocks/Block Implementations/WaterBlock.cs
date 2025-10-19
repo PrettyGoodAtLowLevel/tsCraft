@@ -1,17 +1,18 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Rendering;
 using OurCraft.World;
+using OurCraft.Blocks.Block_Properties;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
     //like full block but translucent
     public class WaterBlock : FullBlock
     {
-        public WaterBlock(string name, int bm, int t, int f, int b, int r, int l, int id) :
+        public WaterBlock(string name, int bm, int t, int f, int b, int r, int l, ushort id) :
         base(name, bm, t, f, b, r, l, id)
         { }
 
-        public WaterBlock(string name, int t, int id) :
+        public WaterBlock(string name, int t, ushort id) :
         base(name, t, t, t, t, t, t, id)
         { }
 

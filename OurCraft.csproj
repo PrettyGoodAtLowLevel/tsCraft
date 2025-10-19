@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <Folder Include="Game Heirarchy\" />
-    <Folder Include="Shaders\OIT\" />
   </ItemGroup>
 
 </Project>

@@ -142,7 +142,7 @@ namespace OurCraft.Rendering
             //tweak for weird screen effects
             postShader.Activate();
             postShader.SetInt("sceneTex", 0);
-            postShader.SetFloat("caStrength", 0.01f);
+            postShader.SetFloat("caStrength", 0.025f);
             postShader.SetFloat("vignetteStrength", 1.0f);
             postShader.SetFloat("saturation", 1.35f);
             postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.1f)); 

@@ -1,5 +1,5 @@
 ﻿//contains systems for managing voxel data memory usage
-namespace OurCraft.Blocks
+namespace OurCraft.Blocks.Block_Properties
 {
     //holds only the unique block states in a subchunk
     public class BlockPalette

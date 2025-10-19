@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Rendering;
+using OurCraft.Blocks.Block_Properties;
 
 namespace OurCraft.Blocks
 {

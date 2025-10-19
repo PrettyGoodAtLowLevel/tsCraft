@@ -2,8 +2,8 @@
 using OurCraft.Blocks;
 using OurCraft.Rendering;
 using OurCraft.World.Terrain_Generation;
-using System.Diagnostics;
-using System.Security.Cryptography;
+using static OurCraft.World.Terrain_Generation.NoiseRouter;
+using OurCraft.Blocks.Block_Properties;
 using static OurCraft.Rendering.Camera;
 
 namespace OurCraft.World
@@ -130,7 +130,7 @@ namespace OurCraft.World
         {          
             if (state != ChunkState.Initialized) return;
 
-            NoiseRegion[,] terrainHeights = new NoiseRegion[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
+            NoiseRegion[,] noiseRegions = new NoiseRegion[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
 
             //calculate the terrain regions
             for (int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
@@ -139,15 +139,21 @@ namespace OurCraft.World
                 {
                     int globalX =  Pos.X * SubChunk.SUBCHUNK_SIZE + x;
                     int globalZ = Pos.Z * SubChunk.SUBCHUNK_SIZE + z;
-                    NoiseRegion terrainHeight = WorldGenerator.GetTerrainRegion(globalX, globalZ);
-                    terrainHeights[x, z] = terrainHeight;
+                    NoiseRegion noiseRegion = WorldGenerator.GetTerrainRegion(globalX, globalZ);
+                    noiseRegions[x, z] = noiseRegion;
                 }
             }          
 
             //create base density map
             foreach (var subChunk in subChunks)
             {
-                subChunk.CreateDensityMap(terrainHeights);
+                subChunk.CreateDensityMap(noiseRegions);
+            }
+
+            //surface paint the subchunks
+            foreach(var subChunk in subChunks)
+            {
+                subChunk.SurfacePaint(noiseRegions);
             }
 
             //update state
@@ -397,30 +403,30 @@ namespace OurCraft.World
         }
 
         //create base density map - stone vs air
-        public void CreateDensityMap(NoiseRegion[,] terrainHeights)
+        public void CreateDensityMap(NoiseRegion[,] noiseRegions)
         {
             for (int z = 0; z < SUBCHUNK_SIZE; z++)
             {             
                 for (int x = 0; x < SUBCHUNK_SIZE; x++)
                 {
-                    NoiseRegion terrainHeight = terrainHeights[x, z];
+                    NoiseRegion noiseRegion = noiseRegions[x, z];
                     for (int y = 0; y < SUBCHUNK_SIZE; y++)
                     {   
                         //create stone-air map
                         int globalX = parent.Pos.X * SUBCHUNK_SIZE + x;
                         int globalY = YPos * SUBCHUNK_SIZE + y;
                         int globalZ = parent.Pos.Z * SUBCHUNK_SIZE + z;
-                        float density = WorldGenerator.GetDensity(globalX, globalY, globalZ, terrainHeight);
+                        float density = WorldGenerator.GetDensity(globalX, globalY, globalZ, noiseRegion);
 
                         //we use raw block ids for extra performance
-                        BlockState state = new BlockState(BlockIDs.AIR_BLOCK);                
-                        if (density > 0) state = new BlockState(BlockIDs.STONE_BLOCK);
+                        BlockState state = new(BlockIDs.AIR_BLOCK);                
+                        if (density > 0) state = new(BlockIDs.STONE_BLOCK);
                         SetBlock(x, y, z, state);
 
                         //fill air blocks below sea level with water
                         if (GetBlockState(x, y, z).BlockID == BlockIDs.AIR_BLOCK && globalY <= WorldGenerator.SEA_LEVEL)
                         {
-                            BlockState state2 = new BlockState(BlockIDs.WATER_BLOCK);
+                            BlockState state2 = new(noiseRegion.biome.WaterBlock);
                             SetBlock(x, y, z, state2);
                         }
                     }
@@ -428,7 +434,44 @@ namespace OurCraft.World
             }
         }
 
+        //paint the top layers with their respective biome surface block
+        public void SurfacePaint(NoiseRegion[,] noiseRegions)
+        { 
+            for(int z = 0; z < SUBCHUNK_SIZE; z++)
+            {
+                for(int x = 0; x < SUBCHUNK_SIZE; x++)
+                {
+                    NoiseRegion noiseRegion = noiseRegions[x, z];
+
+                    for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--) // top-down
+                    {
+                        BlockState current = GetBlockState(x, y, z);
+                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? GetBlockState(x, y + 1, z) : parent.GetBlockUnsafe(x, (y + YPos * SUBCHUNK_SIZE) + 1, z);
+
+                        bool currentEligible = current.BlockID != BlockIDs.AIR_BLOCK && current.BlockID != noiseRegion.biome.WaterBlock;
+                        bool aboveEligible = above.BlockID == BlockIDs.AIR_BLOCK || above.BlockID == noiseRegion.biome.WaterBlock;
+
+                        //only consider blocks with air above (i.e., surface or overhang)
+                        if (currentEligible && aboveEligible)
+                        {
+                            for (int d = 0; d < 5 && (y - d) >= 0; d++) //the loop values are customizable
+                            {
+                                int targetY = y - d;
+
+                                //customize depth levels for the biomes
+                                if (d == 0)
+                                    SetBlock(x, targetY, z, new(WorldGenerator.GetSurfaceBlock(noiseRegion.biome, targetY + YPos * SUBCHUNK_SIZE)));
+                                else if (d <= 2)
+                                    SetBlock(x, targetY, z, new(WorldGenerator.GetSubSurfaceBlock(noiseRegion.biome, targetY + YPos * SUBCHUNK_SIZE)));                               
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         //tries to create the mesh data
+        //this is also about to get nuked next update
         public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
         {
             if (isAllAir) return; //dont create mesh if chunk is completely air                  
@@ -443,6 +486,7 @@ namespace OurCraft.World
         }
 
         //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks
+        //this is about to get nuked next update
         public void AddVoxelDataToChunk(Vector3 pos, Vector3 meshPos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
         {            
             Block block = BlockData.GetBlock(GetBlockState((int)pos.X, (int)pos.Y, (int)pos.Z).BlockID);
