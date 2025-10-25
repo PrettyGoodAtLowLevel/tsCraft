@@ -301,10 +301,9 @@ namespace OurCraft.World
 
             chunkUploadTimer += time;
 
-            if (globalTime > 20)
+            if (globalTime > 30)
             {
-                if (RenderDistance > 12) MaxChunkBuildPerFrame = 0.005f;
-                else MaxChunkBuildPerFrame = 0.001f;
+                MaxChunkBuildPerFrame = 0.01f;
             }
         }
 

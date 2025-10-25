@@ -2,9 +2,10 @@
 using OurCraft.Blocks;
 using OurCraft.Rendering;
 using OurCraft.World.Terrain_Generation;
-using static OurCraft.World.Terrain_Generation.NoiseRouter;
 using OurCraft.Blocks.Block_Properties;
 using static OurCraft.Rendering.Camera;
+using OurCraft.World.Terrain_Generation.SurfaceFeatures;
+using System.Diagnostics;
 
 namespace OurCraft.World
 {
@@ -142,18 +143,30 @@ namespace OurCraft.World
                     NoiseRegion noiseRegion = WorldGenerator.GetTerrainRegion(globalX, globalZ);
                     noiseRegions[x, z] = noiseRegion;
                 }
-            }          
+            }
 
             //create base density map
             foreach (var subChunk in subChunks)
             {
+                
                 subChunk.CreateDensityMap(noiseRegions);
+                
             }
 
             //surface paint the subchunks
-            foreach(var subChunk in subChunks)
+            foreach (var subChunk in subChunks)
             {
+                
                 subChunk.SurfacePaint(noiseRegions);
+            }
+
+            Stopwatch sw2 = Stopwatch.StartNew();
+            //slap on surface feature
+            foreach (var subChunk in subChunks)
+            {
+                
+                subChunk.PlaceSurfaceFeatures(noiseRegions);
+                
             }
 
             //update state
@@ -291,7 +304,7 @@ namespace OurCraft.World
             return true;
         }
 
-        //block states
+        //block manipulation
 
         //trys to get the block from a chunk
         public BlockState GetBlockSafe(int x, int globalY, int z)
@@ -362,6 +375,12 @@ namespace OurCraft.World
 
             batchedMesh.ClearMesh();
             SendMeshToOpenGL();
+        }
+
+        //checks if a position fits in a chunk
+        public static bool PosValid(int x, int y, int z)
+        {
+            return x >= 0 && x < SubChunk.SUBCHUNK_SIZE && z >= 0 && z < SubChunk.SUBCHUNK_SIZE && y >= 0 && y < SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT;
         }
     }
 
@@ -464,6 +483,46 @@ namespace OurCraft.World
                                 else if (d <= 2)
                                     SetBlock(x, targetY, z, new(WorldGenerator.GetSubSurfaceBlock(noiseRegion.biome, targetY + YPos * SUBCHUNK_SIZE)));                               
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        //slap on trees, rocks, grass all on top of top layer of blocks
+        public void PlaceSurfaceFeatures(NoiseRegion[,] noiseRegions)
+        {
+            int seed = NoiseRouter.seed;
+            for (int z = 0; z < SUBCHUNK_SIZE; z++)
+            {
+                for (int x = 0; x < SUBCHUNK_SIZE; x++)
+                {
+                    NoiseRegion noiseRegion = noiseRegions[x, z];
+
+                    for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--) // top-down
+                    {
+                        BlockState current = GetBlockState(x, y, z);
+                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? GetBlockState(x, y + 1, z) : parent.GetBlockUnsafe(x, (y + YPos * SUBCHUNK_SIZE) + 1, z);
+
+                        bool currentEligible = current.BlockID == WorldGenerator.GetSurfaceBlock(noiseRegion.biome, y + YPos * SUBCHUNK_SIZE);
+                        bool aboveEligible = above.BlockID == BlockIDs.AIR_BLOCK;
+
+                        //only consider blocks with air above (i.e., surface or overhang)
+                        if (currentEligible && aboveEligible)
+                        {
+                            foreach (BiomeSurfaceFeature feature in noiseRegion.biome.surfaceFeatures)
+                            {
+                                Vector3i globalCoords = new(x + parent.Pos.X * SUBCHUNK_SIZE, (y + YPos * SUBCHUNK_SIZE), z + parent.Pos.Z * SUBCHUNK_SIZE);
+
+                                //generate random number with deterministic coordinate hash function (super weird but thread safe)
+                                int rand = NoiseRouter.GetStructureRandomness(globalCoords.X, globalCoords.Y, globalCoords.Z, seed, feature.chance);
+
+                                if (rand == 1 && feature.feature.CanPlaceFeature(new Vector3i(x, (y + YPos * SUBCHUNK_SIZE) + 1, z), parent))
+                                {
+                                    feature.feature.PlaceFeature(new Vector3i(x, (y + YPos * SUBCHUNK_SIZE) + 1, z), parent);
+                                    break;
+                                }                                  
+                            }                            
                         }
                     }
                 }

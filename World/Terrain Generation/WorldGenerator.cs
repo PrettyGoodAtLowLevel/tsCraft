@@ -39,9 +39,10 @@ namespace OurCraft.World.Terrain_Generation
             int finalHumid = (int)TerrainSplines.humiditySpline.Evaluate(rawHumididity);
             int finalVeg = (int)TerrainSplines.vegetationSpline.Evaluate(rawVegetation);
 
+            int maxDepth = GetMaxDepth(amplification);
             //combine noise outputs
             float offset = conOffset + eroOffset + (rivOffset * rivFactor);      
-            return new NoiseRegion(offset, amplification, GetBiome(finalTemp, finalHumid, finalVeg));
+            return new NoiseRegion(offset, amplification, GetBiome(finalTemp, finalHumid, finalVeg), maxDepth);
         }
 
         //indexes into the biome table with the current temp, humidity, and vegetation
@@ -56,6 +57,13 @@ namespace OurCraft.World.Terrain_Generation
             //hard clamp values, also boosts generation speed
             if (y > MAX_HEIGHT) return -1;
             else if (y < MIN_HEIGHT) return 1;
+
+            //distance from surface (positive below surface, negative above)
+            float surfaceDist = control.heightOffset - y;
+
+            //early-out optimization: beyond influence range
+            if (surfaceDist < -control.maxDepth) return -1f; //far above terrain
+            if (surfaceDist > control.maxDepth) return 1f;   //deep underground
 
             float rawDensity = (control.heightOffset - y) / 1.0f;
             float rawNoise = NoiseRouter.GetDetailNoise(x, y, z);
@@ -79,6 +87,18 @@ namespace OurCraft.World.Terrain_Generation
             else if (height < biome.ShoreHeight) return biome.ShoreSubSurfaceBlock;
             else if (height < biome.PeakHeight) return biome.SubSurfaceBlock;
             else return biome.PeakSubSurfaceBlock;
+        }
+
+        //get max depth and height of 3d noise changes based on amp factor
+        //for optimization purposes
+        public static int GetMaxDepth(float amp)
+        {
+            if (amp < 7.5)
+                return 10;
+            else if (amp < 50)
+                return 60;
+            else
+                return 150;
         }
     }
 }

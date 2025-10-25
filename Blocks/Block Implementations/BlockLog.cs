@@ -9,7 +9,7 @@ namespace OurCraft.Blocks.Block_Implementations
     public class BlockLog : FullBlock
     {
         //specifies the direction the log is oriented
-        private static readonly EnumProperty<Axis> AXIS;
+        public static readonly EnumProperty<Axis> AXIS;
 
         //initializes the bits for a Log block
         static BlockLog()

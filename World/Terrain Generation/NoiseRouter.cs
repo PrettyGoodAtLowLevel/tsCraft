@@ -23,7 +23,7 @@ namespace OurCraft.World.Terrain_Generation
         static readonly FastNoiseLite vegetationNoise;
 
         //better randomness
-        static readonly int seed = 0;
+        public static readonly int seed = 0;
         static readonly int offsetX = 0;
         static readonly int offsetZ = 0;
 
@@ -78,8 +78,10 @@ namespace OurCraft.World.Terrain_Generation
             //create random seeds for noisemaps
             seed = RandomNumberGenerator.GetInt32(int.MaxValue);
             Random rand = new(seed);
+
             offsetX = rand.Next(10000);
             offsetZ = rand.Next(10000);
+
             int regionalSeed = rand.Next();
             int erosionSeed = rand.Next();
             int riverSeed = rand.Next();
@@ -281,6 +283,41 @@ namespace OurCraft.World.Terrain_Generation
             return vegetationNoise.GetNoise(wx, wz);
         }
 
+        //get structure randomness 
+        public static int GetStructureRandomness(int x, int y, int z, int worldSeed, int max)
+        {
+            //a fast 64-bit coordinate hash (based on x, y, z, and world seed)
+            long hash = worldSeed;
+            hash ^= (x * 374761393 + y * 668265263 + z * 2147483647);
+            hash = (hash ^ (hash >> 13)) * 1274126177;
+            hash = (hash ^ (hash >> 16));
+
+            //return a positive 0–9999 range
+            return (int)(Math.Abs(hash) % max + 1);
+        }
+
+        //weird structure variety, things like tree trunk height, found this code online
+        public static int GetVariation(int x, int y, int z, int worldSeed, int salt = 0, int max = 10000)
+        {
+            unchecked
+            {
+                long hash = worldSeed * (long)0x9E3779B97F4A7C15L; //golden ratio prime
+                hash ^= x * (long)0xBF58476D1CE4E5B9L;
+                hash ^= y * (long)0x94D049BB133111EBL;
+                hash ^= z * 0xDEADBEEFL;
+                hash ^= salt * 0x123456789ABCL;
+
+                //final avalanche (SplitMix64 style)
+                hash ^= (hash >> 30);
+                hash *= (long)0xBF58476D1CE4E5B9L;
+                hash ^= (hash >> 27);
+                hash *= (long)0x94D049BB133111EBL;
+                hash ^= (hash >> 31);
+
+                return (int)(Math.Abs(hash % max));
+            }
+        }
+
         //shows all of the noisemap values at a certain point
         public static void DebugPrint(int x, int z)
         {
@@ -335,15 +372,19 @@ namespace OurCraft.World.Terrain_Generation
         //amplification = how much the terrain can vary from base height
         public readonly float amplification;
 
+        //how much this can displace terrain hard cap
+        public readonly int maxDepth;
+
         //what region of the world you are in
         public readonly Biome biome;
 
         //dflt constructor
-        public NoiseRegion(float heightOffset, float amplification, Biome biome) : this()
+        public NoiseRegion(float heightOffset, float amplification, Biome biome, int maxDepth) : this()
         {
             this.heightOffset = heightOffset;
             this.amplification = amplification;
             this.biome = biome;
+            this.maxDepth = maxDepth;
         }
     }
 }

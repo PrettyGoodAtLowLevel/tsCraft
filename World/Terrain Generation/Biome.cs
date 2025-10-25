@@ -1,4 +1,5 @@
 ﻿using OurCraft.Blocks;
+using OurCraft.World.Terrain_Generation.SurfaceFeatures;
 
 namespace OurCraft.World.Terrain_Generation
 {
@@ -33,5 +34,8 @@ namespace OurCraft.World.Terrain_Generation
 
         public ushort OceanSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
         public ushort OceanSubSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
+
+        //surface features list
+        public List<BiomeSurfaceFeature> surfaceFeatures = [];
     }
 }

@@ -28,6 +28,7 @@ namespace OurCraft.Blocks
             //x shaped natural blocks
             BlockIDs.ROSE_BLOCK = RegisterBlock(new CrossQuadBlock("Rose", TextureIDs.roseTex, BlockIDs.ROSE_BLOCK));
             BlockIDs.X_GRASS_BLOCK = RegisterBlock(new CrossQuadBlock("Grass", TextureIDs.xGrassTex, BlockIDs.X_GRASS_BLOCK));
+            BlockIDs.DEAD_BUSH_BLOCK = RegisterBlock(new CrossQuadBlock("Dead Bush", TextureIDs.deadBushTex, BlockIDs.DEAD_BUSH_BLOCK));
 
             //building blocks
             BlockIDs.STONE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Stone Slab", TextureIDs.stoneTex, BlockIDs.STONE_SLAB_BLOCK));  
@@ -36,8 +37,8 @@ namespace OurCraft.Blocks
             //wood
             BlockIDs.OAK_PLANKS_BLOCK = RegisterBlock(new FullBlock("Oak Planks", TextureIDs.oakPlanksTex, BlockIDs.OAK_PLANKS_BLOCK));
             BlockIDs.OAK_LOG_BLOCK = RegisterBlock(new BlockLog("Oak Log", TextureIDs.oakLogTopTex, TextureIDs.oakLogSideTex, BlockIDs.OAK_LOG_BLOCK));
-            BlockIDs.OAK_SLAB_BLOCK = RegisterBlock(new SlabBlock("oak_slab", TextureIDs.oakPlanksTex, BlockIDs.OAK_SLAB_BLOCK));
-            BlockIDs.OAK_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("oak_leaves", TextureIDs.oakLeavesTex, BlockIDs.OAK_LEAVES_BLOCK));
+            BlockIDs.OAK_SLAB_BLOCK = RegisterBlock(new SlabBlock("Oak Slab", TextureIDs.oakPlanksTex, BlockIDs.OAK_SLAB_BLOCK));
+            BlockIDs.OAK_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Oak Leaves", TextureIDs.oakLeavesTex, BlockIDs.OAK_LEAVES_BLOCK));
 
             BlockIDs.SPRUCE_PLANKS_BLOCK = RegisterBlock(new FullBlock("Spruce Planks", TextureIDs.sprucePlanksTex, BlockIDs.SPRUCE_PLANKS_BLOCK));
             BlockIDs.SPRUCE_LOG_BLOCK = RegisterBlock(new BlockLog("Spruce Log", TextureIDs.spruceLogTopTex, TextureIDs.spruceLogSideTex, BlockIDs.SPRUCE_LOG_BLOCK));
@@ -45,11 +46,18 @@ namespace OurCraft.Blocks
             BlockIDs.SPRUCE_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Spruce Leaves", TextureIDs.spruceLeavesTex, BlockIDs.SPRUCE_LEAVES_BLOCK));
 
             BlockIDs.BIRCH_PLANKS_BLOCK = RegisterBlock(new FullBlock("Birch Planks", TextureIDs.birchPlanksTex, BlockIDs.BIRCH_PLANKS_BLOCK));
-            BlockIDs.BIRCH_LOG_BLOCK = RegisterBlock(new BlockLog("Birch Logs", TextureIDs.birchLogTopTex, TextureIDs.birchLogSideTex, BlockIDs.BIRCH_LOG_BLOCK));
+            BlockIDs.BIRCH_LOG_BLOCK = RegisterBlock(new BlockLog("Birch Log", TextureIDs.birchLogTopTex, TextureIDs.birchLogSideTex, BlockIDs.BIRCH_LOG_BLOCK));
             BlockIDs.BIRCH_SLAB_BLOCK = RegisterBlock(new SlabBlock("Birch Slab", TextureIDs.birchPlanksTex, BlockIDs.BIRCH_SLAB_BLOCK));
-            BlockIDs.BIRCH_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Birch Leaves", TextureIDs.birchLeavesTex, BlockIDs.BIRCH_LEAVES_BLOCK));    
+            BlockIDs.BIRCH_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Birch Leaves", TextureIDs.birchLeavesTex, BlockIDs.BIRCH_LEAVES_BLOCK));
+
+            BlockIDs.JUNGLE_PLANKS_BLOCK = RegisterBlock(new FullBlock("Jungle Planks", TextureIDs.junglePlanksTex, BlockIDs.JUNGLE_PLANKS_BLOCK));
+            BlockIDs.JUNGLE_LOG_BLOCK = RegisterBlock(new BlockLog("Jungle Log", TextureIDs.jungleLogTopTex, TextureIDs.jungleLogSideTex, BlockIDs.JUNGLE_LOG_BLOCK));
+            BlockIDs.JUNGLE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Jungle Slab", TextureIDs.junglePlanksTex, BlockIDs.JUNGLE_SLAB_BLOCK));
+            BlockIDs.JUNGLE_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Jungle Leaves", TextureIDs.jungleLeavesTex, BlockIDs.JUNGLE_LEAVES_BLOCK));
+            
             BlockIDs.ICE_BLOCK = RegisterBlock(new FullBlock("Ice Block", TextureIDs.iceTex, BlockIDs.ICE_BLOCK));
             BlockIDs.GRAVEL_BLOCK = RegisterBlock(new FullBlock("Gravel Block", TextureIDs.gravelTex, BlockIDs.GRAVEL_BLOCK));
+            BlockIDs.CACTUS_BLOCK = RegisterBlock(new FullBlock("Cactus Block", TextureIDs.cactusBottomTex, TextureIDs.cactusTopTex, TextureIDs.cactusSideTex, BlockIDs.CACTUS_BLOCK));
         }
 
         //get block from id
@@ -102,10 +110,16 @@ namespace OurCraft.Blocks
         public static ushort BIRCH_LOG_BLOCK = 0;
         public static ushort BIRCH_SLAB_BLOCK = 0;
         public static ushort BIRCH_LEAVES_BLOCK = 0;
+        public static ushort JUNGLE_PLANKS_BLOCK = 0;
+        public static ushort JUNGLE_LOG_BLOCK = 0;
+        public static ushort JUNGLE_SLAB_BLOCK = 0;
+        public static ushort JUNGLE_LEAVES_BLOCK = 0;
         public static ushort SAND_BLOCK = 0;
         public static ushort SNOW_BLOCK = 0;
         public static ushort ICE_BLOCK = 0;
         public static ushort GRAVEL_BLOCK = 0;
+        public static ushort DEAD_BUSH_BLOCK = 0;
+        public static ushort CACTUS_BLOCK = 0;
     }
 
     //dictionary for mapping ids to strings
