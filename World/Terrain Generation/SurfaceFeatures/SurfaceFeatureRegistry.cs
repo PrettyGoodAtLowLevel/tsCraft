@@ -39,6 +39,11 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
         public static TallOakTree TallOakJungleTree { get; private set; }
         public static TallSpruceTree TallSpruceJungleTree { get; private set; }
 
+        //bushes
+        public static Bush OakBush { get; private set; }
+        public static Bush SpruceBush { get; private set; }
+        public static Bush JungleBush { get; private set; }
+
         static SurfaceFeatureRegistry()
         {
             //one block plants
@@ -230,6 +235,34 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
             TallSpruceJungleTree = new()
             {
                 Name = "Tall Spruce Jungle Tree",
+                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
+                LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
+                LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
+            };
+
+            //bushes
+            OakBush = new()
+            {
+                Name = "Oak Bush",
+                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
+                LeavesBlockID = BlockRegistry.GetBlock("Oak Leaves"),
+                LogBlockID = BlockRegistry.GetBlock("Oak Log"),
+            };
+
+            SpruceBush = new()
+            {
+                Name = "Tall Spruce Tree",
+                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
+                LeavesBlockID = BlockRegistry.GetBlock("Spruce Leaves"),
+                LogBlockID = BlockRegistry.GetBlock("Spruce Log"),
+            };
+
+            JungleBush = new()
+            {
+                Name = "Jungle Bush",
                 PlaceOn = BlockRegistry.GetBlock("Grass Block"),
                 AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
                 LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),

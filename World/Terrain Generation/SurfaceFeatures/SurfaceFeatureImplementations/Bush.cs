@@ -2,16 +2,14 @@
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
-
 namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplementations
 {
-    //coniforous tree surface feature
-    public class Tree : SurfaceFeature
+    public class Bush : SurfaceFeature
     {
         public ushort LogBlockID { get; set; } = 0;
         public ushort LeavesBlockID { get; set; } = 0;
 
-        readonly int maxHeight = 11;
+        readonly int maxHeight = 3;
 
         //checks if the log and edge of leaves fit
         public override bool CanPlaceFeature(Vector3i startPos, Chunk chunk)
@@ -30,16 +28,16 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
             }
 
             int wx = startPos.X;
-            int wy = startPos.Y + 5;
+            int wy = startPos.Y + 1;
             int wz = startPos.Z;
 
-            if (!Chunk.PosValid(wx + 2, wy, wz) || !Chunk.PosValid(wx - 2, wy, wz) 
+            if (!Chunk.PosValid(wx + 2, wy, wz) || !Chunk.PosValid(wx - 2, wy, wz)
             || !Chunk.PosValid(wx, wy, wz + 2) || !Chunk.PosValid(wx, wy, wz - 2))
                 return false;
 
             BlockState check1 = chunk.GetBlockUnsafe(wx + 2, wy, wz);
-            BlockState check2 = chunk.GetBlockUnsafe(wx - 2, wy, wz); 
-            BlockState check3 = chunk.GetBlockUnsafe(wx, wy, wz + 2); 
+            BlockState check2 = chunk.GetBlockUnsafe(wx - 2, wy, wz);
+            BlockState check3 = chunk.GetBlockUnsafe(wx, wy, wz + 2);
             BlockState check4 = chunk.GetBlockUnsafe(wx, wy, wz - 2);
 
             if (check1.BlockID != BlockIDs.AIR_BLOCK || check2.BlockID != BlockIDs.AIR_BLOCK ||
@@ -49,10 +47,10 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
             return true;
         }
 
-        //place a tree
+        //place a random facing log procedurally across the world
         public override void PlaceFeature(Vector3i startPos, Chunk chunk)
         {
-            int count = 5 + NoiseRouter.GetVariation(startPos.X + chunk.Pos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.Pos.Z * SubChunk.SUBCHUNK_SIZE, 5, NoiseRouter.seed, 3);
+            int count = 2;
 
             //place log
             int top = 0;
@@ -78,10 +76,6 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
             //place smaller square of leaves
             int thirdLayerY = top;
             PlaceSquare(startPos, radius - 1, thirdLayerY, chunk);
-
-            //place smaller leaves, no corner
-            int fourthLayerY = top + 1;
-            PlaceRing(startPos, radius - 1, fourthLayerY, chunk);
         }
 
         //place a ring of leaves with a set position and radius

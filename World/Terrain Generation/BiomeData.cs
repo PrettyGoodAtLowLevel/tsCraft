@@ -223,6 +223,7 @@ namespace OurCraft.World.Terrain_Generation
             Plains.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Plains.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
 
+            Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakBush, 2000));
             Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Rose, 500));
             Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakTree, 250));
             Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 15));     
@@ -253,6 +254,7 @@ namespace OurCraft.World.Terrain_Generation
             Desert.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Desert.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
 
+            Desert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakBush, 10000));
             Desert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Cactus, 2100));
             Desert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.DeadBush, 2000));
 
@@ -282,7 +284,8 @@ namespace OurCraft.World.Terrain_Generation
             Tundra.OceanSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
             Tundra.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
 
-            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLog, 12000));           
+            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLog, 12000));
+            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceBush, 6500));
             Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLeaves, 5000));
             Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceOakTree, 1000));
             Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceTree, 900));
@@ -343,7 +346,8 @@ namespace OurCraft.World.Terrain_Generation
             Taiga.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
             Taiga.OceanSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
             Taiga.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-           
+
+            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceBush, 1200));
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceOakTree, 1000));
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLog, 500));
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallSpruceTree, 100));
@@ -408,6 +412,7 @@ namespace OurCraft.World.Terrain_Generation
             WeirdForest.OceanSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
             WeirdForest.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
 
+            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleBush, 400));
             WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleLog, 100));
             WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakSpruceTree, 90));
             WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleLeaves, 55));           
@@ -443,6 +448,7 @@ namespace OurCraft.World.Terrain_Generation
             Forest.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
             Forest.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
 
+            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakBush, 1500));
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakLog, 750));
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Rose, 600));
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.BirchTree, 150));
