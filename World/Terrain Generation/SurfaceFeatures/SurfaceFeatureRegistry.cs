@@ -33,6 +33,12 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
         public static SpruceTree OakSpruceTree { get; private set; }
         public static SpruceTree FrozenTree { get; private set; }
 
+        //tall trees
+        public static TallOakTree TallOakTree { get; private set; }
+        public static TallSpruceTree TallSpruceTree { get; private set; }
+        public static TallOakTree TallOakJungleTree { get; private set; }
+        public static TallSpruceTree TallSpruceJungleTree { get; private set; }
+
         static SurfaceFeatureRegistry()
         {
             //one block plants
@@ -191,6 +197,43 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
                 AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
                 LeavesBlockID = BlockRegistry.GetBlock("Snow"),
                 LogBlockID = BlockRegistry.GetBlock("Ice Block"),
+            };
+
+            //tall trees
+            TallOakTree = new()
+            {
+                Name = "Tall Oak Tree",
+                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
+                LeavesBlockID = BlockRegistry.GetBlock("Oak Leaves"),
+                LogBlockID = BlockRegistry.GetBlock("Oak Log"),
+            };
+
+            TallSpruceTree = new()
+            {
+                Name = "Tall Spruce Tree",
+                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
+                LeavesBlockID = BlockRegistry.GetBlock("Spruce Leaves"),
+                LogBlockID = BlockRegistry.GetBlock("Spruce Log"),
+            };
+
+            TallOakJungleTree = new()
+            {
+                Name = "Tall Oak Jungle Tree",
+                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
+                LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
+                LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
+            };
+
+            TallSpruceJungleTree = new()
+            {
+                Name = "Tall Spruce Jungle Tree",
+                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
+                LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
+                LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
             };
         }
     }

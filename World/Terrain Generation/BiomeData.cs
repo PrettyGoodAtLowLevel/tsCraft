@@ -346,6 +346,7 @@ namespace OurCraft.World.Terrain_Generation
            
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceOakTree, 1000));
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLog, 500));
+            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallSpruceTree, 100));
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLeaves, 50));
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 22));
             Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceTree, 20));           
@@ -408,11 +409,13 @@ namespace OurCraft.World.Terrain_Generation
             WeirdForest.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
 
             WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleLog, 100));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleLeaves, 65));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakSpruceTree, 60));
+            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakSpruceTree, 90));
+            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleLeaves, 55));           
+            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleTree, 52));
             WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakTree, 50));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 30));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleTree, 18));
+            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 25));           
+            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallSpruceJungleTree, 20));
+            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallOakJungleTree, 18));
 
             biomes.Add(WeirdForest);
         }
@@ -443,6 +446,7 @@ namespace OurCraft.World.Terrain_Generation
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakLog, 750));
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Rose, 600));
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.BirchTree, 150));
+            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallOakTree, 145));
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakLeaves, 100));            
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 50));
             Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakTree, 15));

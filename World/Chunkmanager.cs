@@ -96,7 +96,7 @@ namespace OurCraft.World
                 for (int z = playerChunk.Z - WorldDistance; z <= playerChunk.Z + WorldDistance; z++)
                 {
                     ChunkCoord coord = new(x, z);
-                    if (ChunkMap.TryAdd(coord, new Chunk(coord, player)))
+                    if (ChunkMap.TryAdd(coord, new Chunk(coord)))
                     {
                         chunkGenQueue.Enqueue(coord);
 

@@ -93,8 +93,12 @@ namespace OurCraft.World
         //cam, batchedMesh - rendering info, batchedMesh combines mesh data into one big buffer, mesh data is seperate so update times are fast, with minimal draw calls
 
         //rendering
-        readonly Camera cam;
         readonly ChunkMesh batchedMesh;
+
+        //debug
+        int totalCreationTime = 0;
+        int voxelCreationTime = 0;
+        int meshCreationTime = 0;
 
         //world data
         public ChunkCoord Pos { get; private set; }
@@ -110,9 +114,8 @@ namespace OurCraft.World
         public Vector3 chunkMax;
 
         //basic constructor
-        public Chunk(ChunkCoord coord, Camera cam)
-        {
-            this.cam = cam;
+        public Chunk(ChunkCoord coord)
+        {         
             Pos = coord;
             state = ChunkState.Initialized;
             batchedMesh = new ChunkMesh();
@@ -133,6 +136,7 @@ namespace OurCraft.World
 
             NoiseRegion[,] noiseRegions = new NoiseRegion[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
 
+            Stopwatch stopwatch = Stopwatch.StartNew();
             //calculate the terrain regions
             for (int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
             {
@@ -153,6 +157,7 @@ namespace OurCraft.World
                 
             }
 
+
             //surface paint the subchunks
             foreach (var subChunk in subChunks)
             {
@@ -160,7 +165,6 @@ namespace OurCraft.World
                 subChunk.SurfacePaint(noiseRegions);
             }
 
-            Stopwatch sw2 = Stopwatch.StartNew();
             //slap on surface feature
             foreach (var subChunk in subChunks)
             {
@@ -169,19 +173,28 @@ namespace OurCraft.World
                 
             }
 
+            stopwatch.Stop();
+            voxelCreationTime += (int)stopwatch.ElapsedMilliseconds;
+
             //update state
             state = ChunkState.VoxelOnly;     
         }
 
         //creates all subchunk mesh data
         public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
-        {
+        {           
             if (state != ChunkState.VoxelOnly) return;
-            foreach(var subChunk in subChunks)
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            foreach (var subChunk in subChunks)
             {
                 subChunk.CreateChunkMesh(leftC, rightC, frontC, backC);
             }
             state = ChunkState.Meshed;
+
+            stopwatch.Stop();
+            meshCreationTime += (int)stopwatch.ElapsedMilliseconds;
         }
 
         //builds the combined subchunk mesh data
@@ -191,6 +204,11 @@ namespace OurCraft.World
                 return;
             UploadSolidMesh();
             state = ChunkState.Built;
+
+            Console.WriteLine("\nChunk (" + Pos.X + ", " + Pos.Z + ") creation Stats:");
+            Console.WriteLine("Voxel Creation Time: " + voxelCreationTime + " ms");
+            Console.WriteLine("Mesh Creation Time: " + meshCreationTime + " ms");
+            Console.WriteLine("Total Creation Time: " + (voxelCreationTime + meshCreationTime) + " ms");
         }
 
         //combines the vertex data into one big mesh for solid geometry
