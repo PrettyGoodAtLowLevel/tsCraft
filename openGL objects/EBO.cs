@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace OurCraft
 {
     //specifies order of verticies to be drawn in
-    internal class EBO
+    public class EBO
     {
         public int ID { get; private set; }
         public int capacity { get; private set; }

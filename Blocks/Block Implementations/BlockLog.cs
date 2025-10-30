@@ -18,20 +18,10 @@ namespace OurCraft.Blocks.Block_Implementations
             AXIS = layout.AddEnum<Axis>();
         }
 
-        //default constructor
-        public BlockLog(string name, int bm, int t, int f, int b, int r, int l, ushort id) : base(name, bm, t, f, b, r, l, id) { }
-        public BlockLog(string name, int tt, int st, ushort id) : base(name, tt, tt, st, st, st, st, id) { }
+        public BlockLog(string name, BlockShape shape, ushort id) :
+        base(name, shape, id)
+        { }
 
-        //mesh implementation for a log block
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState state)
-        {
-            Axis axis = state.GetProperty(AXIS);
-
-            //add mesh type based on axis
-            if (axis == Axis.X) BlockMeshBuilder.BuildFullBlock(pos, bottom, top, front, back, right, left, state, rightFaceTex, leftFaceTex, frontFaceTex, backFaceTex, topFaceTex, topFaceTex, mesh);
-            else if (axis == Axis.Z) BlockMeshBuilder.BuildFullBlock(pos, bottom, top, front, back, right, left, state, rightFaceTex, leftFaceTex, topFaceTex, topFaceTex, frontFaceTex, backFaceTex, mesh);
-            else if (axis == Axis.Y) BlockMeshBuilder.BuildFullBlock(pos, bottom, top, front, back, right, left, state, topFaceTex, topFaceTex, frontFaceTex, backFaceTex, rightFaceTex, leftFaceTex, mesh);
-        }
 
         //just add regular block to chunk
         public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, Chunkmanager world)

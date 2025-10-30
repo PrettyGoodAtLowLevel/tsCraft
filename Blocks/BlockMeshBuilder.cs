@@ -180,8 +180,8 @@ namespace OurCraft.Blocks
         //gets the face of both blocks and does the face culling check
         private static bool IsFaceVisible(BlockState thisState, BlockState neighborState, CubeFaces face)
         {
-            FaceType thisFace = BlockData.GetBlock(thisState.BlockID).GetBlockFace(face, thisState);
-            FaceType neighborFace = neighborState.GetBlock.GetBlockFace(Opposite(face), neighborState);
+            FaceType thisFace = BlockData.GetBlock(thisState.BlockID).blockShape.GetBlockFace(face, thisState);
+            FaceType neighborFace = neighborState.GetBlock.blockShape.GetBlockFace(Opposite(face), neighborState);
 
             return ShouldRenderFace(thisFace, neighborFace);
         }
@@ -287,8 +287,6 @@ namespace OurCraft.Blocks
 
             mesh.AddChunkMeshData(new BlockVertex(pos + v3,
             new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY()), normal));
-
-            mesh.AddQuadIndices();
         }
 
         //helps adding sides of slabs
@@ -305,8 +303,6 @@ namespace OurCraft.Blocks
 
             mesh.AddChunkMeshData(new BlockVertex(pos + v3,
             new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY() / 2), normal));
-
-            mesh.AddQuadIndices();
         }
         //----------------------------------
 

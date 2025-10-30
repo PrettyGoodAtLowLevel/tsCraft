@@ -19,21 +19,9 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //default constructor
-        public SlabBlock(string name, int bm, int t, int f, int b, int r, int l, ushort id)
-        : base(name, bm, t, f, b, r, l, id) { }
-
-        public SlabBlock(string name, int t, ushort id) :
-        base(name, t, t, t, t, t, t, id){ }
-
-        //adds the correct block mesh of the slab to the world
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState state)
-        {
-            SlabType type = state.GetProperty(SLAB_TYPE);
-
-            if (type == SlabType.Double) BlockMeshBuilder.BuildFullBlock(pos, bottom, top, front, back, right, left, state, topFaceTex, topFaceTex, frontFaceTex, backFaceTex, rightFaceTex, leftFaceTex, mesh);
-            else if (type == SlabType.Top) BlockMeshBuilder.BuildSlab(pos, bottom, top, front, back, right, left, state, topFaceTex, topFaceTex, frontFaceTex, backFaceTex, rightFaceTex, leftFaceTex, mesh, false);
-            else BlockMeshBuilder.BuildSlab(pos, bottom, top, front, back, right, left, state, topFaceTex, topFaceTex, frontFaceTex, backFaceTex, rightFaceTex, leftFaceTex, mesh, true);
-        }
+        public SlabBlock(string name, BlockShape shape, ushort id) :
+        base(name, shape, id)
+        { }
 
         //determines how we place a slab in the world based on the slab we hit
         public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, Chunkmanager world)
@@ -63,32 +51,6 @@ namespace OurCraft.Blocks.Block_Implementations
             {
                 world.SetBlock(globalPos + hitNormal, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Bottom));
                 return;
-            }
-        }
-
-        //getting the face for the slab based on block state
-        public override FaceType GetBlockFace(CubeFaces faceSide, BlockState state)
-        {
-            SlabType type = state.GetProperty(SLAB_TYPE);
-
-            //double slabs have the same shape as a normal block
-            if (type == SlabType.Double)
-                return FaceType.FULL;
-
-            //slab on bottom half of block
-            else if (type == SlabType.Bottom)
-            {
-                if (faceSide == CubeFaces.BOTTOM) return FaceType.FULL; //has a full face at the bottom
-                if (faceSide == CubeFaces.TOP) return FaceType.INDENTED; // doesnt have an adjacent face on top
-                //other cases this is a bottom slab block
-                return FaceType.BOTTOM_SLAB;
-            }
-            else //topslab
-            {
-                if (faceSide == CubeFaces.BOTTOM) return FaceType.INDENTED; //bottom face of top slab doesnt touch anything
-                if (faceSide == CubeFaces.TOP) return FaceType.FULL; //top slab face touches the bottom of the block above
-                //other cases this is a bottom slab block
-                return FaceType.TOP_SLAB;
             }
         }
     }

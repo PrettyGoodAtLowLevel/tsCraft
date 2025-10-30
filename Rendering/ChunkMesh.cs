@@ -47,10 +47,10 @@ namespace OurCraft.Rendering
         }
 
         //send mesh data to gpu
-        public void SetupMesh(List<BlockVertex> vertices, List<uint> indices)
-        {           
-            if (vertices.Count == 0 || meshcount != 0) return; //dont draw if empty
-            //delete gl objects if already created
+        public void SetupMesh(List<BlockVertex> vertices)
+        {
+            if (vertices.Count == 0 || meshcount != 0) return;
+
             vao.Delete();
             vbo.Delete();
             ebo.Delete();
@@ -58,11 +58,33 @@ namespace OurCraft.Rendering
             vao.Create();
             vao.Bind();
 
-            vbo.CreateEmpty(vertices.Count * BlockVertex.GetSize());
+            int vertCount = vertices.Count;
+            int quadCount = vertCount / 4;
+            int indexCount = quadCount * 6;
+
+            //upload vertices
+            vbo.CreateEmpty(vertCount * BlockVertex.GetSize());
             vbo.SubData(0, vertices.ToArray());
-            ebo.CreateEmpty(indices.Count * sizeof(uint));
-            ebo.SubData(0, indices.ToArray());
-           
+
+            //generate indices on the fly
+            uint[] indices = new uint[indexCount];
+            for (int i = 0; i < quadCount; i++)
+            {
+                int vi = i * 4;
+                int ii = i * 6;
+
+                indices[ii + 0] = (uint)(vi + 0);
+                indices[ii + 1] = (uint)(vi + 1);
+                indices[ii + 2] = (uint)(vi + 2);
+                indices[ii + 3] = (uint)(vi + 2);
+                indices[ii + 4] = (uint)(vi + 3);
+                indices[ii + 5] = (uint)(vi + 0);
+            }
+
+            ebo.CreateEmpty(indices.Length * sizeof(uint));
+            ebo.SubData(0, indices);
+
+            //link vertex attributes
             int stride = BlockVertex.GetSize();
             IntPtr xPosOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.x));
             IntPtr yPosOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.y));
@@ -70,27 +92,19 @@ namespace OurCraft.Rendering
             IntPtr uvOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.texUV));
             IntPtr normalOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.normal));
 
-            //x position (2 bytes)
             vao.LinkAttrib(vbo, 0, 1, VertexAttribPointerType.Short, false, stride, xPosOffset);
-
-            //y position (4 bytes full float)
             vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.Float, false, stride, yPosOffset);
-
-            //z position (2 bytes)
             vao.LinkAttrib(vbo, 2, 1, VertexAttribPointerType.Short, false, stride, zPosOffset);
-
-            //texUV (vec2h)
             vao.LinkAttrib(vbo, 3, 2, VertexAttribPointerType.HalfFloat, false, stride, uvOffset);
-
-            //normal (unsigned byte, integer attribute)
             vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
 
             vao.Unbind();
             vbo.Unbind();
             ebo.Unbind();
-            indexSize = (uint)indices.Count;
-            vertexCount = (uint)vertices.Count;
-            meshcount = 1;     
+
+            indexSize = (uint)indices.Length;
+            vertexCount = (uint)vertCount;
+            meshcount = 1;
         }
         
         public void SetDataCount(List<BlockVertex> vertices, List<uint> indices)
@@ -125,15 +139,14 @@ namespace OurCraft.Rendering
         public void Draw(Shader shader, Camera camera)
         {
             if (!HasMesh()) return;
-
             shader.Activate();
+
             //set uniform model matrix for vshader
             modelMat = transform.Matrix();
             GL.UniformMatrix4(GL.GetUniformLocation(shader.ID, "model"), false, ref modelMat);
-            //bind vertex data and textures
-            vao.Bind();
 
-            //draw
+            //bind vertex data and textures, then draw
+            vao.Bind();
             GL.DrawElements(PrimitiveType.Triangles, (int)indexSize, DrawElementsType.UnsignedInt, IntPtr.Zero);
             vao.Unbind();
         }

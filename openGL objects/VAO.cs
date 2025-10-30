@@ -3,7 +3,7 @@
 namespace OurCraft
 {
     //refrences vertex data and memory layout of vertex data
-    internal class VAO
+    public class VAO
     {
         private int ID = 0;
         public VAO() { ID = 0; }

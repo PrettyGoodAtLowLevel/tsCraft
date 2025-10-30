@@ -1,4 +1,5 @@
 ﻿using OurCraft.Blocks.Block_Implementations;
+using OurCraft.Blocks.BlockShapeRegistry;
 
 //contains all the indexes and data for each different block type
 namespace OurCraft.Blocks
@@ -16,48 +17,52 @@ namespace OurCraft.Blocks
         public static void InitBlocks()
         {
             //natural blocks
-            BlockIDs.AIR_BLOCK = RegisterBlock(new AirBlock("Air", 0, 0, 0, 0, 0, 0, BlockIDs.AIR_BLOCK));
-            BlockIDs.GRASS_BLOCK = RegisterBlock(new FullBlock("Grass Block", TextureIDs.dirtTex, TextureIDs.grassTopTex, TextureIDs.grassSideTex, BlockIDs.GRASS_BLOCK));
-            BlockIDs.DIRT_BLOCK = RegisterBlock(new FullBlock("Dirt", TextureIDs.dirtTex, BlockIDs.DIRT_BLOCK));
-            BlockIDs.SAND_BLOCK = RegisterBlock(new FullBlock("Sand", TextureIDs.sandTex, BlockIDs.SAND_BLOCK));
-            BlockIDs.SNOW_BLOCK = RegisterBlock(new FullBlock("Snow", TextureIDs.snowTex, BlockIDs.SNOW_BLOCK));
-            BlockIDs.SNOWY_GRASS_BLOCK = RegisterBlock(new FullBlock("Snowy Grass Block", TextureIDs.dirtTex, TextureIDs.snowTex, TextureIDs.snowGrassSideTex, BlockIDs.SNOWY_GRASS_BLOCK));
-            BlockIDs.STONE_BLOCK = RegisterBlock(new FullBlock("Stone", TextureIDs.stoneTex, BlockIDs.STONE_BLOCK));
-            BlockIDs.WATER_BLOCK = RegisterBlock(new WaterBlock("Water", TextureIDs.blueWoolTex, BlockIDs.WATER_BLOCK));
+            BlockIDs.AIR_BLOCK = RegisterBlock(new AirBlock("Air", BlockShapesRegistry.AirBlockShape, BlockIDs.AIR_BLOCK));
+            BlockIDs.GRASS_BLOCK = RegisterBlock(new FullBlock("Grass Block", BlockShapesRegistry.GrassBlockShape, BlockIDs.GRASS_BLOCK));
+            BlockIDs.DIRT_BLOCK = RegisterBlock(new FullBlock("Dirt", BlockShapesRegistry.DirtBlockShape, BlockIDs.DIRT_BLOCK));
+            BlockIDs.SAND_BLOCK = RegisterBlock(new FullBlock("Sand", BlockShapesRegistry.SandBlockShape, BlockIDs.SAND_BLOCK));
+            BlockIDs.SNOW_BLOCK = RegisterBlock(new FullBlock("Snow", BlockShapesRegistry.SnowBlockShape, BlockIDs.SNOW_BLOCK));
+            BlockIDs.SNOWY_GRASS_BLOCK = RegisterBlock(new FullBlock("Snowy Grass Block", BlockShapesRegistry.SnowyGrassBlockShape, BlockIDs.SNOWY_GRASS_BLOCK));
+            BlockIDs.STONE_BLOCK = RegisterBlock(new FullBlock("Stone", BlockShapesRegistry.StoneBlockShape, BlockIDs.STONE_BLOCK));
+            BlockIDs.WATER_BLOCK = RegisterBlock(new WaterBlock("Water", BlockShapesRegistry.WaterBlockShape, BlockIDs.WATER_BLOCK));
 
             //x shaped natural blocks
-            BlockIDs.ROSE_BLOCK = RegisterBlock(new CrossQuadBlock("Rose", TextureIDs.roseTex, BlockIDs.ROSE_BLOCK));
-            BlockIDs.X_GRASS_BLOCK = RegisterBlock(new CrossQuadBlock("Grass", TextureIDs.xGrassTex, BlockIDs.X_GRASS_BLOCK));
-            BlockIDs.DEAD_BUSH_BLOCK = RegisterBlock(new CrossQuadBlock("Dead Bush", TextureIDs.deadBushTex, BlockIDs.DEAD_BUSH_BLOCK));
+            BlockIDs.ROSE_BLOCK = RegisterBlock(new CrossQuadBlock("Rose", BlockShapesRegistry.CrossRoseShape, BlockIDs.ROSE_BLOCK));
+            BlockIDs.X_GRASS_BLOCK = RegisterBlock(new CrossQuadBlock("Grass", BlockShapesRegistry.CrossGrassShape, BlockIDs.X_GRASS_BLOCK));
+            BlockIDs.DEAD_BUSH_BLOCK = RegisterBlock(new CrossQuadBlock("Dead Bush", BlockShapesRegistry.DeadBushCrossShape, BlockIDs.DEAD_BUSH_BLOCK));
 
             //building blocks
-            BlockIDs.STONE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Stone Slab", TextureIDs.stoneTex, BlockIDs.STONE_SLAB_BLOCK));  
-            BlockIDs.GLASS_BLOCK = RegisterBlock(new GlassBlock("Glass", TextureIDs.glassTex, BlockIDs.GLASS_BLOCK));
+            BlockIDs.STONE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Stone Slab", BlockShapesRegistry.StoneSlabShape, BlockIDs.STONE_SLAB_BLOCK));  
+            BlockIDs.GLASS_BLOCK = RegisterBlock(new GlassBlock("Glass", BlockShapesRegistry.GlassBlockShape, BlockIDs.GLASS_BLOCK));
 
             //wood
-            BlockIDs.OAK_PLANKS_BLOCK = RegisterBlock(new FullBlock("Oak Planks", TextureIDs.oakPlanksTex, BlockIDs.OAK_PLANKS_BLOCK));
-            BlockIDs.OAK_LOG_BLOCK = RegisterBlock(new BlockLog("Oak Log", TextureIDs.oakLogTopTex, TextureIDs.oakLogSideTex, BlockIDs.OAK_LOG_BLOCK));
-            BlockIDs.OAK_SLAB_BLOCK = RegisterBlock(new SlabBlock("Oak Slab", TextureIDs.oakPlanksTex, BlockIDs.OAK_SLAB_BLOCK));
-            BlockIDs.OAK_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Oak Leaves", TextureIDs.oakLeavesTex, BlockIDs.OAK_LEAVES_BLOCK));
+            BlockIDs.OAK_PLANKS_BLOCK = RegisterBlock(new FullBlock("Oak Planks", BlockShapesRegistry.OakPlanksBlockShape, BlockIDs.OAK_PLANKS_BLOCK));
+            BlockIDs.OAK_LOG_BLOCK = RegisterBlock(new BlockLog("Oak Log", BlockShapesRegistry.OakLogBlockShape, BlockIDs.OAK_LOG_BLOCK));
+            BlockIDs.OAK_SLAB_BLOCK = RegisterBlock(new SlabBlock("Oak Slab", BlockShapesRegistry.OakSlabShape, BlockIDs.OAK_SLAB_BLOCK));
+            BlockIDs.OAK_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Oak Leaves", BlockShapesRegistry.OakLeavesBlockShape, BlockIDs.OAK_LEAVES_BLOCK));
 
-            BlockIDs.SPRUCE_PLANKS_BLOCK = RegisterBlock(new FullBlock("Spruce Planks", TextureIDs.sprucePlanksTex, BlockIDs.SPRUCE_PLANKS_BLOCK));
-            BlockIDs.SPRUCE_LOG_BLOCK = RegisterBlock(new BlockLog("Spruce Log", TextureIDs.spruceLogTopTex, TextureIDs.spruceLogSideTex, BlockIDs.SPRUCE_LOG_BLOCK));
-            BlockIDs.SPRUCE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Spruce Slab", TextureIDs.sprucePlanksTex, BlockIDs.SPRUCE_SLAB_BLOCK));
-            BlockIDs.SPRUCE_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Spruce Leaves", TextureIDs.spruceLeavesTex, BlockIDs.SPRUCE_LEAVES_BLOCK));
+            //
+            BlockIDs.SPRUCE_PLANKS_BLOCK = RegisterBlock(new FullBlock("Spruce Planks", BlockShapesRegistry.SprucePlanksBlockShape, BlockIDs.SPRUCE_PLANKS_BLOCK));
+            BlockIDs.SPRUCE_LOG_BLOCK = RegisterBlock(new BlockLog("Spruce Log", BlockShapesRegistry.SpruceLogBlockShape, BlockIDs.SPRUCE_LOG_BLOCK));
+            BlockIDs.SPRUCE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Spruce Slab", BlockShapesRegistry.SpruceSlabShape, BlockIDs.SPRUCE_SLAB_BLOCK));
+            BlockIDs.SPRUCE_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Spruce Leaves", BlockShapesRegistry.SpruceLeavesBlockShape, BlockIDs.SPRUCE_LEAVES_BLOCK));
 
-            BlockIDs.BIRCH_PLANKS_BLOCK = RegisterBlock(new FullBlock("Birch Planks", TextureIDs.birchPlanksTex, BlockIDs.BIRCH_PLANKS_BLOCK));
-            BlockIDs.BIRCH_LOG_BLOCK = RegisterBlock(new BlockLog("Birch Log", TextureIDs.birchLogTopTex, TextureIDs.birchLogSideTex, BlockIDs.BIRCH_LOG_BLOCK));
-            BlockIDs.BIRCH_SLAB_BLOCK = RegisterBlock(new SlabBlock("Birch Slab", TextureIDs.birchPlanksTex, BlockIDs.BIRCH_SLAB_BLOCK));
-            BlockIDs.BIRCH_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Birch Leaves", TextureIDs.birchLeavesTex, BlockIDs.BIRCH_LEAVES_BLOCK));
+            //
+            BlockIDs.BIRCH_PLANKS_BLOCK = RegisterBlock(new FullBlock("Birch Planks", BlockShapesRegistry.BirchPlanksBlockShape, BlockIDs.BIRCH_PLANKS_BLOCK));
+            BlockIDs.BIRCH_LOG_BLOCK = RegisterBlock(new BlockLog("Birch Log", BlockShapesRegistry.BirchLogBlockShape, BlockIDs.BIRCH_LOG_BLOCK));
+            BlockIDs.BIRCH_SLAB_BLOCK = RegisterBlock(new SlabBlock("Birch Slab", BlockShapesRegistry.BirchSlabShape, BlockIDs.BIRCH_SLAB_BLOCK));
+            BlockIDs.BIRCH_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Birch Leaves", BlockShapesRegistry.BirchLeavesBlockShape, BlockIDs.BIRCH_LEAVES_BLOCK));
 
-            BlockIDs.JUNGLE_PLANKS_BLOCK = RegisterBlock(new FullBlock("Jungle Planks", TextureIDs.junglePlanksTex, BlockIDs.JUNGLE_PLANKS_BLOCK));
-            BlockIDs.JUNGLE_LOG_BLOCK = RegisterBlock(new BlockLog("Jungle Log", TextureIDs.jungleLogTopTex, TextureIDs.jungleLogSideTex, BlockIDs.JUNGLE_LOG_BLOCK));
-            BlockIDs.JUNGLE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Jungle Slab", TextureIDs.junglePlanksTex, BlockIDs.JUNGLE_SLAB_BLOCK));
-            BlockIDs.JUNGLE_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Jungle Leaves", TextureIDs.jungleLeavesTex, BlockIDs.JUNGLE_LEAVES_BLOCK));
+            //
+            BlockIDs.JUNGLE_PLANKS_BLOCK = RegisterBlock(new FullBlock("Jungle Planks", BlockShapesRegistry.JunglePlanksBlockShape, BlockIDs.JUNGLE_PLANKS_BLOCK));
+            BlockIDs.JUNGLE_LOG_BLOCK = RegisterBlock(new BlockLog("Jungle Log", BlockShapesRegistry.JungleLogBlockShape, BlockIDs.JUNGLE_LOG_BLOCK));
+            BlockIDs.JUNGLE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Jungle Slab", BlockShapesRegistry.JungleSlabShape, BlockIDs.JUNGLE_SLAB_BLOCK));
+            BlockIDs.JUNGLE_LEAVES_BLOCK = RegisterBlock(new LeavesBlock("Jungle Leaves", BlockShapesRegistry.JungleLeavesBlockShape, BlockIDs.JUNGLE_LEAVES_BLOCK));
             
-            BlockIDs.ICE_BLOCK = RegisterBlock(new FullBlock("Ice Block", TextureIDs.iceTex, BlockIDs.ICE_BLOCK));
-            BlockIDs.GRAVEL_BLOCK = RegisterBlock(new FullBlock("Gravel Block", TextureIDs.gravelTex, BlockIDs.GRAVEL_BLOCK));
-            BlockIDs.CACTUS_BLOCK = RegisterBlock(new FullBlock("Cactus Block", TextureIDs.cactusBottomTex, TextureIDs.cactusTopTex, TextureIDs.cactusSideTex, BlockIDs.CACTUS_BLOCK));
+            //
+            BlockIDs.ICE_BLOCK = RegisterBlock(new FullBlock("Ice Block", BlockShapesRegistry.IceBlockShape, BlockIDs.ICE_BLOCK));
+            BlockIDs.GRAVEL_BLOCK = RegisterBlock(new FullBlock("Gravel Block", BlockShapesRegistry.GravelBlockShape, BlockIDs.GRAVEL_BLOCK));
+            BlockIDs.CACTUS_BLOCK = RegisterBlock(new FullBlock("Cactus Block", BlockShapesRegistry.CactusBlockShape, BlockIDs.CACTUS_BLOCK));
         }
 
         //get block from id

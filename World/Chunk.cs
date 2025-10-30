@@ -95,8 +95,6 @@ namespace OurCraft.World
         //rendering
         readonly ChunkMesh batchedMesh;
 
-        //debug
-        int totalCreationTime = 0;
         int voxelCreationTime = 0;
         int meshCreationTime = 0;
 
@@ -202,58 +200,51 @@ namespace OurCraft.World
         {
             if (state == ChunkState.Deleted || state == ChunkState.VoxelOnly || state == ChunkState.Initialized)
                 return;
+
+            Stopwatch sw = Stopwatch.StartNew();
             UploadSolidMesh();
             state = ChunkState.Built;
+            sw.Stop();
+            int buildTime = (int)sw.ElapsedMilliseconds;
 
             Console.WriteLine("\nChunk (" + Pos.X + ", " + Pos.Z + ") creation Stats:");
             Console.WriteLine("Voxel Creation Time: " + voxelCreationTime + " ms");
             Console.WriteLine("Mesh Creation Time: " + meshCreationTime + " ms");
-            Console.WriteLine("Total Creation Time: " + (voxelCreationTime + meshCreationTime) + " ms");
+            Console.WriteLine("Build Time: " + buildTime + " ms");
+            Console.WriteLine("Total Creation Time: " + (voxelCreationTime + meshCreationTime + buildTime) + " ms");
         }
-
+        
         //combines the vertex data into one big mesh for solid geometry
         private void UploadSolidMesh()
         {         
             //compute size upfront
             int totalVertexCount = 0;
-            int totalIndexCount = 0;
 
             foreach (var subChunk in subChunks)
             {
                 totalVertexCount += subChunk.SolidGeo.vertices.Count;
-                totalIndexCount += subChunk.SolidGeo.indices.Count;
             }
 
             //preallocate size
             var totalVertices = new List<BlockVertex>(totalVertexCount);
-            var totalIndices = new List<uint>(totalIndexCount);
 
             int vertexOffset = 0;
-            int indexOffset = 0;
 
             //append mesh data
             foreach (var subChunk in subChunks)
             {
-                var geo = subChunk.SolidGeo;
-                if (geo.vertices.Count == 0 || geo.indices.Count == 0)
+                ChunkMeshData geo = subChunk.SolidGeo;
+                if (geo.vertices.Count == 0)
                     continue;
-                uint baseIndex = (uint)vertexOffset;
 
                 //append vertices
                 totalVertices.AddRange(geo.vertices);
 
-                //adjust indices relative to baseIndex
-                var adjustedIndices = new uint[geo.indices.Count];
-                for (int i = 0; i < geo.indices.Count; i++)
-                    adjustedIndices[i] = geo.indices[i] + baseIndex;
-                totalIndices.AddRange(adjustedIndices);
-
                 vertexOffset += geo.vertices.Count;
-                indexOffset += geo.indices.Count;
             }
 
             //mesh upload
-            batchedMesh.SetupMesh(totalVertices, totalIndices);
+            batchedMesh.SetupMesh(totalVertices);
             batchedMesh.transform.SetPosition(new Vector3(Pos.X * SubChunk.SUBCHUNK_SIZE, 0, Pos.Z * SubChunk.SUBCHUNK_SIZE));
         }
 
@@ -559,7 +550,6 @@ namespace OurCraft.World
                         AddVoxelDataToChunk(new Vector3(x, y, z), new Vector3(x, YPos * SUBCHUNK_SIZE + y, z), leftC, rightC, frontC, backC);
                     }
             SolidGeo.vertices.TrimExcess();
-            SolidGeo.indices.TrimExcess();
         }
 
         //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks
@@ -577,7 +567,7 @@ namespace OurCraft.World
             BlockState left = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, -1, 0, 0, leftC, rightC, frontC, backC);
             BlockState right = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 1, 0, 0, leftC, rightC, frontC, backC);
 
-            block.AddBlockMesh(meshPos, bottom, top, front, back, right, left, SolidGeo, state);
+            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, SolidGeo, state);
         }
 
         //rebuilds the subchunk mesh data when modifying a block

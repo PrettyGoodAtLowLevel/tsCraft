@@ -9,6 +9,7 @@ using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 using static OurCraft.Physics.VoxelPhysics;
 using OurCraft.World.Terrain_Generation;
+using OpenTK.Graphics.OpenGL4;
 
 namespace OurCraft
 {
@@ -39,7 +40,7 @@ namespace OurCraft
             base.OnLoad();
             CursorState = CursorState.Grabbed;
             BlockData.InitBlocks();
-            world = new Chunkmanager(RenderDistances.SIX_CHUNKS, ref cam, ref worldGenThreads);
+            world = new Chunkmanager(Program.renderDistance, ref cam, ref worldGenThreads);
             renderer = new Renderer(ref world, ref cam, screenWidth, screenHeight);
             world.Generate();
             currentBlock = BlockRegistry.GetBlock("Grass Block");
@@ -130,6 +131,7 @@ namespace OurCraft
 
             if (timer >= 1)
             {
+                long totalMem = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64;
                 Title = "TsCraft, fps: " + (int)(1 / args.Time) + ", camera position (" + (int)cam.Position.X + ", " + ((int)cam.Position.Y) + ", " + (int)cam.Position.Z + ")";
                 timer = 0;
             }
