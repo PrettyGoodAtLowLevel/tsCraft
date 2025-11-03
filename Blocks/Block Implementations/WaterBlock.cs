@@ -10,6 +10,8 @@ namespace OurCraft.Blocks.Block_Implementations
     {
         public WaterBlock(string name, BlockShape shape, ushort id) :
         base(name, shape, id)
-        { }
+        {
+            IsSolid = false;
+        }
     }
 }

@@ -4,6 +4,7 @@ using OurCraft.Rendering;
 using OurCraft.utility;
 using OurCraft.Blocks.Block_Properties;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace OurCraft.World
 {
@@ -72,8 +73,6 @@ namespace OurCraft.World
         Camera player;
         ChunkCoord lastPlayerChunk;
         private readonly ThreadPoolSystem threadPool;
-
-        //methods
 
         //basic constructor
         public Chunkmanager(RenderDistances renderDistance, ref Camera player, ref ThreadPoolSystem tp)
@@ -198,16 +197,26 @@ namespace OurCraft.World
                 //create mesh and upload on a seperate thread
                 threadPool.Submit(() =>
                 {
-                    Chunk? left, right, front, back;
+                    Chunk? left, right, front, back,
+                    c1, c2, c3, c4;
                     left = GetChunk(new ChunkCoord(coord.X - 1, coord.Z));
                     right = GetChunk(new ChunkCoord(coord.X + 1, coord.Z));
                     front = GetChunk(new ChunkCoord(coord.X, coord.Z + 1));
                     back = GetChunk(new ChunkCoord(coord.X, coord.Z - 1));
 
+
+                    c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1)); //back-left
+                    c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1)); //back-right
+                    c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1)); //front-left
+                    c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1)); //front-right
+
                     if (left == null || right == null || front == null || back == null) return;
                     if (!left.HasVoxelData() || !right.HasVoxelData() || !front.HasVoxelData() || !back.HasVoxelData()) return;
 
-                    chunk.CreateChunkMesh(left, right, front, back);
+                    if (c1 == null || c2 == null || c3 == null || c4 == null) return;
+                    if (!c1.HasVoxelData() || !c2.HasVoxelData() || !c3.HasVoxelData() || !c4.HasVoxelData()) return;
+
+                    chunk.CreateChunkMesh(left, right, front, back, c1, c2, c3, c4);
                     chunkUploadQueue.Enqueue(chunk);
                 });
             }
@@ -402,16 +411,26 @@ namespace OurCraft.World
         private bool ChunkHasNeighbors(ChunkCoord coord)
         {
             //get this chunk and adjacent chunks
-            Chunk? thisChunk, left, right, back, front;
+            Chunk? thisChunk, left, right, back, front,
+            c1, c2, c3, c4;
+
             thisChunk = GetChunk(coord);
             left = GetChunk(new ChunkCoord(coord.X - 1, coord.Z ));
             right = GetChunk(new ChunkCoord(coord.X + 1, coord.Z ));
             front = GetChunk(new ChunkCoord(coord.X, coord.Z + 1 ));
             back = GetChunk(new ChunkCoord( coord.X, coord.Z - 1 ));
 
+            c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1)); //back-left
+            c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1)); //back-right
+            c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1)); //front-left
+            c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1)); //front-right
+
             //if chunks dont exist or dont have block data, then back out
             if (thisChunk == null || left == null || right == null || front == null || back == null) return false;
             if (!thisChunk.HasVoxelData() || !left.HasVoxelData() || !right.HasVoxelData() || !front.HasVoxelData() || !back.HasVoxelData()) return false;
+
+            if (c1 == null || c2 == null || c3 == null || c4 == null) return false;
+            if (!c1.HasVoxelData() || !c2.HasVoxelData() || !c3.HasVoxelData() || !c4.HasVoxelData()) return false;
 
             return true;
         }
@@ -459,6 +478,9 @@ namespace OurCraft.World
 
             if (lz == SubChunk.SUBCHUNK_SIZE - 1) RemeshChunk(GetChunk(new ChunkCoord(chunkX, chunkZ + 1)), ly);
             if (lz == 0) RemeshChunk(GetChunk(new ChunkCoord(chunkX, chunkZ - 1)), ly);
+
+            if (lx == SubChunk.SUBCHUNK_SIZE - 1 && lz == SubChunk.SUBCHUNK_SIZE - 1) RemeshChunk(GetChunk(new ChunkCoord(chunkX + 1, chunkZ + 1)), ly);
+            if (lx == 0 && lz == 0) RemeshChunk(GetChunk(new ChunkCoord(chunkX - 1, chunkZ - 1)), ly);
         }
 
         //updates surrounding blocks when a block is set, ONLY CALL WHEN ALL BLOCKS ARE READY
@@ -475,7 +497,8 @@ namespace OurCraft.World
         //tries to remesh a chunk
         private void RemeshChunk(Chunk? chunk, int globalY)
         {
-            Chunk? left, right, back, front;
+            Chunk? left, right, back, front,
+            c1, c2, c3, c4;
             ChunkCoord coord;
 
             if (chunk != null) coord = chunk.Pos;
@@ -489,10 +512,18 @@ namespace OurCraft.World
             front = GetChunk(new ChunkCoord(chunkX, chunkZ + 1));
             back = GetChunk(new ChunkCoord(chunkX, chunkZ - 1));
 
+            c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1)); //back-left
+            c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1)); //back-right
+            c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1)); //front-left
+            c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1)); //front-right
+
             if (chunk == null || left == null || right == null || front == null || back == null) return;
             if (!chunk.Remeshable() || !left.Remeshable() || !right.Remeshable() || !front.Remeshable() || !back.Remeshable()) return;
 
-            chunk.Remesh(left, right, front, back, globalY);
+            if (c1 == null || c2 == null || c3 == null || c4 == null) return;
+            if (!c1.Remeshable() || !c2.Remeshable() || !c3.Remeshable() || !c4.Remeshable()) return;
+
+            chunk.Remesh(left, right, front, back, c1, c2, c3, c4, globalY);
         }
 
         //math helpers

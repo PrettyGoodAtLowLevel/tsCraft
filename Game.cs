@@ -40,6 +40,7 @@ namespace OurCraft
             base.OnLoad();
             CursorState = CursorState.Grabbed;
             BlockData.InitBlocks();
+            WorldGenerator.FlatWorld = false;
             world = new Chunkmanager(Program.renderDistance, ref cam, ref worldGenThreads);
             renderer = new Renderer(ref world, ref cam, screenWidth, screenHeight);
             world.Generate();
@@ -54,7 +55,7 @@ namespace OurCraft
             //render your stuff here
             rawTime += args.Time;
             float shaderTime = (float)(rawTime % 1000.0);
-            renderer.RenderSceneFrame(shaderTime);           
+            renderer.RenderSceneFrame(shaderTime, (float)args.Time);           
             SwapBuffers();
         }
 
@@ -70,21 +71,7 @@ namespace OurCraft
             {
                 if (hitBlock)
                 {
-                    //get blocks
-                    BlockState bottom, top, front, back, left, right;
-
-                    bottom = world.GetBlockState(hit.blockPos + new Vector3(0, -1, 0));
-                    top = world.GetBlockState(hit.blockPos + new Vector3(0, 1, 0));
-                    front = world.GetBlockState(hit.blockPos + new Vector3(0, 0, 1));
-                    back = world.GetBlockState(hit.blockPos + new Vector3(0, 0, -1));
-                    right = world.GetBlockState(hit.blockPos + new Vector3(1, 0, 0));
-                    left = world.GetBlockState(hit.blockPos + new Vector3(-1, 0, 0));
-
-                    if (bottom.BlockID == BlockIDs.INVALID_BLOCK || top.BlockID == BlockIDs.INVALID_BLOCK || front.BlockID == BlockIDs.INVALID_BLOCK
-                    || back.BlockID == BlockIDs.INVALID_BLOCK || right.BlockID == BlockIDs.INVALID_BLOCK || left.BlockID == BlockIDs.INVALID_BLOCK) return;
-
                     world.SetBlock(hit.blockPos, new BlockState(BlockIDs.AIR_BLOCK));
-                    world.UpdateNeighborBlocks(hit.blockPos, bottom, top, front, back, right, left);
                 }
             }
             if (MouseState.IsButtonPressed(MouseButton.Right))
@@ -101,15 +88,12 @@ namespace OurCraft
                     right = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(1, 0, 0));
                     left = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(-1, 0, 0));
 
-                    if (bottom.BlockID == BlockIDs.INVALID_BLOCK || top.BlockID == BlockIDs.INVALID_BLOCK || front.BlockID == BlockIDs.INVALID_BLOCK
-                    || back.BlockID == BlockIDs.INVALID_BLOCK || right.BlockID == BlockIDs.INVALID_BLOCK || left.BlockID == BlockIDs.INVALID_BLOCK) return;
 
                     //try to add block
                     BlockData.GetBlock(currentBlock).PlaceBlockState(hit.blockPos, hit.faceNormal,
                     bottom, top, front, back, right, left,
                     world.GetBlockState(hit.blockPos), world);
 
-                    world.UpdateNeighborBlocks(hit.blockPos, bottom, top, front, back, right, left);
                 }
             }
 
@@ -119,6 +103,9 @@ namespace OurCraft
 
             if (KeyboardState.IsKeyDown(Keys.Z)) renderer.fov = 20;
             else renderer.fov = 90;
+
+            if (KeyboardState.IsKeyPressed(Keys.C)) renderer.ToggleAOOff();
+            if (KeyboardState.IsKeyPressed(Keys.V)) renderer.ToggleAOOn();
 
             if (KeyboardState.IsKeyPressed(Keys.R))
             {

@@ -5,10 +5,12 @@ layout(location = 1) in float aYPos; //half precision mapped to float
 layout(location = 2) in float aZPos; //short mapped to float
 layout(location = 3) in vec2 aUV;
 layout(location = 4) in int aNormal;
+layout(location = 5) in int AOID;
 
 //output variables to frag shader
 out vec2 TexCoords;
 flat out int NormalID;
+out float AO; //interpolated
 out vec3 FragPos;
 
 //positioning and transformations
@@ -32,4 +34,5 @@ void main()
     NormalID = aNormal;
     TexCoords = aUV;
     FragPos = worldPos.xyz; //pass world-space position to fragment shader
+    AO = AOID / 255.0f;
 }

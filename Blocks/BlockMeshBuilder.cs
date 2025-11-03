@@ -11,43 +11,40 @@ namespace OurCraft.Blocks
         private const int textureSizeInBlocksX = 32; //512 / 16
         private const int textureSizeInBlocksY = 16; //256 / 16
 
-        //--------full block mesh builders-------------
-        //tries to build a cube mesh with specified texture ids based on which faces are visible
         public static void BuildFullBlock(Vector3 pos,
         BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisState,
         int bottomTex, int topTex, int frontTex, int backTex, int rightTex, int leftTex,
-        ChunkMeshData mesh)
+        ChunkMeshData mesh, VoxelAOData aoData)
         {
             //bottom (-Y)
             if (IsFaceVisible(thisState, bottom, CubeFaces.BOTTOM))
-                AddFullFace(pos, CubeFaces.BOTTOM, bottomTex, mesh);
+                AddFullFace(pos, CubeFaces.BOTTOM, bottomTex, mesh, aoData);
 
             //top (+Y)
             if (IsFaceVisible(thisState, top, CubeFaces.TOP))
-                AddFullFace(pos, CubeFaces.TOP, topTex, mesh);
+                AddFullFace(pos, CubeFaces.TOP, topTex, mesh, aoData);
 
             // front (+Z)
             if (IsFaceVisible(thisState, front, CubeFaces.FRONT))
-                AddFullFace(pos, CubeFaces.FRONT, frontTex, mesh);
+                AddFullFace(pos, CubeFaces.FRONT, frontTex, mesh, aoData);
 
             // back (-Z)
             if (IsFaceVisible(thisState, back, CubeFaces.BACK))
-                AddFullFace(pos, CubeFaces.BACK, backTex, mesh);
+                AddFullFace(pos, CubeFaces.BACK, backTex, mesh, aoData);
 
             // right (+X)
             if (IsFaceVisible(thisState, right, CubeFaces.RIGHT))
-                AddFullFace(pos, CubeFaces.RIGHT, rightTex, mesh);
+                AddFullFace(pos, CubeFaces.RIGHT, rightTex, mesh, aoData);
 
             // left (-X)
             if (IsFaceVisible(thisState, left, CubeFaces.LEFT))
-                AddFullFace(pos, CubeFaces.LEFT, leftTex, mesh);
+                AddFullFace(pos, CubeFaces.LEFT, leftTex, mesh, aoData);
         }
 
-        //tries to build a half slab mesh based on which faces are visisible
         public static void BuildSlab(Vector3 pos,
         BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisState,
         int bottomTex, int topTex, int frontTex, int backTex, int rightTex, int leftTex,
-        ChunkMeshData mesh, bool bottomSlab)
+        ChunkMeshData mesh, bool bottomSlab, VoxelAOData aoData)
         {
             //get the y positions for the slab
             float yMin = bottomSlab ? 0 : 0.5f;
@@ -55,88 +52,51 @@ namespace OurCraft.Blocks
 
             //bottom (-Y)
             if (IsFaceVisible(thisState, bottom, CubeFaces.BOTTOM))
-                AddQuad(pos, new Vector3(1.0f, yMin, 1.0f), new Vector3(0.0f, yMin, 1.0f), new Vector3(0.0f, yMin, 0.0f), new Vector3(1.0f, yMin, 0.0f), bottomTex, (byte)CubeFaces.BOTTOM.GetHashCode(), mesh);
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.BottomFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(1.0f, yMin, 1.0f), new Vector3(0.0f, yMin, 1.0f), new Vector3(0.0f, yMin, 0.0f), new Vector3(1.0f, yMin, 0.0f),
+                bottomTex, (byte)CubeFaces.BOTTOM, mesh, aoBytes[3], aoBytes[2], aoBytes[0], aoBytes[1]);
+            }
 
             //top (+Y)
             if (IsFaceVisible(thisState, top, CubeFaces.TOP))
-                AddQuad(pos, new Vector3(1.0f, yMax, 0.0f), new Vector3(0.0f, yMax, 0.0f), new Vector3(0.0f, yMax, 1.0f), new Vector3(1.0f, yMax, 1.0f), topTex, (byte)CubeFaces.TOP.GetHashCode(), mesh);
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.TopFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(1.0f, yMax, 0.0f), new Vector3(0.0f, yMax, 0.0f), new Vector3(0.0f, yMax, 1.0f), new Vector3(1.0f, yMax, 1.0f),
+                topTex, (byte)CubeFaces.TOP, mesh, aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3]);
+            }
 
             //front (+Z)
             if (IsFaceVisible(thisState, front, CubeFaces.FRONT))
-                AddSlabSide(pos, new Vector3(0.0f, yMin, 1.0f), new Vector3(1.0f, yMin, 1.0f), new Vector3(1.0f, yMax, 1.0f), new Vector3(0.0f, yMax, 1.0f), frontTex, (byte)CubeFaces.FRONT.GetHashCode(), mesh);
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.FrontFaceFromCube(aoData));
+                AddSlabSide(pos, new Vector3(0.0f, yMin, 1.0f), new Vector3(1.0f, yMin, 1.0f), new Vector3(1.0f, yMax, 1.0f), new Vector3(0.0f, yMax, 1.0f),
+                frontTex, (byte)CubeFaces.FRONT, mesh, aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+            }
 
             //back (-Z)
             if (IsFaceVisible(thisState, back, CubeFaces.BACK))
-                AddSlabSide(pos, new Vector3(1.0f, yMin, 0.0f), new Vector3(0.0f, yMin, 0.0f), new Vector3(0.0f, yMax, 0.0f), new Vector3(1.0f, yMax, 0.0f), backTex, (byte)CubeFaces.BACK.GetHashCode(), mesh);
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.BackFaceFromCube(aoData));
+                AddSlabSide(pos, new Vector3(1.0f, yMin, 0.0f), new Vector3(0.0f, yMin, 0.0f), new Vector3(0.0f, yMax, 0.0f), new Vector3(1.0f, yMax, 0.0f),
+                backTex, (byte)CubeFaces.BACK, mesh, aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3]);
+            }
 
             //right (+X)
             if (IsFaceVisible(thisState, right, CubeFaces.RIGHT))
-                AddSlabSide(pos, new Vector3(1.0f, yMin, 1.0f), new Vector3(1.0f, yMin, 0.0f), new Vector3(1.0f, yMax, 0.0f), new Vector3(1.0f, yMax, 1.0f), rightTex, (byte)CubeFaces.RIGHT.GetHashCode(), mesh);
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.RightFaceFromCube(aoData));
+                AddSlabSide(pos, new Vector3(1.0f, yMin, 1.0f), new Vector3(1.0f, yMin, 0.0f), new Vector3(1.0f, yMax, 0.0f), new Vector3(1.0f, yMax, 1.0f),
+                rightTex, (byte)CubeFaces.RIGHT, mesh, aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+            }
 
             //left (-X)
             if (IsFaceVisible(thisState, left, CubeFaces.LEFT))
-                AddSlabSide(pos, new Vector3(0.0f, yMin, 0.0f), new Vector3(0.0f, yMin, 1.0f), new Vector3(0.0f, yMax, 1.0f), new Vector3(0.0f, yMax, 0.0f), leftTex, (byte)CubeFaces.LEFT.GetHashCode(), mesh);
-        }
-
-        //creates a water block with a y slightly lower than others
-        public static void BuildFullWater(Vector3 pos,
-        BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisState,
-        int bottomTex, int topTex, int frontTex, int backTex, int rightTex, int leftTex,
-        ChunkMeshData mesh)
-        {
-            //bottom (-Y)
-            if (IsFaceVisible(thisState, bottom, CubeFaces.BOTTOM))
-                AddQuad(pos,
-                    new Vector3(1.0f, 0.0f, 1.0f),
-                    new Vector3(0.0f, 0.0f, 1.0f),
-                    new Vector3(0.0f, 0.0f, 0.0f),
-                    new Vector3(1.0f, 0.0f, 0.0f),
-                    bottomTex, (byte)CubeFaces.BOTTOM.GetHashCode(), mesh);
-
-            //top (+Y)
-            if (IsFaceVisible(thisState, top, CubeFaces.TOP))
-                AddQuad(pos,
-                  new Vector3(1.0f, 1.0f, 0.0f),
-                  new Vector3(0.0f, 1.0f, 0.0f),
-                  new Vector3(0.0f, 1.0f, 1.0f),
-                  new Vector3(1.0f, 1.0f, 1.0f),
-                  topTex, (byte)CubeFaces.TOP.GetHashCode(), mesh);
-
-            //front (+Z)
-            if (IsFaceVisible(thisState, front, CubeFaces.FRONT))
-                AddQuad(pos,
-                    new Vector3(0.0f, 0.0f, 1.0f),
-                    new Vector3(1.0f, 0.0f, 1.0f),
-                    new Vector3(1.0f, 1.0f, 1.0f),
-                    new Vector3(0.0f, 1.0f, 1.0f),
-                    frontTex, (byte)CubeFaces.FRONT.GetHashCode(), mesh);
-
-            //back (-Z)
-            if (IsFaceVisible(thisState, back, CubeFaces.BACK))
-                AddQuad(pos,
-                    new Vector3(1.0f, 0.0f, 0.0f),
-                    new Vector3(0.0f, 0.0f, 0.0f),
-                    new Vector3(0.0f, 1.0f, 0.0f),
-                    new Vector3(1.0f, 1.0f, 0.0f),
-                    backTex, (byte)CubeFaces.BACK.GetHashCode(), mesh);
-
-            //right (+X)
-            if (IsFaceVisible(thisState, right, CubeFaces.RIGHT))
-                AddQuad(pos,
-                    new Vector3(1.0f, 0.0f, 1.0f),
-                    new Vector3(1.0f, 0.0f, 0.0f),
-                    new Vector3(1.0f, 1.0f, 0.0f),
-                    new Vector3(1.0f, 1.0f, 1.0f),
-                    rightTex, (byte)CubeFaces.RIGHT.GetHashCode(), mesh);
-
-            //left (-X)
-            if (IsFaceVisible(thisState, left, CubeFaces.LEFT))
-                AddQuad(pos,
-                    new Vector3(0.0f, 0.0f, 0.0f),
-                    new Vector3(0.0f, 0.0f, 1.0f),
-                    new Vector3(0.0f, 1.0f, 1.0f),
-                    new Vector3(0.0f, 1.0f, 0.0f),
-                    leftTex, (byte)CubeFaces.LEFT.GetHashCode(), mesh);
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.LeftFaceFromCube(aoData));
+                AddSlabSide(pos, new Vector3(0.0f, yMin, 0.0f), new Vector3(0.0f, yMin, 1.0f), new Vector3(0.0f, yMax, 1.0f), new Vector3(0.0f, yMax, 0.0f),
+                leftTex, (byte)CubeFaces.LEFT, mesh, aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3]);
+            }
         }
 
         public static void BuildXShapeBlock(Vector3 pos, int texID, ChunkMeshData mesh)
@@ -173,11 +133,126 @@ namespace OurCraft.Blocks
                 new Vector3(0.0f + eps, 1.0f, 1.0f - eps),
                 texID, (byte)CubeFaces.LEFT.GetHashCode(), mesh);
         }
-        //----------------------------------------
+        
+        private static void AddFullFace(Vector3 pos, CubeFaces faceType, int textureID, ChunkMeshData mesh, VoxelAOData aoData)
+        {
+            //bottom (-Y)
+            if (faceType == CubeFaces.BOTTOM)
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.BottomFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.0f, 0.0f, 0.0f), new Vector3(1.0f, 0.0f, 1.0f), new Vector3(0.0f, 0.0f, 1.0f),
+                textureID, (byte)CubeFaces.BOTTOM, mesh, aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+            }
 
+            //top (+Y)
+            else if (faceType == CubeFaces.TOP)
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.TopFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(0.0f, 1.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f), new Vector3(1.0f, 1.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f),
+                textureID, (byte)CubeFaces.TOP, mesh, aoBytes[2], aoBytes[3], aoBytes[1], aoBytes[0]);
+            }
 
-        //---------face culling settings----------------
-        //gets the face of both blocks and does the face culling check
+            //front (+Z)
+            else if (faceType == CubeFaces.FRONT)
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.FrontFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(0.0f, 0.0f, 1.0f), new Vector3(1.0f, 0.0f, 1.0f),  new Vector3(1.0f, 1.0f, 1.0f),  new Vector3(0.0f, 1.0f, 1.0f),
+                textureID, (byte)CubeFaces.FRONT, mesh, aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+            }
+
+            //back (-Z)
+            else if (faceType == CubeFaces.BACK)
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.BackFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector3(1.0f, 1.0f, 0.0f),
+                textureID, (byte)CubeFaces.BACK, mesh, aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3]);
+            }
+
+            //right (+X)
+            else if (faceType == CubeFaces.RIGHT)
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.RightFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(1.0f, 0.0f, 1.0f), new Vector3(1.0f, 0.0f, 0.0f), new Vector3(1.0f, 1.0f, 0.0f), new Vector3(1.0f, 1.0f, 1.0f),
+                textureID, (byte)CubeFaces.RIGHT, mesh, aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+            }
+
+            //left (-X)
+            else if (faceType == CubeFaces.LEFT)
+            {
+                byte[] aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.LeftFaceFromCube(aoData));
+                AddQuad(pos, new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector3(0.0f, 1.0f, 1.0f), new Vector3(0.0f, 1.0f, 0.0f),
+                textureID, (byte)CubeFaces.LEFT, mesh, aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3]);
+            }
+        }
+
+        //specifies exact vertex coordinates for adding a quad
+        private static void AddQuad(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh, byte av0, byte av1, byte av2, byte av3)
+        {
+            mesh.AddChunkMeshData(new BlockVertex(pos + v0,
+            new Vector2(GetTextureX(texID), GetTextureY(texID)), normal, av0));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v1,
+            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID)), normal, av1));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v2,
+            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID) + NormalizedBlockTextureY()), normal, av2));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v3,
+            new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY()), normal, av3));
+        }
+
+        private static void AddQuad(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh)
+        {
+            mesh.AddChunkMeshData(new BlockVertex(pos + v0,
+            new Vector2(GetTextureX(texID), GetTextureY(texID)), normal));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v1,
+            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID)), normal));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v2,
+            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID) + NormalizedBlockTextureY()), normal));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v3,
+            new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY()), normal));
+        }
+
+        private static void AddSlabSide(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh, byte av0, byte av1, byte av2, byte av3)
+        {
+            mesh.AddChunkMeshData(new BlockVertex(pos + v0,
+            new Vector2(GetTextureX(texID), GetTextureY(texID)), normal, av0));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v1,
+            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID)), normal, av1));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v2,
+            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID) + NormalizedBlockTextureY() / 2), normal, av2));
+
+            mesh.AddChunkMeshData(new BlockVertex(pos + v3,
+            new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY() / 2), normal, av3));
+        }
+
+        //face culling things
+        private static CubeFaces Opposite(CubeFaces face)
+        {
+            switch (face)
+            {
+                case CubeFaces.BOTTOM:
+                    return CubeFaces.TOP;
+                case CubeFaces.TOP:
+                    return CubeFaces.BOTTOM;
+                case CubeFaces.FRONT:
+                    return CubeFaces.BACK;
+                case CubeFaces.BACK:
+                    return CubeFaces.FRONT;
+                case CubeFaces.RIGHT:
+                    return CubeFaces.LEFT;
+                case CubeFaces.LEFT:
+                    return CubeFaces.RIGHT;
+                default:
+                    return CubeFaces.BOTTOM;
+            }
+        }
+
         private static bool IsFaceVisible(BlockState thisState, BlockState neighborState, CubeFaces face)
         {
             FaceType thisFace = BlockData.GetBlock(thisState.BlockID).blockShape.GetBlockFace(face, thisState);
@@ -186,7 +261,6 @@ namespace OurCraft.Blocks
             return ShouldRenderFace(thisFace, neighborFace);
         }
 
-        //determines if a face is renderable
         private static bool ShouldRenderFace(FaceType current, FaceType neighbor)
         {
             //air means no geometry to render
@@ -212,125 +286,8 @@ namespace OurCraft.Blocks
             //otherwise, show face
             return true;
         }
-        //-------------------------------------------------
-
-        //----mesh building helpers---------
-        //helper for adding a full cube face
-        private static void AddFullFace(Vector3 pos, CubeFaces faceType, int textureID, ChunkMeshData mesh)
-        {
-            //bottom (-Y)
-            if (faceType == CubeFaces.BOTTOM)
-                AddQuad(pos,
-                    new Vector3(1.0f, 0.0f, 1.0f),
-                    new Vector3(0.0f, 0.0f, 1.0f),
-                    new Vector3(0.0f, 0.0f, 0.0f),
-                    new Vector3(1.0f, 0.0f, 0.0f),
-                    textureID, (byte)CubeFaces.BOTTOM.GetHashCode(), mesh);
-
-            //top (+Y)
-            else if (faceType == CubeFaces.TOP)
-                AddQuad(pos,
-                  new Vector3(1.0f, 1.0f, 0.0f),
-                  new Vector3(0.0f, 1.0f, 0.0f),
-                  new Vector3(0.0f, 1.0f, 1.0f),
-                  new Vector3(1.0f, 1.0f, 1.0f),
-                  textureID, (byte)CubeFaces.TOP.GetHashCode(), mesh);
-
-            // front (+Z)
-            else if (faceType == CubeFaces.FRONT)
-                AddQuad(pos,
-                    new Vector3(0.0f, 0.0f, 1.0f),
-                    new Vector3(1.0f, 0.0f, 1.0f),
-                    new Vector3(1.0f, 1.0f, 1.0f),
-                    new Vector3(0.0f, 1.0f, 1.0f),
-                    textureID, (byte)CubeFaces.FRONT.GetHashCode(), mesh);
-
-            // back (-Z)
-            else if (faceType == CubeFaces.BACK)
-                AddQuad(pos,
-                    new Vector3(1.0f, 0.0f, 0.0f),
-                    new Vector3(0.0f, 0.0f, 0.0f),
-                    new Vector3(0.0f, 1.0f, 0.0f),
-                    new Vector3(1.0f, 1.0f, 0.0f),
-                    textureID, (byte)CubeFaces.BACK.GetHashCode(), mesh);
-
-            // right (+X)
-            else if (faceType == CubeFaces.RIGHT)
-                AddQuad(pos,
-                    new Vector3(1.0f, 0.0f, 1.0f),
-                    new Vector3(1.0f, 0.0f, 0.0f),
-                    new Vector3(1.0f, 1.0f, 0.0f),
-                    new Vector3(1.0f, 1.0f, 1.0f),
-                    textureID, (byte)CubeFaces.RIGHT.GetHashCode(), mesh);
-
-            // left (-X)
-            else if (faceType == CubeFaces.LEFT)
-                AddQuad(pos,
-                    new Vector3(0.0f, 0.0f, 0.0f),
-                    new Vector3(0.0f, 0.0f, 1.0f),
-                    new Vector3(0.0f, 1.0f, 1.0f),
-                    new Vector3(0.0f, 1.0f, 0.0f),
-                    textureID, (byte)CubeFaces.LEFT.GetHashCode(), mesh);
-        }
-
-        //specifies exact vertex coordinates for adding a quad
-        private static void AddQuad(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh)
-        {
-            mesh.AddChunkMeshData(new BlockVertex(pos + v0,
-            new Vector2(GetTextureX(texID), GetTextureY(texID)), normal));
-
-            mesh.AddChunkMeshData(new BlockVertex(pos + v1,
-            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID)), normal));
-
-            mesh.AddChunkMeshData(new BlockVertex(pos + v2,
-            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID) + NormalizedBlockTextureY()), normal));
-
-            mesh.AddChunkMeshData(new BlockVertex(pos + v3,
-            new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY()), normal));
-        }
-
-        //helps adding sides of slabs
-        private static void AddSlabSide(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh)
-        {
-            mesh.AddChunkMeshData(new BlockVertex(pos + v0,
-            new Vector2(GetTextureX(texID), GetTextureY(texID)), normal));
-
-            mesh.AddChunkMeshData(new BlockVertex(pos + v1,
-            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID)), normal));
-
-            mesh.AddChunkMeshData(new BlockVertex(pos + v2,
-            new Vector2(GetTextureX(texID) + NormalizedBlockTextureX(), GetTextureY(texID) + NormalizedBlockTextureY() / 2), normal));
-
-            mesh.AddChunkMeshData(new BlockVertex(pos + v3,
-            new Vector2(GetTextureX(texID), GetTextureY(texID) + NormalizedBlockTextureY() / 2), normal));
-        }
-        //----------------------------------
-
-        //gets the opposite cube face of a specified face
-        private static CubeFaces Opposite(CubeFaces face)
-        {
-            switch (face)
-            {
-                case CubeFaces.BOTTOM:
-                    return CubeFaces.TOP;
-                case CubeFaces.TOP:
-                    return CubeFaces.BOTTOM;
-                case CubeFaces.FRONT:
-                    return CubeFaces.BACK;
-                case CubeFaces.BACK:
-                    return CubeFaces.FRONT;
-                case CubeFaces.RIGHT:
-                    return CubeFaces.LEFT;
-                case CubeFaces.LEFT:
-                    return CubeFaces.RIGHT;
-                default:
-                    return CubeFaces.BOTTOM;
-            }
-        }
 
         //-------texture getters----------
-        //gets tex coords on x axis easily
-        //returns the texture coordinates in a very easy to use way
         private static float GetTextureX(int textureID)
         {
             int x = textureID % textureSizeInBlocksX;
@@ -344,7 +301,6 @@ namespace OurCraft.Blocks
             return texY;
         }
 
-        // normalized sizes (OpenGL UV coords)
         private static float NormalizedBlockTextureX()
         {
             return 1.0f / textureSizeInBlocksX;

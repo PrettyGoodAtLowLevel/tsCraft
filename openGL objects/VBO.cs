@@ -10,18 +10,19 @@ namespace OurCraft
     public struct BlockVertex
     {
         //assumes in local chunk coordinates
-        public BlockVertex(Vector3 pos, Vector2 uv, byte normal)
+        public BlockVertex(Vector3 pos, Vector2 uv, byte normal, byte ao = 0)
         {
             x = EncodeToShort(pos.X);
             y = pos.Y;
             z = EncodeToShort(pos.Z);
             texUV = new Vector2h(uv);
             this.normal = normal;
+            this.ao = ao;
         }
 
         //byte location = 0
         public short x; //since only 0-31 coords, short works fine
-        public float y; //but since 0-383 coords, float would be better
+        public float y; //but since 0-383 coords, float would be better, short still works but less presicion
         public short z;
 
         //byte location = 8

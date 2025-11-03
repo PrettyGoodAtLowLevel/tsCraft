@@ -6,6 +6,7 @@ using OurCraft.Blocks.Block_Properties;
 using static OurCraft.Rendering.Camera;
 using OurCraft.World.Terrain_Generation.SurfaceFeatures;
 using System.Diagnostics;
+using OurCraft.Blocks.Meshing;
 
 namespace OurCraft.World
 {
@@ -179,7 +180,8 @@ namespace OurCraft.World
         }
 
         //creates all subchunk mesh data
-        public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
+        public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
+            Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {           
             if (state != ChunkState.VoxelOnly) return;
 
@@ -187,7 +189,7 @@ namespace OurCraft.World
 
             foreach (var subChunk in subChunks)
             {
-                subChunk.CreateChunkMesh(leftC, rightC, frontC, backC);
+                subChunk.CreateChunkMesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
             }
             state = ChunkState.Meshed;
 
@@ -207,11 +209,11 @@ namespace OurCraft.World
             sw.Stop();
             int buildTime = (int)sw.ElapsedMilliseconds;
 
-            Console.WriteLine("\nChunk (" + Pos.X + ", " + Pos.Z + ") creation Stats:");
-            Console.WriteLine("Voxel Creation Time: " + voxelCreationTime + " ms");
-            Console.WriteLine("Mesh Creation Time: " + meshCreationTime + " ms");
-            Console.WriteLine("Build Time: " + buildTime + " ms");
-            Console.WriteLine("Total Creation Time: " + (voxelCreationTime + meshCreationTime + buildTime) + " ms");
+            //Console.WriteLine("\nChunk (" + Pos.X + ", " + Pos.Z + ") creation Stats:");
+            //Console.WriteLine("Voxel Creation Time: " + voxelCreationTime + " ms");
+            //Console.WriteLine("Mesh Creation Time: " + meshCreationTime + " ms");
+            //Console.WriteLine("Build Time: " + buildTime + " ms");
+            //Console.WriteLine("Total Creation Time: " + (voxelCreationTime + meshCreationTime + buildTime) + " ms");
         }
         
         //combines the vertex data into one big mesh for solid geometry
@@ -371,16 +373,16 @@ namespace OurCraft.World
         }
 
         //remesh subchunks that are effected by a block being broken or placed
-        public void Remesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, int globalY)
+        public void Remesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4, int globalY)
         {
             //get subchunk position for remeshing
             int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
             int localY = globalY % SubChunk.SUBCHUNK_SIZE;
 
             //remesh this subchunk and adjacent subchunks if on a subchunk edge
-            subChunks[subChunkY].Remesh(leftC, rightC, frontC, backC);
-            if (localY == SubChunk.SUBCHUNK_SIZE - 1 && subChunkY >= SUBCHUNK_COUNT) subChunks[subChunkY + 1].Remesh(leftC, rightC, frontC, backC);
-            if (localY == 0 && subChunkY - 1 >= 0) subChunks[subChunkY - 1].Remesh(leftC, rightC, frontC, backC);
+            subChunks[subChunkY].Remesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            if ((localY == SubChunk.SUBCHUNK_SIZE - 1) && globalY < CHUNK_HEIGHT - SubChunk.SUBCHUNK_SIZE) subChunks[subChunkY + 1].Remesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            if (localY == 0 && subChunkY - 1 >= 0) subChunks[subChunkY - 1].Remesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
 
             batchedMesh.ClearMesh();
             SendMeshToOpenGL();
@@ -540,41 +542,92 @@ namespace OurCraft.World
 
         //tries to create the mesh data
         //this is also about to get nuked next update
-        public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
+        public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
             if (isAllAir) return; //dont create mesh if chunk is completely air                  
             for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--)
                 for (int x = SUBCHUNK_SIZE - 1; x >= 0; x--)
                     for (int z = SUBCHUNK_SIZE - 1; z >= 0; z--)
                     {
-                        AddVoxelDataToChunk(new Vector3(x, y, z), new Vector3(x, YPos * SUBCHUNK_SIZE + y, z), leftC, rightC, frontC, backC);
+                        AddMeshDataToChunk(new Vector3(x, y, z), new Vector3(x, YPos * SUBCHUNK_SIZE + y, z), leftC, rightC, frontC, backC, c1, c2, c3, c4);
                     }
             SolidGeo.vertices.TrimExcess();
         }
 
         //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks
         //this is about to get nuked next update
-        public void AddVoxelDataToChunk(Vector3 pos, Vector3 meshPos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
+        public void AddMeshDataToChunk(Vector3 pos, Vector3 meshPos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {            
             Block block = BlockData.GetBlock(GetBlockState((int)pos.X, (int)pos.Y, (int)pos.Z).BlockID);
+            if (block.blockShape is EmptyBlockShape) return;
+
             BlockState state = GetBlockState((int)pos.X, (int)pos.Y, (int)pos.Z);
 
             //get neighbor blocks
-            BlockState top = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 1, 0, leftC, rightC, frontC, backC);
-            BlockState bottom = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, -1, 0, leftC, rightC, frontC, backC);
-            BlockState front = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, 1, leftC, rightC, frontC, backC);
-            BlockState back = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, -1, leftC, rightC, frontC, backC);
-            BlockState left = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, -1, 0, 0, leftC, rightC, frontC, backC);
-            BlockState right = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 1, 0, 0, leftC, rightC, frontC, backC);
+            BlockState top = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 1, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            BlockState bottom = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, -1, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            BlockState front = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, 1, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            BlockState back = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, -1, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            BlockState left = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, -1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            BlockState right = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
 
-            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, SolidGeo, state);
+            if (top.GetBlock.blockShape.IsFullBlock && bottom.GetBlock.blockShape.IsFullBlock
+            && front.GetBlock.blockShape.IsFullBlock && back.GetBlock.blockShape.IsFullBlock &&
+            left.GetBlock.blockShape.IsFullBlock && right.GetBlock.blockShape.IsFullBlock)
+                return;
+
+            VoxelAOData aoData = GetVoxelAOData(pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, SolidGeo, state, aoData);
+        }
+
+        private VoxelAOData GetVoxelAOData(Vector3 pos,
+        Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
+        Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        {
+            VoxelAOData ao = new VoxelAOData();
+            int x = (int)pos.X;
+            int y = (int)pos.Y;
+            int z = (int)pos.Z;
+
+            //helper to get neighbor block safely
+            BlockState N(int ox, int oy, int oz) => GetNeighborBlockSafe(x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            
+            //top face + top corners
+            ao.topFront = N(0, +1, +1).GetBlock.IsSolid;
+            ao.topBack = N(0, +1, -1).GetBlock.IsSolid;
+            ao.topLeft = N(-1, +1, 0).GetBlock.IsSolid;
+            ao.topRight = N(+1, +1, 0).GetBlock.IsSolid;
+
+            ao.topBackLeft = N(-1, +1, -1).GetBlock.IsSolid;  //back-left
+            ao.topBackRight = N(+1, +1, -1).GetBlock.IsSolid; //back-right
+            ao.topFrontLeft = N(-1, +1, +1).GetBlock.IsSolid; //front-left
+            ao.topFrontRight = N(+1, +1, +1).GetBlock.IsSolid;//front-right
+
+            //bottom face + bottom corners
+            ao.bottomFront = N(0, -1, +1).GetBlock.IsSolid;
+            ao.bottomBack = N(0, -1, -1).GetBlock.IsSolid;
+            ao.bottomLeft = N(-1, -1, 0).GetBlock.IsSolid;
+            ao.bottomRight = N(+1, -1, 0).GetBlock.IsSolid;
+
+            ao.bottomBackLeft = N(-1, -1, -1).GetBlock.IsSolid;  //back-left
+            ao.bottomBackRight = N(+1, -1, -1).GetBlock.IsSolid; //back-right
+            ao.bottomFrontLeft = N(-1, -1, +1).GetBlock.IsSolid; //front-left
+            ao.bottomFrontRight = N(+1, -1, +1).GetBlock.IsSolid;//front-right
+
+            //side corners
+            ao.backLeft = N(-1, 0, -1).GetBlock.IsSolid;  //back-left
+            ao.backRight = N(+1, 0, -1).GetBlock.IsSolid; //back-right
+            ao.frontLeft = N(-1, 0, +1).GetBlock.IsSolid; //front-left
+            ao.frontRight = N(+1, 0, +1).GetBlock.IsSolid;//front-right
+
+            return ao;
         }
 
         //rebuilds the subchunk mesh data when modifying a block
-        public void Remesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
+        public void Remesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {          
             ClearMesh();
-            CreateChunkMesh(leftC, rightC, frontC, backC);
+            CreateChunkMesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
         }
 
         //clears the mesh data
@@ -613,33 +666,60 @@ namespace OurCraft.World
             blockIndices.Set(index, paletteIndex);
         }
 
-        //helper to fetch neighbor types safely
-        public BlockState GetNeighborBlockSafe(int x, int y, int z, int offsetX, int offsetY, int offsetZ, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
+        //helper to fetch neighbor types safely — now supports corner chunks (c1..c4)
+        public BlockState GetNeighborBlockSafe(int x, int y, int z, int offsetX, int offsetY, int offsetZ,
+        Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
             int nx = x + offsetX;
             int ny = YPos * SUBCHUNK_SIZE + y + offsetY; //global Y
             int nz = z + offsetZ;
 
-            // out of world bounds
-            if (ny < 0 || ny >= Chunk.CHUNK_HEIGHT)
+            //out of world bounds (vertical)
+            if (ny < 0 || ny >= 384)
                 return new BlockState(BlockIDs.AIR_BLOCK);
 
+            // start with this chunk as default
             Chunk? targetChunk = parent;
 
-            //X-axis neighbors
-            if (nx < 0) targetChunk = leftC;
-            else if (nx >= SUBCHUNK_SIZE) targetChunk = rightC;
+            bool nxLeft = nx < 0;
+            bool nxRight = nx >= SUBCHUNK_SIZE;
+            bool nzBack = nz < 0;
+            bool nzFront = nz >= SUBCHUNK_SIZE;
 
-            //Z-axis neighbors
-            if (nz < 0) targetChunk = backC;
-            else if (nz >= SUBCHUNK_SIZE) targetChunk = frontC;
+            //if diagonal: prefer corner chunks
+            if (nxLeft && nzBack)
+            {
+                targetChunk = c1; //back-left
+            }
+            else if (nxRight && nzBack)
+            {
+                targetChunk = c2; //back-right
+            }
+            else if (nxLeft && nzFront)
+            {
+                targetChunk = c3; //front-right
+            }
+            else if (nxRight && nzFront)
+            {
+                targetChunk = c4; //front-left
+            }
+            else
+            {
+                //non-diagonal: choose along X or Z
+                if (nxLeft) targetChunk = leftC;
+                else if (nxRight) targetChunk = rightC;
+
+                if (nzBack) targetChunk = backC;
+                else if (nzFront) targetChunk = frontC;
+            }
 
             if (targetChunk == null || !targetChunk.HasVoxelData())
                 return new BlockState(BlockIDs.AIR_BLOCK);
 
             //convert to local coordinates inside target chunk/subchunk
-            int localX = (nx + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
-            int localZ = (nz + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
+            //this handles -1 -> SUBCHUNK_SIZE-1 mapping etc.
+            int localX = ((nx % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
+            int localZ = ((nz % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
 
             return targetChunk.GetBlockSafe(localX, ny, localZ);
         }

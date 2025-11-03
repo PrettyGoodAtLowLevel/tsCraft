@@ -91,12 +91,14 @@ namespace OurCraft.Rendering
             IntPtr zPosOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.z));
             IntPtr uvOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.texUV));
             IntPtr normalOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.normal));
+            IntPtr aoOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.ao));
 
             vao.LinkAttrib(vbo, 0, 1, VertexAttribPointerType.Short, false, stride, xPosOffset);
             vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.Float, false, stride, yPosOffset);
             vao.LinkAttrib(vbo, 2, 1, VertexAttribPointerType.Short, false, stride, zPosOffset);
             vao.LinkAttrib(vbo, 3, 2, VertexAttribPointerType.HalfFloat, false, stride, uvOffset);
             vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
+            vao.LinkAttribInt(vbo, 5, 1, VertexAttribIntegerType.UnsignedByte, stride, aoOffset);
 
             vao.Unbind();
             vbo.Unbind();

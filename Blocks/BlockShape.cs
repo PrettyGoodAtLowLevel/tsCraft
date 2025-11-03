@@ -45,10 +45,11 @@ namespace OurCraft.Blocks
         public int BackFaceTex { get; set; } = 0;
         public int RightFaceTex { get; set; } = 0;
         public int LeftFaceTex { get; set; } = 0;
+        public bool IsFullBlock { get; set; } = false;
 
         //how does this block shape get added to the world based on state
         public virtual void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top,
-        BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState)
+        BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aoData)
         { }
 
         //gets the face type from a specified block state

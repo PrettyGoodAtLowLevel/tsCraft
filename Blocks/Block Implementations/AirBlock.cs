@@ -7,6 +7,8 @@ namespace OurCraft.Blocks.Block_Implementations
     {
         public AirBlock(string name, BlockShape shape, ushort id) :
         base(name, shape, id)
-        { }
+        {
+            IsSolid = false;
+        }
     }
 }

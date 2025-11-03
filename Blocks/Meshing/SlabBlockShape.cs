@@ -8,18 +8,18 @@ namespace OurCraft.Blocks.Meshing
     //half block shape, a little more complex
     public class SlabBlockShape : BlockShape
     {
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState)
+        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aOData)
         {
             SlabType type = thisState.GetProperty(SlabBlock.SLAB_TYPE);
 
             if (type == SlabType.Double) BlockMeshBuilder.BuildFullBlock(pos, bottom, top, front, back, right, left, thisState,
-            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh);
+            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh, aOData);
 
             else if (type == SlabType.Top) BlockMeshBuilder.BuildSlab(pos, bottom, top, front, back, right, left, thisState,
-            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh, false);
+            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh, false, aOData);
 
             else BlockMeshBuilder.BuildSlab(pos, bottom, top, front, back, right, left, thisState,
-            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh, true);
+            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh, true, aOData);
         }
 
         //getting the face for the slab based on block state

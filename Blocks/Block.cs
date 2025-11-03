@@ -12,6 +12,7 @@ namespace OurCraft.Blocks
         //block data
         protected string name = "";       
         protected ushort id = 0;
+        public bool IsSolid = true;
 
         //texture ids
         public BlockShape blockShape;

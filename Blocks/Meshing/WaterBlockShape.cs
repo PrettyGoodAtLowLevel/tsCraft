@@ -17,10 +17,10 @@ namespace OurCraft.Blocks.Meshing
         }
 
         //basic water mesh
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState)
+        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aOData)
         {
-            BlockMeshBuilder.BuildFullWater(pos, bottom, top, front, back, right, left, thisState,
-            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh);
+            BlockMeshBuilder.BuildFullBlock(pos, bottom, top, front, back, right, left, thisState,
+            BottomFaceTex, TopFaceTex, FrontFaceTex, BackFaceTex, RightFaceTex, LeftFaceTex, mesh, aOData);
         }
     }
 }

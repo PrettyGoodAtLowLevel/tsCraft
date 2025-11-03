@@ -20,7 +20,6 @@ namespace OurCraft.Rendering
         private readonly Shader postShader = new Shader(); 
         private readonly FullscreenQuad postProcessingQuad;
         private int screenWidth, screenHeight;
-
         public Renderer(ref Chunkmanager chunks, ref Camera cam, int width, int height)
         {
             //assign values create shaders
@@ -40,9 +39,8 @@ namespace OurCraft.Rendering
         }
 
         //draws a frame in a current world
-        public void RenderSceneFrame(float time)
+        public void RenderSceneFrame(float time, float deltaTime)
         {
-            
             //render all chunks to postFBO
             postFBO.Bind();
             ClearScene();
@@ -54,9 +52,10 @@ namespace OurCraft.Rendering
             postShader.Activate();
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, postFBO.ColorTexture);
-            postProcessingQuad.Draw();
-            
+            postProcessingQuad.Draw();           
         }
+
+
 
         //draws chunks without any post processing
         private void DrawRawChunks(float time)
@@ -136,7 +135,6 @@ namespace OurCraft.Rendering
             shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE - 20);
             shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE);
             shader.SetFloat("fogDensity", 0.5f);
-
             
             //-----post processing----
             //tweak for weird screen effects
@@ -159,6 +157,16 @@ namespace OurCraft.Rendering
             GL.CullFace(TriangleFace.Back);
             GL.Enable(EnableCap.FramebufferSrgb);
             GL.Viewport(0, 0, width, height);
+        }
+
+        public void ToggleAOOff()
+        {            
+            shader.SetBool("useAO", false);  
+        }
+
+        public void ToggleAOOn()
+        {
+            shader.SetBool("useAO", true);
         }
 
         //gets all the visible chunks

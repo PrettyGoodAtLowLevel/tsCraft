@@ -10,10 +10,13 @@ namespace OurCraft.World.Terrain_Generation
         public const int SEA_LEVEL = 126;
         public const int MIN_HEIGHT = 90;
         public const int MAX_HEIGHT = 320;
+        public static bool FlatWorld = true;
 
         //determines low fidelity shape of terrain
         public static NoiseRegion GetTerrainRegion(int x, int z)
         {
+            if (FlatWorld) return new NoiseRegion(130, 0, BiomeData.Plains, 0);
+
             //get terrain shaping noises
             float continentalness = NoiseRouter.GetRegionalNoise(x, z);
             float erosion = NoiseRouter.GetErosionNoise(x, z);
@@ -93,9 +96,9 @@ namespace OurCraft.World.Terrain_Generation
         //for optimization purposes
         public static int GetMaxDepth(float amp)
         {
-            if (amp < 7.5)
+            if (amp < 7.5f)
                 return 10;
-            else if (amp < 50)
+            else if (amp < 50.5f)
                 return 60;
             else
                 return 150;

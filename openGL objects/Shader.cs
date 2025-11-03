@@ -45,7 +45,7 @@ namespace OurCraft
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
         }
-
+        
         //activate shader
         public void Activate()
         {
@@ -65,6 +65,7 @@ namespace OurCraft
         //changes a uniform bool value
         public void SetBool(string name, bool value)
         {
+            this.Activate();
             int loc = GL.GetUniformLocation(ID, name);
             int val = value == true ? 1 : 0;
             GL.Uniform1(loc, val);
