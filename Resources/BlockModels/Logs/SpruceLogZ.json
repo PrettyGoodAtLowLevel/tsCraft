@@ -1,0 +1,66 @@
+{
+  "Name": "spruce_log_z",
+  "IsTranslucent": false,
+  "AOSupport": true,
+
+  "FaceCull": {
+    "Bottom": "FullBlock",
+    "Top": "FullBlock",
+    "Front": "FullBlock",
+    "Back": "FullBlock",
+    "Right": "FullBlock",
+    "Left": "FullBlock"
+  },
+
+  "Elements": [
+    {
+      "From": [ 0, 0, 0 ],
+      "To": [ 16, 16, 16 ],
+
+      "Faces": {
+        "Top": {
+          "Texture": "Spruce_Log_Side",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Top",
+          "AO": true
+        },
+        "Bottom": {
+          "Texture": "Spruce_Log_Side",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Bottom",
+          "AO": true
+        },
+        "Front": {
+          "Texture": "Spruce_Log_Top",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Front",
+          "AO": true
+        },
+        "Back": {
+          "Texture": "Spruce_Log_Top",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Back",
+          "AO": true
+        },
+        "Right": {
+          "Texture": "Spruce_Log_Side",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Right",
+          "AO": true
+        },
+        "Left": {
+          "Texture": "Spruce_Log_Side",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Left",
+          "AO": true
+        }
+      }
+    }
+  ]
+}
