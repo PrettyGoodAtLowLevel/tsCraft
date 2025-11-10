@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Folder Include="Game Heirarchy\" />
+    <Folder Include="Resources\Data\WorldGen\Biomes\" />
   </ItemGroup>
 
 </Project>

@@ -73,7 +73,8 @@ namespace OurCraft.World.Terrain_Generation
             InitializeBiomeTable();
             PropagateBiomeTable();
 
-            //debug test for biome table propagation          
+            //debug test for biome table propagation
+            /*
             for (int t = 0; t < 5; t++)
             {
                 for (int h = 0; h < 5; h++)
@@ -83,7 +84,8 @@ namespace OurCraft.World.Terrain_Generation
                         Console.WriteLine($"{(TemperatureIndex)t}, {(HumidityIndex)h}, {(VegetationIndex)v} = {biomeTable[t, h, v].Name}");
                     }
                 }
-            }           
+            }     
+            */
         }
 
         //get the biome

@@ -40,7 +40,7 @@ namespace OurCraft
             GL.AttachShader(ID, fragmentShader);
             GL.LinkProgram(ID);
             CheckProgramLink(ID);
-
+            
             //after fully compiled on gpu no reason to keep this extra data
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);

@@ -19,14 +19,14 @@ namespace OurCraft.Blocks
     public enum FaceType
     {
         AIR,
-        FULL,           //regular cube face
+        FULLBLOCK,           //regular cube face
         CUTOUT,         //things like stairs
-        BOTTOM_SLAB,    //botom part of slab
-        TOP_SLAB,       //top slab
+        BOTTOMSLAB,    //botom part of slab
+        TOPSLAB,       //top slab
         INDENTED,       //faces that are not on the edge of a cube 
         WATER,          //water (duh)
-        WATER_TOP,
-        WATER_BOTTOM,
+        WATERTOP,
+        WATERBOTTOM,
         GLASS,          //duh
         LEAVES,
     }
@@ -35,17 +35,10 @@ namespace OurCraft.Blocks
     public abstract class BlockShape
     {
         public BlockShape()
-        {
-          
-        }
+        { }
 
-        public int BottomFaceTex { get; set; } = 0;
-        public int TopFaceTex { get; set; } = 0;
-        public int FrontFaceTex { get; set; } = 0;
-        public int BackFaceTex { get; set; } = 0;
-        public int RightFaceTex { get; set; } = 0;
-        public int LeftFaceTex { get; set; } = 0;
-        public bool IsFullBlock { get; set; } = false;
+        public bool IsFullOpaqueBlock { get; set; } = false;
+        public bool IsTranslucent { get; set; } = false;
 
         //how does this block shape get added to the world based on state
         public virtual void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top,
@@ -53,6 +46,39 @@ namespace OurCraft.Blocks
         { }
 
         //gets the face type from a specified block state
-        public virtual FaceType GetBlockFace(CubeFaces faceSide, BlockState state) { return FaceType.FULL; }
+        public virtual FaceType GetBlockFace(CubeFaces faceSide, BlockState state) { return FaceType.FULLBLOCK; }
+
+        //helpers for getting faces
+        public static CubeFaces FaceNameToCubeFace(string name)
+        {
+            switch (name)
+            {
+                case "Bottom":
+                    return CubeFaces.BOTTOM;
+                case "Top":
+                    return CubeFaces.TOP;
+                case "Front":
+                    return CubeFaces.FRONT;
+                case "Back":
+                    return CubeFaces.BACK;
+                case "Right":
+                    return CubeFaces.RIGHT;
+                case "Left":
+                    return CubeFaces.LEFT;
+                default:
+                    return CubeFaces.BOTTOM;
+            }
+        }
+
+        //get the current face type from json string value
+        public static FaceType FaceTypeFromString(string name)
+        {
+            return (FaceType)Enum.Parse(typeof(FaceType), name.ToUpper());
+        }
+
+        public static int GetTextureID(string name)
+        {
+            return TextureRegistry.GetTextureID(name);
+        }
     }
 }

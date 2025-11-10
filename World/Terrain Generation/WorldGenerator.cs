@@ -64,7 +64,7 @@ namespace OurCraft.World.Terrain_Generation
             //distance from surface (positive below surface, negative above)
             float surfaceDist = control.heightOffset - y;
 
-            //early-out optimization: beyond influence range
+            //early-out optimization beyond influence range
             if (surfaceDist < -control.maxDepth) return -1f; //far above terrain
             if (surfaceDist > control.maxDepth) return 1f;   //deep underground
 

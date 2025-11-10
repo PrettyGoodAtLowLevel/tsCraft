@@ -54,6 +54,14 @@ namespace OurCraft
             //scale to short range
             return (short)(normalized * short.MaxValue);
         }
+
+        public static float DecodeFromShort(short encoded, float chunkSize = (float)SubChunk.SUBCHUNK_SIZE)
+        {
+            //convert short back to normalized [0, 1) range
+            float normalized = encoded / (float)short.MaxValue;
+            //scale back to [0, chunkSize) range
+            return normalized * chunkSize;
+        }
     }
 
     //holds vertex data for openGL

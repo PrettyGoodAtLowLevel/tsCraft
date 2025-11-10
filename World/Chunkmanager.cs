@@ -376,7 +376,7 @@ namespace OurCraft.World
         }
 
         //gets the chunk the player is in
-        private ChunkCoord GetPlayerChunk()
+        public ChunkCoord GetPlayerChunk()
         {
             //get int player position
             int pX = (int)Math.Floor(player.Position.X);
@@ -391,6 +391,14 @@ namespace OurCraft.World
             if (pZ < 0) chunkZ -= 1;
 
             return new ChunkCoord(chunkX, chunkZ);
+        }
+
+        //get refrence to the chunk the player is in
+        public Chunk? GetChunkPlayerIsIn()
+        {
+            Chunk? chunk = GetChunk(GetPlayerChunk());
+            if (chunk == null) return null;
+            return chunk;
         }
 
         //checks if a chunk is too far away from player and should be unrendered

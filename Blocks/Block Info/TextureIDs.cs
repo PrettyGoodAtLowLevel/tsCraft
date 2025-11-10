@@ -23,7 +23,7 @@
         public static readonly int cobbleStoneTex = 26;
 
         //water        
-        public static readonly int blueWoolTex = 333;
+        public static readonly int waterTex = 387;
 
         //------tree blocks------------
 
@@ -57,6 +57,81 @@
         public static readonly int deadBushTex = 136;
 
         //--------building blocks-----------
-        public static readonly int glassTex = 152;      
+        public static readonly int glassTex = 152;
+        public static readonly int whiteGlassTex = 367;
+        public static readonly int purpleGlassTex = 368;
     }
+
+    public static class TextureRegistry
+    {
+        private static readonly Dictionary<string, int> textureMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            //-------- Terrain Blocks --------
+            { "Grass_Top", TextureIDs.grassTopTex },
+            { "Snow_Grass_Side", TextureIDs.snowGrassSideTex },
+            { "Dirt", TextureIDs.dirtTex },
+            { "Gravel", TextureIDs.gravelTex },
+            { "Grass_Side", TextureIDs.grassSideTex },
+            { "Snow", TextureIDs.snowTex },
+            { "Ice", TextureIDs.iceTex },
+            { "Sand", TextureIDs.sandTex },
+            { "Cactus_Top", TextureIDs.cactusTopTex },
+            { "Cactus_Side", TextureIDs.cactusSideTex },
+            { "Cactus_Bottom", TextureIDs.cactusBottomTex },
+
+            //-------- Stone Blocks --------
+            { "Stone", TextureIDs.stoneTex },
+            { "Cobblestone", TextureIDs.cobbleStoneTex },
+
+            // -------- Water --------
+            { "Water", TextureIDs.waterTex },
+
+            //-------- Oak Tree --------
+            { "Oak_Log_Side", TextureIDs.oakLogSideTex },
+            { "Oak_Log_Top", TextureIDs.oakLogTopTex },
+            { "Oak_Leaves", TextureIDs.oakLeavesTex },
+            { "Oak_Planks", TextureIDs.oakPlanksTex },
+
+            //-------- Spruce Tree --------
+            { "Spruce_Log_Side", TextureIDs.spruceLogSideTex },
+            { "Spruce_Log_Top", TextureIDs.spruceLogTopTex },
+            { "Spruce_Leaves", TextureIDs.spruceLeavesTex },
+            { "Spruce_Planks", TextureIDs.sprucePlanksTex },
+
+            //-------- Birch Tree --------
+            { "Birch_Log_Side", TextureIDs.birchLogSideTex },
+            { "Birch_Log_Top", TextureIDs.birchLogTopTex },
+            { "Birch_Leaves", TextureIDs.birchLeavesTex },
+            { "Birch_Planks", TextureIDs.birchPlanksTex },
+
+            //-------- Jungle Tree --------
+            { "Jungle_Log_Side", TextureIDs.jungleLogSideTex },
+            { "Jungle_Log_Top", TextureIDs.jungleLogTopTex },
+            { "Jungle_Leaves", TextureIDs.jungleLeavesTex },
+            { "Jungle_Planks", TextureIDs.junglePlanksTex },
+
+            //-------- X-Shaped Plants --------
+            { "Rose", TextureIDs.roseTex },
+            { "Grass_X", TextureIDs.xGrassTex },
+            { "Dead_Bush", TextureIDs.deadBushTex },
+
+            //-------- Building Blocks --------
+            { "Glass", TextureIDs.glassTex },
+            { "White_Glass", TextureIDs.whiteGlassTex },
+            { "Purple_Glass", TextureIDs.purpleGlassTex },
+        };
+
+        //returns the integer texture ID for a given name.
+        //throws if not found.
+        public static int GetTextureID(string name)
+        {
+            if (!textureMap.TryGetValue(name, out int id))
+                throw new KeyNotFoundException($"Texture name not found in registry: '{name}'");
+            return id;
+        }
+
+        //returns true if the texture name exists.
+        public static bool HasTexture(string name) => textureMap.ContainsKey(name);
+    }
+
 }

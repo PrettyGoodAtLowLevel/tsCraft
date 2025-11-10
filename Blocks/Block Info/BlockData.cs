@@ -1,5 +1,5 @@
 ﻿using OurCraft.Blocks.Block_Implementations;
-using OurCraft.Blocks.BlockShapeRegistry;
+using OurCraft.Blocks.BlockShapeData;
 
 //contains all the indexes and data for each different block type
 namespace OurCraft.Blocks
@@ -10,8 +10,8 @@ namespace OurCraft.Blocks
     public static class BlockData
     {
         //all blocks
-        static readonly List<Block> blocks = new();
-        public static int MAXBLOCKID;
+        static readonly List<Block> blocks = [];
+        public static int MAXBLOCKID { get; private set; }
 
         //register all of the blocks
         public static void InitBlocks()

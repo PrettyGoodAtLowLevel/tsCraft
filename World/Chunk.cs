@@ -94,7 +94,8 @@ namespace OurCraft.World
         //cam, batchedMesh - rendering info, batchedMesh combines mesh data into one big buffer, mesh data is seperate so update times are fast, with minimal draw calls
 
         //rendering
-        readonly ChunkMesh batchedMesh;
+        public readonly ChunkMesh batchedMesh;
+        public readonly ChunkMesh transparentMesh;
 
         int voxelCreationTime = 0;
         int meshCreationTime = 0;
@@ -118,6 +119,7 @@ namespace OurCraft.World
             Pos = coord;
             state = ChunkState.Initialized;
             batchedMesh = new ChunkMesh();
+            transparentMesh = new ChunkMesh();
 
             //initialize subchunks
             for (int i = 0; i < SUBCHUNK_COUNT; i++)
@@ -205,6 +207,7 @@ namespace OurCraft.World
 
             Stopwatch sw = Stopwatch.StartNew();
             UploadSolidMesh();
+            UploadTranparentMesh();
             state = ChunkState.Built;
             sw.Stop();
             int buildTime = (int)sw.ElapsedMilliseconds;
@@ -250,10 +253,49 @@ namespace OurCraft.World
             batchedMesh.transform.SetPosition(new Vector3(Pos.X * SubChunk.SUBCHUNK_SIZE, 0, Pos.Z * SubChunk.SUBCHUNK_SIZE));
         }
 
+        private void UploadTranparentMesh()
+        {
+            //compute size upfront
+            int totalVertexCount = 0;
+
+            foreach (var subChunk in subChunks)
+            {
+                totalVertexCount += subChunk.TransparentGeo.vertices.Count;
+            }
+
+            //preallocate size
+            var totalVertices = new List<BlockVertex>(totalVertexCount);
+
+            int vertexOffset = 0;
+
+            //append mesh data
+            foreach (var subChunk in subChunks)
+            {
+                ChunkMeshData geo = subChunk.TransparentGeo;
+                if (geo.vertices.Count == 0)
+                    continue;
+
+                //append vertices
+                totalVertices.AddRange(geo.vertices);
+
+                vertexOffset += geo.vertices.Count;
+            }
+
+            //mesh upload
+            transparentMesh.SetupMesh(totalVertices);
+            transparentMesh.transform.SetPosition(new Vector3(Pos.X * SubChunk.SUBCHUNK_SIZE, 0, Pos.Z * SubChunk.SUBCHUNK_SIZE));
+        }
+
         //draws all the subchunk opaque meshes
         public void Draw(Shader shader, Camera camera)
         {
-            batchedMesh.Draw(shader, camera);
+            batchedMesh.Draw(shader, camera);       
+        }
+
+        //draws all of the transparent stuff in a subchunk
+        public void DrawTransparent(Shader shader, Camera camera)
+        {
+            transparentMesh.Draw(shader, camera);
         }
 
         //makes all subchunk meshes empty
@@ -264,6 +306,7 @@ namespace OurCraft.World
                 subChunk.ClearMesh();
             }
             batchedMesh.ClearMesh();
+            transparentMesh.ClearMesh();
             state = ChunkState.VoxelOnly;
         }
 
@@ -276,6 +319,7 @@ namespace OurCraft.World
                 subChunk.Delete();
             }
             batchedMesh.Delete();
+            transparentMesh.Delete();
         }
 
         //getters
@@ -385,6 +429,7 @@ namespace OurCraft.World
             if (localY == 0 && subChunkY - 1 >= 0) subChunks[subChunkY - 1].Remesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
 
             batchedMesh.ClearMesh();
+            transparentMesh.ClearMesh();          
             SendMeshToOpenGL();
         }
 
@@ -421,6 +466,7 @@ namespace OurCraft.World
         public int YPos { get; private set; } = 0;
         readonly Chunk parent;
         public ChunkMeshData SolidGeo { get; private set; }
+        public ChunkMeshData TransparentGeo { get; private set; }
 
         //basic constructor
         public SubChunk(Chunk parent, int yPos)
@@ -430,6 +476,7 @@ namespace OurCraft.World
             palette = new BlockPalette();
             blockIndices = new ByteBlockStorage(SUBCHUNK_SIZE * SUBCHUNK_SIZE * SUBCHUNK_SIZE);
             SolidGeo = new ChunkMeshData();
+            TransparentGeo = new ChunkMeshData();
         }
 
         //create base density map - stone vs air
@@ -552,6 +599,7 @@ namespace OurCraft.World
                         AddMeshDataToChunk(new Vector3(x, y, z), new Vector3(x, YPos * SUBCHUNK_SIZE + y, z), leftC, rightC, frontC, backC, c1, c2, c3, c4);
                     }
             SolidGeo.vertices.TrimExcess();
+            TransparentGeo.vertices.TrimExcess();
         }
 
         //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks
@@ -571,13 +619,14 @@ namespace OurCraft.World
             BlockState left = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, -1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
             BlockState right = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
 
-            if (top.GetBlock.blockShape.IsFullBlock && bottom.GetBlock.blockShape.IsFullBlock
-            && front.GetBlock.blockShape.IsFullBlock && back.GetBlock.blockShape.IsFullBlock &&
-            left.GetBlock.blockShape.IsFullBlock && right.GetBlock.blockShape.IsFullBlock)
+            if (top.GetBlock.blockShape.IsFullOpaqueBlock && bottom.GetBlock.blockShape.IsFullOpaqueBlock
+            && front.GetBlock.blockShape.IsFullOpaqueBlock && back.GetBlock.blockShape.IsFullOpaqueBlock &&
+            left.GetBlock.blockShape.IsFullOpaqueBlock && right.GetBlock.blockShape.IsFullOpaqueBlock)
                 return;
 
             VoxelAOData aoData = GetVoxelAOData(pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, SolidGeo, state, aoData);
+            ChunkMeshData meshRef = block.blockShape.IsTranslucent ? TransparentGeo : SolidGeo;
+            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, meshRef, state, aoData);
         }
 
         private VoxelAOData GetVoxelAOData(Vector3 pos,
@@ -634,12 +683,14 @@ namespace OurCraft.World
         public void ClearMesh()
         {
             SolidGeo.ClearMesh();
+            TransparentGeo.ClearMesh();
         }
 
         //clears all the chunk mesh data
         public void Delete()
         {
             SolidGeo.ClearMesh();
+            TransparentGeo.ClearMesh();
         }
 
         //trys to get the block from a chunk

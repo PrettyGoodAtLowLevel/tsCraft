@@ -1,0 +1,66 @@
+{
+  "Name": "stone_slab_top",
+  "IsTranslucent": false,
+  "AOSupport": true,
+
+  "FaceCull": {
+    "Bottom": "Indented",
+    "Top": "FullBlock",
+    "Front": "TopSlab",
+    "Back": "TopSlab",
+    "Right": "TopSlab",
+    "Left": "TopSlab"
+  },
+
+  "Elements": [
+    {
+      "From": [ 0, 8, 0 ],
+      "To": [ 16, 16, 16 ],
+
+      "Faces": {
+        "Top": {
+          "Texture": "Stone",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Top",
+          "AO": true
+        },
+        "Bottom": {
+          "Texture": "Stone",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": false,
+          "CullAxis": "Bottom",
+          "AO": true
+        },
+        "Front": {
+          "Texture": "Stone",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Front",
+          "AO": true
+        },
+        "Back": {
+          "Texture": "Stone",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Back",
+          "AO": true
+        },
+        "Right": {
+          "Texture": "Stone",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Right",
+          "AO": true
+        },
+        "Left": {
+          "Texture": "Stone",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Left",
+          "AO": true
+        }
+      }
+    }
+  ]
+}

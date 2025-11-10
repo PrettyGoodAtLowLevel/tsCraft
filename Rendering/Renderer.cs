@@ -20,6 +20,8 @@ namespace OurCraft.Rendering
         private readonly Shader postShader = new Shader(); 
         private readonly FullscreenQuad postProcessingQuad;
         private int screenWidth, screenHeight;
+        public Vector3 skyColor = Vector3.Zero;
+
         public Renderer(ref Chunkmanager chunks, ref Camera cam, int width, int height)
         {
             //assign values create shaders
@@ -30,7 +32,7 @@ namespace OurCraft.Rendering
 
             //configure openGL and post processing
             ConfigureOpenGL(width, height);
-            postFBO = new FBO(width, height, true);           
+            postFBO = new FBO(width, height, true);
             postProcessingQuad = new FullscreenQuad();
           
             //load textures get fog working, set shaders   
@@ -60,7 +62,7 @@ namespace OurCraft.Rendering
         //draws chunks without any post processing
         private void DrawRawChunks(float time)
         {
-            //set camera position for proper fog and update shader time
+            //setup
             SetGeneralChunkShaderUniforms(time);
             UpdateCamera();
             ClearScene();
@@ -69,24 +71,44 @@ namespace OurCraft.Rendering
             //get visible chunks
             var visibleChunks = GetVisibleChunks();
 
-            //depth testing is true
-            DisableTransparency();
-            
-            //draw all opaque chunks and alpha tested blocks
+            //solids
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthMask(true);
+            GL.Disable(EnableCap.Blend);
+
             foreach (var chunk in visibleChunks)
             {
                 chunk.Draw(shader, sceneCamera);
             }
-         
-            //restore
+
+            //translucent pass
+            //weird depth managing but we only have water so its fine
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
+            GL.DepthMask(true);
+            GL.Enable(EnableCap.DepthTest);
+
+            //sort chunks by distance
+            visibleChunks.Sort((a, b) =>
+            {
+                float distA = (a.batchedMesh.transform.position - sceneCamera.Position).LengthSquared;
+                float distB = (b.batchedMesh.transform.position - sceneCamera.Position).LengthSquared;
+                return distA.CompareTo(distB);
+            });
+
+            foreach (var chunk in visibleChunks)
+            {
+                chunk.DrawTransparent(shader, sceneCamera);
+            }
+
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
         }
 
         //clear color scene and reset depth buffer
-        private static void ClearScene()
+        private void ClearScene()
         {
-            GL.ClearColor(0.5f, 0.7f, 0.8f, 1.0f);
+            GL.ClearColor(skyColor.X, skyColor.Y, skyColor.Z, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
 
@@ -114,24 +136,17 @@ namespace OurCraft.Rendering
             shader.SetVector3("cameraPos", sceneCamera.Position);
         }
 
-        //turn off transparency
-        private static void DisableTransparency()
-        {
-            GL.Enable(EnableCap.DepthTest);
-            GL.DepthMask(true);
-            GL.Disable(EnableCap.Blend);
-        }
-
         //make shaders work properly
         private void InitShaders()
         {
             //create all shaders
             shader.Create("default.vert", "default.frag");
             postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
+            skyColor = new Vector3(0.3f, 0.15f, 0.15f);
 
             //-----set up block shaders-----
             shader.Activate();
-            shader.SetVector3("fogColor", new Vector3(0.5f, 0.7f, 0.8f));
+            shader.SetVector3("skyColor", skyColor);
             shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE - 20);
             shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE);
             shader.SetFloat("fogDensity", 0.5f);
@@ -147,6 +162,7 @@ namespace OurCraft.Rendering
             postShader.SetFloat("tintIntensity", 0.1f);
             postShader.SetVector2("uResolution", new Vector2(screenWidth, screenHeight));
             postShader.SetFloat("aaStrength", 0.2f);
+            
         }
 
         //configure openGL properly

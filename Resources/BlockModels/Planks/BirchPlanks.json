@@ -1,0 +1,66 @@
+{
+  "Name": "birch_planks",
+  "IsTranslucent": false,
+  "AOSupport": true,
+
+  "FaceCull": {
+    "Bottom": "FullBlock",
+    "Top": "FullBlock",
+    "Front": "FullBlock",
+    "Back": "FullBlock",
+    "Right": "FullBlock",
+    "Left": "FullBlock"
+  },
+
+  "Elements": [
+    {
+      "From": [ 0, 0, 0 ],
+      "To": [ 16, 16, 16 ],
+
+      "Faces": {
+        "Top": {
+          "Texture": "Birch_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Top",
+          "AO": true
+        },
+        "Bottom": {
+          "Texture": "Birch_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Bottom",
+          "AO": true
+        },
+        "Front": {
+          "Texture": "Birch_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Front",
+          "AO": true
+        },
+        "Back": {
+          "Texture": "Birch_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Back",
+          "AO": true
+        },
+        "Right": {
+          "Texture": "Birch_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Right",
+          "AO": true
+        },
+        "Left": {
+          "Texture": "Birch_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Left",
+          "AO": true
+        }
+      }
+    }
+  ]
+}

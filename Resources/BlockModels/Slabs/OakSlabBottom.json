@@ -1,0 +1,66 @@
+{
+  "Name": "oak_slab_bottom",
+  "IsTranslucent": false,
+  "AOSupport": true,
+
+  "FaceCull": {
+    "Bottom": "FullBlock",
+    "Top": "Indented",
+    "Front": "BottomSlab",
+    "Back": "BottomSlab",
+    "Right": "BottomSlab",
+    "Left": "BottomSlab"
+  },
+
+  "Elements": [
+    {
+      "From": [ 0, 0, 0 ],
+      "To": [ 16, 8, 16 ],
+
+      "Faces": {
+        "Top": {
+          "Texture": "Oak_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": false,
+          "CullAxis": "Top",
+          "AO": true
+        },
+        "Bottom": {
+          "Texture": "Oak_Planks",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Bottom",
+          "AO": true
+        },
+        "Front": {
+          "Texture": "Oak_Planks",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Front",
+          "AO": true
+        },
+        "Back": {
+          "Texture": "Oak_Planks",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Back",
+          "AO": true
+        },
+        "Right": {
+          "Texture": "Oak_Planks",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Right",
+          "AO": true
+        },
+        "Left": {
+          "Texture": "Oak_Planks",
+          "UV": [ 0, 0, 16, 8 ],
+          "Cullable": true,
+          "CullAxis": "Left",
+          "AO": true
+        }
+      }
+    }
+  ]
+}

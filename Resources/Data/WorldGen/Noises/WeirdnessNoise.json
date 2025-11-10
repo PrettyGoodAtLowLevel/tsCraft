@@ -1,0 +1,8 @@
+{
+  "NoiseType": "OpenSimplex2",
+  "FractalType": "FBm",
+  "DomainWarpType": "OpenSimplex2",
+  "Frequency": 0.002,
+  "Octaves": 3,
+  "Warp": 300
+}
