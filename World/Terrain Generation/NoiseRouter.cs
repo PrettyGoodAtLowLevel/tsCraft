@@ -8,6 +8,7 @@ namespace OurCraft.World.Terrain_Generation
     //provides methods to get noise values for terrain generation
     //allows to customize the noise map values to your desire 
     //also lets you debug the world gen if you want to see why you are in a certain terrain
+    //loads json noise files and maps their values to fastnoiselite objects
     public static class NoiseRouter
     {
         //terrain shaping noises
