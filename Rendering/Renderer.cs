@@ -142,7 +142,7 @@ namespace OurCraft.Rendering
             //create all shaders
             shader.Create("default.vert", "default.frag");
             postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
-            skyColor = new Vector3(0.3f, 0.15f, 0.15f);
+            skyColor = new Vector3(0.5f, 0.6f, 0.8f);
 
             //-----set up block shaders-----
             shader.Activate();
@@ -150,7 +150,7 @@ namespace OurCraft.Rendering
             shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE - 20);
             shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE);
             shader.SetFloat("fogDensity", 0.5f);
-            
+
             //-----post processing----
             //tweak for weird screen effects
             postShader.Activate();

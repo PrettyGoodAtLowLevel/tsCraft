@@ -34,13 +34,13 @@ namespace OurCraft.World.Terrain_Generation
         //set up all of the noises
         static NoiseRouter()
         {
-            //create random seeds for noisemaps
+            //make seed gen
             seed = RandomNumberGenerator.GetInt32(int.MaxValue);
             Random rand = new(seed);
-
             offsetX = rand.Next(10000);
             offsetZ = rand.Next(10000);
 
+            //create seeds
             int regionalSeed = rand.Next();
             int erosionSeed = rand.Next();
             int riverSeed = rand.Next();
@@ -50,130 +50,16 @@ namespace OurCraft.World.Terrain_Generation
             int humiditySeed = rand.Next();
             int vegetationSeed = rand.Next();
 
-            //initialize noises
-            regionalNoise = new FastNoiseLite(regionalSeed);
-            erosionNoise = new FastNoiseLite(erosionSeed);
-            riverNoise = new FastNoiseLite(riverSeed);
-            weirdnessNoise = new FastNoiseLite(weirdSeed);
-            fractureNoise = new FastNoiseLite(fractureSeed);
-            detailNoise = new FastNoiseLite(seed);
-            temperatureNoise = new FastNoiseLite(temperatureSeed);
-            humidityNoise = new FastNoiseLite(humiditySeed);
-            vegetationNoise = new FastNoiseLite(vegetationSeed);
-
-            //actually set their noise settings to desired value
-            ConfigureRegionNoise();
-            ConfigureErosionNoise();
-            ConfigureRiverNoise();
-            ConfigureWierdnessNoise();
-            ConfigureFractureNoise();
-            ConfigureDetailNoise();
-            ConfigureTemperatureNoise();
-            ConfigureHumidityNoise();
-            ConfigureVegetationNoise();
-        }
-
-        //creates large oceans and land masses
-        static void ConfigureRegionNoise()
-        {
-            NoiseJson regJson = NoiseJson.Load("RegionalNoise.json");
-            regionalNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(regJson.NoiseType));
-            regionalNoise.SetFractalType(NoiseJson.FractalTypeFromString(regJson.FractalType));
-            regionalNoise.SetFrequency(regJson.Frequency);
-            regionalNoise.SetFractalOctaves(regJson.Octaves);
-            regionalNoise.SetDomainWarpAmp(regJson.Warp);
-        }
-
-        //creates highlands or low lands
-        static void ConfigureErosionNoise()
-        {
-            NoiseJson eroJson = NoiseJson.Load("ErosionNoise.json");
-            erosionNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(eroJson.NoiseType));
-            erosionNoise.SetFractalType(NoiseJson.FractalTypeFromString(eroJson.FractalType));
-            erosionNoise.SetFrequency(eroJson.Frequency);
-            erosionNoise.SetFractalOctaves(eroJson.Octaves);
-            erosionNoise.SetDomainWarpAmp(eroJson.Warp);
-        }
-
-        //carves rivers into the world
-        static void ConfigureRiverNoise()
-        {
-            NoiseJson riverJson = NoiseJson.Load("RiverNoise.json");
-            riverNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(riverJson.NoiseType));
-            riverNoise.SetFractalType(NoiseJson.FractalTypeFromString(riverJson.FractalType));
-            riverNoise.SetFrequency(riverJson.Frequency);
-            riverNoise.SetFractalOctaves(riverJson.Octaves);
-            riverNoise.SetDomainWarpAmp(riverJson.Warp);
-        }
-
-        //creates weird terrain
-        static void ConfigureWierdnessNoise()
-        {
-            NoiseJson weirdJson = NoiseJson.Load("WeirdnessNoise.json");
-            weirdnessNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(weirdJson.NoiseType));
-            weirdnessNoise.SetFractalType(NoiseJson.FractalTypeFromString(weirdJson.FractalType));
-            weirdnessNoise.SetDomainWarpType(NoiseJson.DomainWarpTypeFromString(weirdJson.DomainWarpType));
-            weirdnessNoise.SetFrequency(weirdJson.Frequency);
-            weirdnessNoise.SetFractalOctaves(weirdJson.Octaves);
-            weirdnessNoise.SetDomainWarpAmp(weirdJson.Warp);
-        }
-
-        //creates crazy terrain
-        static void ConfigureFractureNoise()
-        {
-            NoiseJson fractureJson = NoiseJson.Load("FractureNoise.json");
-            fractureNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(fractureJson.NoiseType));
-            fractureNoise.SetFractalType(NoiseJson.FractalTypeFromString(fractureJson.FractalType));
-            fractureNoise.SetDomainWarpType(NoiseJson.DomainWarpTypeFromString(fractureJson.DomainWarpType));
-            fractureNoise.SetFrequency(fractureJson.Frequency);
-            fractureNoise.SetFractalOctaves(fractureJson.Octaves);
-            fractureNoise.SetDomainWarpAmp(fractureJson.Warp);
-        }
-
-        //creates rugged terrain shape
-        static void ConfigureDetailNoise()
-        {
-            NoiseJson detailJson = NoiseJson.Load("DetailNoise.json");
-            detailNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(detailJson.NoiseType));
-            detailNoise.SetFractalType(NoiseJson.FractalTypeFromString(detailJson.FractalType));
-            detailNoise.SetFrequency(detailJson.Frequency);
-            detailNoise.SetFractalOctaves(detailJson.Octaves);
-        }
-
-        //how hot is this area?
-        static void ConfigureTemperatureNoise()
-        {
-            NoiseJson tempJson = NoiseJson.Load("TemperatureNoise.json");
-            temperatureNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(tempJson.NoiseType));
-            temperatureNoise.SetFractalType(NoiseJson.FractalTypeFromString(tempJson.FractalType));
-            temperatureNoise.SetDomainWarpType(NoiseJson.DomainWarpTypeFromString(tempJson.DomainWarpType));
-            temperatureNoise.SetFrequency(tempJson.Frequency);
-            temperatureNoise.SetFractalOctaves(tempJson.Octaves);
-            temperatureNoise.SetDomainWarpAmp(tempJson.Warp);
-        }
-
-        //how much rainfall in this area?
-        static void ConfigureHumidityNoise()
-        {
-            NoiseJson humidJson = NoiseJson.Load("HumidityNoise.json");
-            humidityNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(humidJson.NoiseType));
-            humidityNoise.SetFractalType(NoiseJson.FractalTypeFromString(humidJson.FractalType));
-            humidityNoise.SetDomainWarpType(NoiseJson.DomainWarpTypeFromString(humidJson.DomainWarpType));
-            humidityNoise.SetFrequency(humidJson.Frequency);
-            humidityNoise.SetFractalOctaves(humidJson.Octaves);
-            humidityNoise.SetDomainWarpAmp(humidJson.Warp);
-        }
-
-        //how much plants are in this area?
-        static void ConfigureVegetationNoise()
-        {
-            NoiseJson vegJson = NoiseJson.Load("VegetationNoise.json");
-            vegetationNoise.SetNoiseType(NoiseJson.NoiseTypeFromString(vegJson.NoiseType));
-            vegetationNoise.SetFractalType(NoiseJson.FractalTypeFromString(vegJson.FractalType));
-            vegetationNoise.SetDomainWarpType(NoiseJson.DomainWarpTypeFromString(vegJson.DomainWarpType));
-            vegetationNoise.SetFrequency(vegJson.Frequency);
-            vegetationNoise.SetFractalOctaves(vegJson.Octaves);
-            vegetationNoise.SetDomainWarpAmp(vegJson.Warp);
+            //load the noise settings
+            regionalNoise = NoiseJson.JsonToFastNoise("RegionalNoise.json", regionalSeed);
+            erosionNoise = NoiseJson.JsonToFastNoise("ErosionNoise.json", erosionSeed);
+            riverNoise = NoiseJson.JsonToFastNoise("RiverNoise.json", riverSeed);
+            weirdnessNoise = NoiseJson.JsonToFastNoise("WeirdnessNoise.json", weirdSeed);
+            fractureNoise = NoiseJson.JsonToFastNoise("FractureNoise.json", fractureSeed);
+            detailNoise = NoiseJson.JsonToFastNoise("DetailNoise.json", seed);
+            temperatureNoise = NoiseJson.JsonToFastNoise("TemperatureNoise.Json", temperatureSeed);
+            humidityNoise = NoiseJson.JsonToFastNoise("HumidityNoise.json", humiditySeed);
+            vegetationNoise = NoiseJson.JsonToFastNoise("VegetationNoise.json", vegetationSeed);
         }
 
         //--noise functions--
@@ -418,6 +304,20 @@ namespace OurCraft.World.Terrain_Generation
             return result;
         }
 
+        //grab json file and cast it to regular fast noise lite
+        public static FastNoiseLite JsonToFastNoise(string fileName, int seed)
+        {
+            NoiseJson json = Load(fileName);
+            FastNoiseLite noise = new();
+            noise.SetSeed(seed);
+            noise.SetNoiseType(NoiseTypeFromString(json.NoiseType));
+            noise.SetFractalType(FractalTypeFromString(json.FractalType));
+            noise.SetDomainWarpType(DomainWarpTypeFromString(json.DomainWarpType));
+            noise.SetFrequency(json.Frequency);
+            noise.SetFractalOctaves(json.Octaves);
+            noise.SetDomainWarpAmp(json.Warp);
+            return noise;
+        }
 
         //get the current fractal type from json string value
         public static FastNoiseLite.FractalType FractalTypeFromString(string name)

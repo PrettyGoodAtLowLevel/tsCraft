@@ -7,6 +7,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
     //surface features - fast
     public static class SurfaceFeatureRegistry
     {
+        public static Dictionary<string, SurfaceFeature> featureMap = new Dictionary<string, SurfaceFeature>();
+
         //plants
         public static Plant Grass { get; private set; }
         public static Plant Rose { get; private set; }
@@ -268,6 +270,61 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
                 LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
                 LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
             };
+            RegisterFeatures();            
         }
+
+        public static void RegisterFeatures()
+        {
+            //register all surface features in the featureMap
+            featureMap = new Dictionary<string, SurfaceFeature>
+            {
+                //plants
+                { "Grass", Grass },
+                { "Rose", Rose },
+                { "DeadBush", DeadBush },
+                { "OakLeaves", OakLeaves },
+                { "SpruceLeaves", SpruceLeaves },
+                { "JungleLeaves", JungleLeaves },
+
+                //logs / cacti
+                { "OakLog", OakLog },
+                { "SpruceLog", SpruceLog },
+                { "JungleLog", JungleLog },
+                { "Cactus", Cactus },
+                { "IceCactus", IceCactus },
+
+                //trees
+                { "OakTree", OakTree },
+                { "BirchTree", BirchTree },
+                { "JungleTree", JungleTree },
+                { "SpruceTree", SpruceTree },
+
+                //weird trees
+                { "SpruceOakTree", SpruceOakTree },
+                { "OakSpruceTree", OakSpruceTree },
+                { "FrozenTree", FrozenTree },
+
+                //tall trees
+                { "TallOakTree", TallOakTree },
+                { "TallSpruceTree", TallSpruceTree },
+                { "TallOakJungleTree", TallOakJungleTree },
+                { "TallSpruceJungleTree", TallSpruceJungleTree },
+
+                //bushes
+                { "OakBush", OakBush },
+                { "SpruceBush", SpruceBush },
+                { "JungleBush", JungleBush }
+            };
+        }
+
+        public static SurfaceFeature GetFeature(string name)
+        {
+            if (featureMap.TryGetValue(name, out var feature))
+                return feature;
+
+            Console.WriteLine($"[SurfaceFeatureRegistry] Warning: Feature '{name}' not found!");
+            return null;
+        }
+
     }
 }

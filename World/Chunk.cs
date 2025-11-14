@@ -153,25 +153,20 @@ namespace OurCraft.World
             //create base density map
             foreach (var subChunk in subChunks)
             {
-                
-                subChunk.CreateDensityMap(noiseRegions);
-                
+                subChunk.CreateDensityMap(noiseRegions);                
             }
 
 
             //surface paint the subchunks
             foreach (var subChunk in subChunks)
             {
-                
                 subChunk.SurfacePaint(noiseRegions);
             }
 
             //slap on surface feature
             foreach (var subChunk in subChunks)
-            {
-                
-                subChunk.PlaceSurfaceFeatures(noiseRegions);
-                
+            {              
+                subChunk.PlaceSurfaceFeatures(noiseRegions);            
             }
 
             stopwatch.Stop();
@@ -253,6 +248,7 @@ namespace OurCraft.World
             batchedMesh.transform.SetPosition(new Vector3(Pos.X * SubChunk.SUBCHUNK_SIZE, 0, Pos.Z * SubChunk.SUBCHUNK_SIZE));
         }
 
+        //same thing as the regular mesh, but for transparent water geometry
         private void UploadTranparentMesh()
         {
             //compute size upfront
@@ -322,7 +318,6 @@ namespace OurCraft.World
             transparentMesh.Delete();
         }
 
-        //getters
         //get state
         public ChunkState GetState()
         {
@@ -568,7 +563,7 @@ namespace OurCraft.World
                         //only consider blocks with air above (i.e., surface or overhang)
                         if (currentEligible && aboveEligible)
                         {
-                            foreach (BiomeSurfaceFeature feature in noiseRegion.biome.surfaceFeatures)
+                            foreach (BiomeSurfaceFeature feature in noiseRegion.biome.SurfaceFeatures)
                             {
                                 Vector3i globalCoords = new(x + parent.Pos.X * SUBCHUNK_SIZE, (y + YPos * SUBCHUNK_SIZE), z + parent.Pos.Z * SUBCHUNK_SIZE);
 
@@ -619,9 +614,11 @@ namespace OurCraft.World
             BlockState left = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, -1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
             BlockState right = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
 
+            //if surrounding blocks are all full solid cubes, and the current block is also full solid, then skip meshing entirely
             if (top.GetBlock.blockShape.IsFullOpaqueBlock && bottom.GetBlock.blockShape.IsFullOpaqueBlock
             && front.GetBlock.blockShape.IsFullOpaqueBlock && back.GetBlock.blockShape.IsFullOpaqueBlock &&
-            left.GetBlock.blockShape.IsFullOpaqueBlock && right.GetBlock.blockShape.IsFullOpaqueBlock)
+            left.GetBlock.blockShape.IsFullOpaqueBlock && right.GetBlock.blockShape.IsFullOpaqueBlock
+            && block.blockShape.IsFullOpaqueBlock)
                 return;
 
             VoxelAOData aoData = GetVoxelAOData(pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
@@ -629,6 +626,7 @@ namespace OurCraft.World
             block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, meshRef, state, aoData);
         }
 
+        //returns the values necessary for computing voxel ambient occlusion
         private VoxelAOData GetVoxelAOData(Vector3 pos,
         Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
         Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)

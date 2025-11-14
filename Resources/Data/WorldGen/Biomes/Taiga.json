@@ -1,0 +1,58 @@
+{
+  "Name": "Taiga",
+  "Temperature": "Temperate",
+  "Humidity": "Humid",
+  "Vegetation": "Dense",
+
+  "Heights": {
+    "Regular": 130,
+    "Ocean": 100,
+    "Shore": 127,
+    "Peak": 235
+  },
+
+  "Blocks": {
+    "Water": "Water",
+    "WaterSurface": "Water",
+    "Surface": "Grass Block",
+    "SubSurface": "Dirt",
+    "PeakSurface": "Snow",
+    "PeakSubSurface": "Stone",
+    "ShoreSurface": "Grass Block",
+    "ShoreSubSurface": "Dirt",
+    "OceanSurface": "Grass Block",
+    "OceanSubSurface": "Dirt"
+  },
+
+  "SurfaceFeatures": [
+    {
+      "Name": "SpruceBush",
+      "Chance": 1200
+    },
+    {
+      "Name": "SpruceOakTree",
+      "Chance": 1000
+    },
+    {
+      "Name": "SpruceLog",
+      "Chance": 500
+    },
+    {
+      "Name": "TallSpruceTree",
+      "Chance": 100
+    },
+    {
+      "Name": "SpruceLeaves",
+      "Chance": 50
+    },
+    {
+      "Name": "Grass",
+      "Chance": 22
+    },
+    {
+      "Name": "SpruceTree",
+      "Chance": 20
+    }
+
+  ]
+}

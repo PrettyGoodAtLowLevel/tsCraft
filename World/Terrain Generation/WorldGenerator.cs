@@ -15,7 +15,7 @@ namespace OurCraft.World.Terrain_Generation
         //determines low fidelity shape of terrain
         public static NoiseRegion GetTerrainRegion(int x, int z)
         {
-            if (FlatWorld) return new NoiseRegion(130, 0, BiomeData.Plains, 0);
+            if (FlatWorld) return new NoiseRegion(130, 0, BiomeData.EmptyBiome, 0);
 
             //get terrain shaping noises
             float continentalness = NoiseRouter.GetRegionalNoise(x, z);

@@ -1,0 +1,66 @@
+{
+  "Name": "Weird Forest",
+  "Temperature": "Hot",
+  "Humidity": "Humid",
+  "Vegetation": "Dense",
+
+  "Heights": {
+    "Regular": 130,
+    "Ocean": 100,
+    "Shore": 127,
+    "Peak": 235
+  },
+
+  "Blocks": {
+    "Water": "Water",
+    "WaterSurface": "Water",
+    "Surface": "Grass Block",
+    "SubSurface": "Dirt",
+    "PeakSurface": "Stone",
+    "PeakSubSurface": "Stone",
+    "ShoreSurface": "Grass Block",
+    "ShoreSubSurface": "Dirt",
+    "OceanSurface": "Grass Block",
+    "OceanSubSurface": "Dirt"
+  },
+
+  "SurfaceFeatures": [
+    {
+      "Name": "JungleBush",
+      "Chance": 400
+    },
+    {
+      "Name": "JungleLog",
+      "Chance": 100
+    },
+    {
+      "Name": "OakSpruceTree",
+      "Chance": 90
+    },
+    {
+      "Name": "JungleLeaves",
+      "Chance": 55
+    },
+    {
+      "Name": "JungleTree",
+      "Chance": 52
+    },
+    {
+      "Name": "OakTree",
+      "Chance": 50
+    },
+    {
+      "Name": "Grass",
+      "Chance": 25
+    },
+    {
+      "Name": "TallSpruceJungleTree",
+      "Chance": 20
+    },
+    {
+      "Name": "TallOakJungleTree",
+      "Chance": 18
+    }
+
+  ]
+}

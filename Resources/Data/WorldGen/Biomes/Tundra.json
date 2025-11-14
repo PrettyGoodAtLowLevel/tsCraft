@@ -1,0 +1,54 @@
+{
+  "Name": "Tundra",
+  "Temperature": "Cold",
+  "Humidity": "Normal",
+  "Vegetation": "Sparse",
+
+  "Heights": {
+    "Regular": 130,
+    "Ocean": 100,
+    "Shore": 127,
+    "Peak": 240
+  },
+
+  "Blocks": {
+    "Water": "Water",
+    "WaterSurface": "Water",
+    "Surface": "Snowy Grass Block",
+    "SubSurface": "Dirt",
+    "PeakSurface": "Snow",
+    "PeakSubSurface": "Stone",
+    "ShoreSurface": "Sand",
+    "ShoreSubSurface": "Sand",
+    "OceanSurface": "Gravel Block",
+    "OceanSubSurface": "Gravel Block"
+  },
+
+  "SurfaceFeatures": [
+    {
+      "Name": "SpruceLog",
+      "Chance": 12000
+    },
+    {
+      "Name": "SpruceBush",
+      "Chance": 6500
+    },
+    {
+      "Name": "SpruceLeaves",
+      "Chance": 5000
+    },
+    {
+      "Name": "SpruceOakTree",
+      "Chance": 1000
+    },
+    {
+      "Name": "SpruceTree",
+      "Chance": 900
+    },
+    {
+      "Name": "Grass",
+      "Chance": 300
+    }
+
+  ]
+}

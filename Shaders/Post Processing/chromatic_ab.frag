@@ -7,8 +7,8 @@ uniform float vignetteStrength;
 uniform vec3 tintColor;
 uniform float tintIntensity;
 
-uniform vec2 uResolution; // screen resolution
-uniform float aaStrength; // how much smoothing to apply
+uniform vec2 uResolution; //screen resolution
+uniform float aaStrength; //how much smoothing to apply
 
 in vec2 TexCoords;
 out vec4 FragColor;

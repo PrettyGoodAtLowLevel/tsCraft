@@ -1,0 +1,41 @@
+{
+  "Name": "Frozen Peaks",
+  "Temperature": "Freezing",
+  "Humidity": "Humid",
+  "Vegetation": "Sparse",
+
+  "Heights": {
+    "Regular": 130,
+    "Ocean": 100,
+    "Shore": 127,
+    "Peak": 225
+  },
+
+  "Blocks": {
+    "Water": "Water",
+    "WaterSurface": "Ice Block",
+    "Surface": "Snowy Grass Block",
+    "SubSurface": "Dirt",
+    "PeakSurface": "Ice Block",
+    "PeakSubSurface": "Stone",
+    "ShoreSurface": "Gravel Block",
+    "ShoreSubSurface": "Dirt",
+    "OceanSurface": "Snow",
+    "OceanSubSurface": "Stone"
+  },
+
+  "SurfaceFeatures": [
+    {
+      "Name": "SpruceTree",
+      "Chance": 950
+    },
+    {
+      "Name": "FrozenTree",
+      "Chance": 800
+    },
+    {
+      "Name": "SpruceLeaves",
+      "Chance": 750
+    }
+  ]
+}

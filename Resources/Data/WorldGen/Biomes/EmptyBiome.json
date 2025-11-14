@@ -1,0 +1,29 @@
+﻿{
+  "Name": "Empty",
+  "Temperature": "Warm",
+  "Humidity": "Dry",
+  "Vegetation": "Barren",
+
+  "Heights": {
+    "Regular": 130,
+    "Ocean": 100,
+    "Shore": 127,
+    "Peak": 230
+  },
+
+  "Blocks": {
+    "Water": "Water",
+    "WaterSurface": "Water",
+    "Surface": "Grass Block",
+    "SubSurface": "Dirt",
+    "PeakSurface": "Stone",
+    "PeakSubSurface": "Stone",
+    "ShoreSurface": "Sand",
+    "ShoreSubSurface": "Sand",
+    "OceanSurface": "Sand",
+    "OceanSubSurface": "Sand"
+  },
+
+  "SurfaceFeatures": [
+  ]
+}

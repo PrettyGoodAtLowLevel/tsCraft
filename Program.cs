@@ -1,5 +1,6 @@
 ﻿using OurCraft;
 using OurCraft.World;
+using OurCraft.World.Terrain_Generation;
 
 //entry point (actually durr)
 static class Program
@@ -23,10 +24,24 @@ static class Program
             Console.WriteLine("wrong formatt dumbass");
             return;
         }
+        Console.WriteLine("Flat or normal world? true or false");
+        bool flat;
+        string? input2 = Console.ReadLine();
 
+        try
+        {
+            flat = bool.Parse(input2);
+        }
+        catch
+        {
+            Console.WriteLine("Freaking idiot");
+            flat = false;
+            return;
+        }
         renderDistance = (RenderDistances)renderDist - 2;
         Console.WriteLine(renderDistance.ToString());
         using var game = new Game();
+        WorldGenerator.FlatWorld = flat;
         game.Run();
     }
 }

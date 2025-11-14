@@ -9,9 +9,6 @@ using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 using static OurCraft.Physics.VoxelPhysics;
 using OurCraft.World.Terrain_Generation;
-using OpenTK.Graphics.OpenGL4;
-using System.Text.Json.Nodes;
-using OurCraft.Blocks.Meshing;
 
 namespace OurCraft
 {
@@ -42,11 +39,11 @@ namespace OurCraft
             base.OnLoad();
             CursorState = CursorState.Grabbed;
             BlockData.InitBlocks();
-            WorldGenerator.FlatWorld = false;
             world = new Chunkmanager(Program.renderDistance, ref cam, ref worldGenThreads);
             renderer = new Renderer(ref world, ref cam, screenWidth, screenHeight);
             world.Generate();
             currentBlock = BlockRegistry.GetBlock("Grass Block");
+            renderer.ToggleAOOn();
         }
 
         //when drawing things
@@ -106,9 +103,6 @@ namespace OurCraft
             if (KeyboardState.IsKeyDown(Keys.Z)) renderer.fov = 20;
             else renderer.fov = 90;
 
-            if (KeyboardState.IsKeyPressed(Keys.C)) renderer.ToggleAOOff();
-            if (KeyboardState.IsKeyPressed(Keys.V)) renderer.ToggleAOOn();
-
             if (KeyboardState.IsKeyPressed(Keys.R))
             {
                 Console.Clear();
@@ -156,13 +150,3 @@ namespace OurCraft
         }
     }
 }
-
-//base weapon settings (every weapon has some configuration of these + their own attack functions)
-//float attackSpeed = 1.6 (can hit 1.6 times per sec)
-//int baseDmg = 10 (does 5 hearts of damage on full charge attack)
-//float splashRange = 1 (one block of splash/sweep range)
-//float splashDropoff = 0.75 (the other enemies hit only take 75% of the base dmg)
-//float knockBack = 1 (does one block of knockback)
-//float critMultiplier = 1.25 (critical hits do 25% more damage)
-//float critChance = 1.0 (every attempt at a critcal hit works)
-//float attackReach = 3.0 (3 blocks of reach)

@@ -17,7 +17,7 @@ uniform vec3 cameraPos;
 uniform vec3 skyColor =  vec3(0.5, 0.3, 0.4);
 
 //lighting parameters
-uniform vec3 lightDir = vec3(0.2, 1.0, 0.3); // direction to the light
+uniform vec3 lightDir = vec3(0.2, 1.0, 0.3); //direction to the light
 uniform float ambientStrength = 0.3;
 
 //fog parameters

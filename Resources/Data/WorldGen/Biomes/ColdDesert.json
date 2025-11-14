@@ -1,0 +1,37 @@
+{
+  "Name": "Cold Desert",
+  "Temperature": "Freezing",
+  "Humidity": "Arid",
+  "Vegetation": "Barren",
+
+  "Heights": {
+    "Regular": 130,
+    "Ocean": 100,
+    "Shore": 127,
+    "Peak": 180
+  },
+
+  "Blocks": {
+    "Water": "Water",
+    "WaterSurface": "Ice Block",
+    "Surface": "Snow",
+    "SubSurface": "Dirt",
+    "PeakSurface": "Snow",
+    "PeakSubSurface": "Stone",
+    "ShoreSurface": "Snow",
+    "ShoreSubSurface": "Snow",
+    "OceanSurface": "Snow",
+    "OceanSubSurface": "Stone"
+  },
+
+  "SurfaceFeatures": [
+    {
+      "Name": "IceCactus",
+      "Chance": 3000
+    },
+    {
+      "Name": "DeadBush",
+      "Chance": 2500
+    }
+  ]
+}

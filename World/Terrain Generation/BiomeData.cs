@@ -1,4 +1,5 @@
-﻿using OurCraft.Blocks;
+﻿using OpenTK.Graphics.OpenGL;
+using OurCraft.Blocks;
 using OurCraft.World.Terrain_Generation.SurfaceFeatures;
 
 namespace OurCraft.World.Terrain_Generation
@@ -48,6 +49,9 @@ namespace OurCraft.World.Terrain_Generation
         public static Biome WeirdForest { get; private set; }
         public static Biome Forest { get; private set; }
 
+        //for superflat worlds
+        public static Biome EmptyBiome { get; private set; }
+
         public readonly static List<Biome> biomes = [];
         static readonly Biome[,,] biomeTable;
 
@@ -63,6 +67,7 @@ namespace OurCraft.World.Terrain_Generation
             FrozenPeaks = new Biome();
             WeirdForest = new Biome();
             Forest = new Biome();
+            EmptyBiome = LoadBiomeQuick("EmptyBiome.json");
 
             biomeTable = new Biome[TemperatureIndex.HOT.GetHashCode() + 1,
             HumidityIndex.WET.GetHashCode() + 1,
@@ -205,261 +210,64 @@ namespace OurCraft.World.Terrain_Generation
         //basic biome
         public static void InitPlains()
         {
-            Plains.Name = "Plains";
-            Plains.TempIndex = TemperatureIndex.WARM.GetHashCode();
-            Plains.HumidIndex = HumidityIndex.DRY.GetHashCode();
-            Plains.VegetationIndex = VegetationIndex.BARREN.GetHashCode();
-
-            Plains.RegularHeight = 130;
-            Plains.OceanHeight = 100;
-            Plains.ShoreHeight = 127;
-            Plains.PeakHeight = 230;
-
-            Plains.WaterBlock = BlockRegistry.GetBlock("Water");
-            Plains.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            Plains.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            Plains.PeakSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            Plains.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            Plains.ShoreSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Plains.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Plains.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Plains.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
-
-            Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakBush, 2000));
-            Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Rose, 500));
-            Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakTree, 250));
-            Plains.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 15));     
-
+            Plains = LoadBiomeQuick("Plains.json");
             biomes.Add(Plains);
         }
 
         //the hot biome
         public static void InitDesert()
         {
-            Desert.Name = "Desert";
-            Desert.TempIndex = TemperatureIndex.HOT.GetHashCode();
-            Desert.HumidIndex = HumidityIndex.ARID.GetHashCode();
-            Desert.VegetationIndex = VegetationIndex.SPARSE.GetHashCode();
-
-            Desert.RegularHeight = 130;
-            Desert.OceanHeight = 100;
-            Desert.ShoreHeight = 127;
-            Desert.PeakHeight = 230;
-
-            Desert.WaterBlock = BlockRegistry.GetBlock("Water");
-            Desert.SurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Desert.SubSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Desert.PeakSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            Desert.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            Desert.ShoreSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Desert.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Desert.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Desert.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-
-            Desert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakBush, 10000));
-            Desert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Cactus, 2100));
-            Desert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.DeadBush, 2000));
-
+            Desert = LoadBiomeQuick("Desert.json");
             biomes.Add(Desert);
         }
 
         //the cold biome
         public static void InitTundra()
         {
-            Tundra.Name = "Tundra";
-            Tundra.TempIndex = TemperatureIndex.COLD.GetHashCode();
-            Tundra.HumidIndex = HumidityIndex.NORMAL.GetHashCode();
-            Tundra.VegetationIndex = VegetationIndex.SPARSE.GetHashCode();
-
-            Tundra.RegularHeight = 130;
-            Tundra.OceanHeight = 100;
-            Tundra.ShoreHeight = 127;
-            Tundra.PeakHeight = 240;
-
-            Tundra.WaterBlock = BlockRegistry.GetBlock("Water");
-            Tundra.SurfaceBlock = BlockRegistry.GetBlock("Snowy Grass Block");
-            Tundra.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            Tundra.PeakSurfaceBlock = BlockRegistry.GetBlock("Snow");
-            Tundra.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            Tundra.ShoreSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Tundra.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Tundra.OceanSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
-            Tundra.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
-
-            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLog, 12000));
-            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceBush, 6500));
-            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLeaves, 5000));
-            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceOakTree, 1000));
-            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceTree, 900));
-            Tundra.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 300));
-
+            Tundra = LoadBiomeQuick("Tundra.json");
             biomes.Add(Tundra);
         }
 
         //rare cold biome
         public static void InitColdDesert()
         {
-            ColdDesert.Name = "Cold Desert";
-            ColdDesert.TempIndex = TemperatureIndex.FREEZING.GetHashCode();
-            ColdDesert.HumidIndex = HumidityIndex.ARID.GetHashCode();
-            ColdDesert.VegetationIndex = VegetationIndex.BARREN.GetHashCode();
-
-            ColdDesert.RegularHeight = 130;
-            ColdDesert.OceanHeight = 100;
-            ColdDesert.ShoreHeight = 127;
-            ColdDesert.PeakHeight = 180;
-
-            ColdDesert.WaterBlock = BlockRegistry.GetBlock("Water");
-            ColdDesert.WaterSurfaceBlock = BlockRegistry.GetBlock("Ice Block");
-            ColdDesert.SurfaceBlock = BlockRegistry.GetBlock("Snow");
-            ColdDesert.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            ColdDesert.PeakSurfaceBlock = BlockRegistry.GetBlock("Snow");
-            ColdDesert.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            ColdDesert.ShoreSurfaceBlock = BlockRegistry.GetBlock("Snow");
-            ColdDesert.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Snow");
-            ColdDesert.OceanSurfaceBlock = BlockRegistry.GetBlock("Snow");
-            ColdDesert.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-
-            ColdDesert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.IceCactus, 3000));
-            ColdDesert.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.DeadBush, 2500));
-
+            ColdDesert = LoadBiomeQuick("ColdDesert.json");
             biomes.Add(ColdDesert);
         }
 
         //the middle biome
         public static void InitTaiga()
         {
-            Taiga.Name = "Taiga";
-            Taiga.TempIndex = TemperatureIndex.TEMPERATE.GetHashCode();
-            Taiga.HumidIndex = HumidityIndex.HUMID.GetHashCode();
-            Taiga.VegetationIndex = VegetationIndex.DENSE.GetHashCode();
-
-            Taiga.RegularHeight = 130;
-            Taiga.OceanHeight = 100;
-            Taiga.ShoreHeight = 127;
-            Taiga.PeakHeight = 235;
-
-            Taiga.WaterBlock = BlockRegistry.GetBlock("Water");
-            Taiga.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            Taiga.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            Taiga.PeakSurfaceBlock = BlockRegistry.GetBlock("Snow");
-            Taiga.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            Taiga.ShoreSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            Taiga.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            Taiga.OceanSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            Taiga.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-
-            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceBush, 1200));
-            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceOakTree, 1000));
-            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLog, 500));
-            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallSpruceTree, 100));
-            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLeaves, 50));
-            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 22));
-            Taiga.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceTree, 20));           
-
+            Taiga = LoadBiomeQuick("Taiga.json");
             biomes.Add(Taiga);
         }
 
         //the cold alternative
         public static void InitFrozenPeaks()
         {
-            FrozenPeaks.Name = "Frozen Peaks";
-            FrozenPeaks.TempIndex = TemperatureIndex.FREEZING.GetHashCode();
-            FrozenPeaks.HumidIndex = HumidityIndex.HUMID.GetHashCode();
-            FrozenPeaks.VegetationIndex = VegetationIndex.SPARSE.GetHashCode();
-
-            FrozenPeaks.RegularHeight = 130;
-            FrozenPeaks.OceanHeight = 100;
-            FrozenPeaks.ShoreHeight = 127;
-            FrozenPeaks.PeakHeight = 225;
-
-            FrozenPeaks.WaterBlock = BlockRegistry.GetBlock("Water");
-            FrozenPeaks.WaterSurfaceBlock = BlockRegistry.GetBlock("Ice Block");
-            FrozenPeaks.SurfaceBlock = BlockRegistry.GetBlock("Snowy Grass Block");
-            FrozenPeaks.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            FrozenPeaks.PeakSurfaceBlock = BlockRegistry.GetBlock("Ice Block");
-            FrozenPeaks.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            FrozenPeaks.ShoreSurfaceBlock = BlockRegistry.GetBlock("Gravel Block");
-            FrozenPeaks.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            FrozenPeaks.OceanSurfaceBlock = BlockRegistry.GetBlock("Snow");
-            FrozenPeaks.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-
-            FrozenPeaks.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceTree, 950));
-            FrozenPeaks.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.FrozenTree, 800));           
-            FrozenPeaks.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.SpruceLeaves, 750));
-
+            FrozenPeaks = LoadBiomeQuick("FrozenPeaks.json");
             biomes.Add(FrozenPeaks);
         }
 
         //hot biome alternative
         public static void InitWeirdForest()
         {
-            WeirdForest.Name = "Weird Forest";
-            WeirdForest.TempIndex = TemperatureIndex.HOT.GetHashCode();
-            WeirdForest.HumidIndex = HumidityIndex.HUMID.GetHashCode();
-            WeirdForest.VegetationIndex = VegetationIndex.DENSE.GetHashCode();
-
-            WeirdForest.RegularHeight = 130;
-            WeirdForest.OceanHeight = 100;
-            WeirdForest.ShoreHeight = 127;
-            WeirdForest.PeakHeight = 235;
-
-            WeirdForest.WaterBlock = BlockRegistry.GetBlock("Water");
-            WeirdForest.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            WeirdForest.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            WeirdForest.PeakSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            WeirdForest.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Stone");
-            WeirdForest.ShoreSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            WeirdForest.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            WeirdForest.OceanSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            WeirdForest.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleBush, 400));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleLog, 100));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakSpruceTree, 90));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleLeaves, 55));           
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.JungleTree, 52));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakTree, 50));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 25));           
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallSpruceJungleTree, 20));
-            WeirdForest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallOakJungleTree, 18));
-
+            WeirdForest = LoadBiomeQuick("WeirdForest.json");
             biomes.Add(WeirdForest);
         }
 
         //basic biome alternative
         public static void InitForest()
         {
-            Forest.Name = "Forest";
-            Forest.TempIndex = TemperatureIndex.WARM.GetHashCode();
-            Forest.HumidIndex = HumidityIndex.NORMAL.GetHashCode();
-            Forest.VegetationIndex = VegetationIndex.DENSE.GetHashCode();
-
-            Forest.RegularHeight = 130;
-            Forest.OceanHeight = 100;
-            Forest.ShoreHeight = 127;
-            Forest.PeakHeight = 230;
-
-            Forest.WaterBlock = BlockRegistry.GetBlock("Water");
-            Forest.SurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            Forest.SubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            Forest.PeakSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            Forest.PeakSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            Forest.ShoreSurfaceBlock = BlockRegistry.GetBlock("Grass Block");
-            Forest.ShoreSubSurfaceBlock = BlockRegistry.GetBlock("Dirt");
-            Forest.OceanSurfaceBlock = BlockRegistry.GetBlock("Sand");
-            Forest.OceanSubSurfaceBlock = BlockRegistry.GetBlock("Sand");
-
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakBush, 1500));
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakLog, 750));
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Rose, 600));
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.BirchTree, 150));
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.TallOakTree, 145));
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakLeaves, 100));            
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.Grass, 50));
-            Forest.surfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.OakTree, 15));
-
+            Forest = LoadBiomeQuick("Forest.json");
             biomes.Add(Forest);
+        }
+
+        //helper method for quickly loading in biomes
+        public static Biome LoadBiomeQuick(string json)
+        {
+            Biome biome = BiomeLoader.ToRuntimeBiome(BiomeLoader.LoadBiomeConfig(json));
+            return biome;
         }
     }
 }
