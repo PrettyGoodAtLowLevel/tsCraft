@@ -1,7 +1,6 @@
 ﻿using OurCraft.Blocks;
 using OurCraft.World.Terrain_Generation.SurfaceFeatures;
 using System.Text.Json;
-using System.Xml.Linq;
 
 namespace OurCraft.World.Terrain_Generation
 {
@@ -152,5 +151,4 @@ namespace OurCraft.World.Terrain_Generation
             return (int)((VegetationIndex)Enum.Parse(typeof(VegetationIndex), humid.ToUpper()));
         }
     }
-
 }

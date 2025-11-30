@@ -300,7 +300,20 @@ namespace OurCraft.World.Terrain_Generation
                 else
                     Console.WriteLine("Loaded noise config successfully!");
             }
-         
+
+            //if thing is null return default noise json fast noise lite
+            if (result == null)
+            {
+                NoiseJson temp = new NoiseJson();
+                temp.NoiseType = "OpenSimplex2";
+                temp.FractalType = "FBm";
+                temp.DomainWarpType = "OpenSimplex2";
+                temp.Frequency = 0.01f;
+                temp.Octaves = 0;
+                temp.Warp = 0;
+                return temp;
+            }
+
             return result;
         }
 

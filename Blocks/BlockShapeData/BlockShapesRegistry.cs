@@ -60,7 +60,8 @@ namespace OurCraft.Blocks.BlockShapeData
 
         public static FullBlockModelShape CactusBlockShape { get; } = new()
         {
-            cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load("Natural/CactusBlock.json"))
+            cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load("Natural/CactusBlock.json")),
+            IsFullOpaqueBlock = false,
         };
 
         //Cross-shaped natural blocks
@@ -191,6 +192,22 @@ namespace OurCraft.Blocks.BlockShapeData
         public static FullBlockModelShape JungleLeavesBlockShape { get; } = new()
         {
             cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load("Leaves/JungleLeaves.json"))
+        };
+
+        //some light sources
+        public static FullBlockModelShape RedstoneBlockShape { get; } = new()
+        {
+            cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load("Building/RedstoneBlock.json"))
+        };
+
+        public static FullBlockModelShape EmeraldBlockShape { get; } = new()
+        {
+            cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load("Building/EmeraldBlock.json"))
+        };
+
+        public static FullBlockModelShape LapizBlockShape { get; } = new()
+        {
+            cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load("Building/LapizBlock.json"))
         };
     }
 }

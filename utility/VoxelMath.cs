@@ -1,4 +1,6 @@
-﻿namespace OurCraft.utility
+﻿using OpenTK.Mathematics;
+
+namespace OurCraft.utility
 {
     //contains custom helper math functions
     //mainly for terrain gen
@@ -14,6 +16,53 @@
         {
             //smooth interpolation: 3t^2 - 2t^3
             return t * t * (3f - 2f * t);
+        }
+
+        //helper methods for packing and unpacking light values and math
+        public static int Mod(int value, int size)
+        {
+            int m = value % size;
+            return m < 0 ? m + size : m;
+        }
+
+        //does floor division
+        public static int FloorDiv(int a, int b)
+        {
+            int div = a / b;
+            int rem = a % b;
+            if ((rem != 0) && ((rem < 0) != (b < 0)))
+                div--;
+            return div;
+        }
+
+        //pack subchunk local coords into a ushort
+        public static ushort PackPos32(int x, int y, int z)
+        {
+            return (ushort)
+            ((x & 0x1F) |       //5 bits
+            ((y & 0x1F) << 5) | //next 5 bits
+            ((z & 0x1F) << 10));//next 5 bits
+        }
+
+        //unpacks values from a ushort, mainly for lighting positions
+        public static void UnpackPos32(ushort packed, ref ushort x, ref ushort y, ref ushort z)
+        {
+            x = (ushort)(packed & 0x1F);
+            y = (ushort)((packed >> 5) & 0x1F);
+            z = (ushort)((packed >> 10) & 0x1F);
+        }
+
+        //packs a lighting value into a ushort
+        public static ushort PackLight16(Vector3i light, ushort sky)
+        {
+            return (ushort)((light.X & 0xF) | ((light.Y & 0xF) << 4) |
+            ((light.Z & 0xF) << 8) | ((sky & 0xF) << 12));
+        }
+
+        //same thing but for vector3i and only for the block light
+        public static Vector3i UnpackLight16Block(ushort light)
+        {
+            return new Vector3i((light >> 0) & 0xF, (light >> 4) & 0xF, (light >> 8) & 0xF);
         }
     }
 

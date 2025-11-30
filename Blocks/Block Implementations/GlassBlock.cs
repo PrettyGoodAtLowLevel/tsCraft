@@ -10,5 +10,16 @@ namespace OurCraft.Blocks.Block_Implementations
         public GlassBlock(string name, BlockShape shape, ushort id) :
         base(name, shape, id)
         { }
+
+        //light can pass through glass
+        public override bool IsLightPassable(BlockState state)
+        {
+            return true;
+        }
+
+        public override bool IsLightSource(BlockState state)
+        {
+            return false;
+        }
     }
 }

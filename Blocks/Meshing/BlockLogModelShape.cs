@@ -18,20 +18,24 @@ namespace OurCraft.Blocks.Meshing
         public CachedBlockModel cachedModelZ = new();
 
         //add log type mesh
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aOData)
+        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aOData,
+        ushort topLight, ushort bottomLight, ushort frontLight, ushort backLight, ushort rightLight, ushort leftLight)
         {
             Axis axis = BlockLog.AXIS.Decode(thisState.MetaData);
 
             switch (axis)
             {
                 case Axis.X:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelX, pos, bottom, top, front, back, right, left, thisState, mesh, aOData);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelX, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
+                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
                     break;
                 case Axis.Y:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelY, pos, bottom, top, front, back, right, left, thisState, mesh, aOData);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelY, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
+                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
                     break;
                 default:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, bottom, top, front, back, right, left, thisState, mesh, aOData);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
+                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
                     break;
             }
         }

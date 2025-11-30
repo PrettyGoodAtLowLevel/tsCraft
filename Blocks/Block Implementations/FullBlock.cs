@@ -19,5 +19,15 @@ namespace OurCraft.Blocks.Block_Implementations
         {
             world.SetBlock(globalPos + hitNormal, new BlockState((byte)id));
         }
+
+        public override bool IsLightPassable(BlockState state)
+        {
+            return false;
+        }
+
+        public override bool IsLightSource(BlockState state)
+        {
+            return false;
+        }
     }
 }

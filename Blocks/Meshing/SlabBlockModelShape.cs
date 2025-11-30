@@ -16,20 +16,24 @@ namespace OurCraft.Blocks.Meshing
         public CachedBlockModel cachedModelBottom = new();
 
         //add slab type mesh
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aOData)
+        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aOData,
+        ushort topLight, ushort bottomLight, ushort frontLight, ushort backLight, ushort rightLight, ushort leftLight)
         {
             SlabType type = SlabBlock.SLAB_TYPE.Decode(thisState.MetaData);
 
             switch (type)
             {
                 case SlabType.Double:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, bottom, top, front, back, right, left, thisState, mesh, aOData);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
+                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
                     break;
                 case SlabType.Top:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, bottom, top, front, back, right, left, thisState, mesh, aOData);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
+                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
                     break;
                 default:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, bottom, top, front, back, right, left, thisState, mesh, aOData);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
+                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
                     break;
             }
         }

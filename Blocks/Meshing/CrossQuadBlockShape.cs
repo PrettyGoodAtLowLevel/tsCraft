@@ -16,9 +16,10 @@ namespace OurCraft.Blocks.Meshing
             return FaceType.INDENTED;
         }
 
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState state, VoxelAOData aOData)
+        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState state, VoxelAOData aOData,
+        ushort topLight, ushort bottomLight, ushort frontLight, ushort backLight, ushort rightLight, ushort leftLight)
         {
-            BlockModelMeshBuilder.BuildXShapeBlock(pos, Tex, mesh);
+            BlockModelMeshBuilder.BuildXShapeBlock(pos, Tex, mesh, topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
         }
     }
 }

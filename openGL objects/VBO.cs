@@ -10,7 +10,7 @@ namespace OurCraft
     public struct BlockVertex
     {
         //assumes in local chunk coordinates
-        public BlockVertex(Vector3 pos, Vector2 uv, byte normal, byte ao = 0)
+        public BlockVertex(Vector3 pos, Vector2 uv, byte normal, byte ao = 0, ushort lightValue = 0)
         {
             x = EncodeToShort(pos.X);
             y = pos.Y;
@@ -18,6 +18,7 @@ namespace OurCraft
             texUV = new Vector2h(uv);
             this.normal = normal;
             this.ao = ao;
+            lighting = lightValue;
         }
 
         //byte location = 0
@@ -35,10 +36,7 @@ namespace OurCraft
         public byte ao = 0;
 
         //byte location = 14
-        public byte lighting = 0;
-
-        //byte location = 15
-        public byte flags = 0;
+        public ushort lighting = 0;
 
         //always updates when adding new vertex properties
         public static int GetSize()

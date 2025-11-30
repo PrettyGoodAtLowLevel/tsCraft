@@ -1,6 +1,7 @@
 ﻿using OurCraft.Blocks.Block_Properties;
 using OurCraft.Rendering;
 using OpenTK.Mathematics;
+using OpenTK.Graphics.ES11;
 
 namespace OurCraft.Blocks
 {
@@ -42,7 +43,8 @@ namespace OurCraft.Blocks
 
         //how does this block shape get added to the world based on state
         public virtual void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top,
-        BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aoData)
+        BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aoData,
+        ushort topLight, ushort bottomLight, ushort frontLight, ushort backLight, ushort rightLight, ushort leftLight)
         { }
 
         //gets the face type from a specified block state

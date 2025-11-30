@@ -28,6 +28,7 @@ namespace OurCraft.Rendering
         public static Texture globalBlockTexture = new();
 
         //mesh stats
+        private List<uint> indices = new List<uint>();
         private uint indexSize = 0;
         private uint vertexCount = 0;
         private int meshcount = 0;
@@ -46,6 +47,26 @@ namespace OurCraft.Rendering
             globalBlockTexture.Load("Textures/dingledong.png");                    
         }
 
+        //build the indices for the chunk
+        public void SetupIndices(int vertexCount)
+        {
+            indices.Clear();
+            int quadCount = vertexCount / 4;
+            int indexCount = quadCount * 6;
+            indices = new List<uint>(indexCount);
+            for (int i = 0; i < quadCount; i++)
+            {
+                int vi = i * 4;
+
+                indices.Add((uint)(vi + 0));
+                indices.Add((uint)(vi + 1));
+                indices.Add((uint)(vi + 2));
+                indices.Add((uint)(vi + 2));
+                indices.Add((uint)(vi + 3));
+                indices.Add((uint)(vi + 0));
+            }
+        }
+
         //send mesh data to gpu
         public void SetupMesh(List<BlockVertex> vertices)
         {
@@ -59,30 +80,12 @@ namespace OurCraft.Rendering
             vao.Bind();
 
             int vertCount = vertices.Count;
-            int quadCount = vertCount / 4;
-            int indexCount = quadCount * 6;
 
             //upload vertices
             vbo.CreateEmpty(vertCount * BlockVertex.GetSize());
             vbo.SubData(0, vertices.ToArray());
-
-            //generate indices on the fly
-            uint[] indices = new uint[indexCount];
-            for (int i = 0; i < quadCount; i++)
-            {
-                int vi = i * 4;
-                int ii = i * 6;
-
-                indices[ii + 0] = (uint)(vi + 0);
-                indices[ii + 1] = (uint)(vi + 1);
-                indices[ii + 2] = (uint)(vi + 2);
-                indices[ii + 3] = (uint)(vi + 2);
-                indices[ii + 4] = (uint)(vi + 3);
-                indices[ii + 5] = (uint)(vi + 0);
-            }
-
-            ebo.CreateEmpty(indices.Length * sizeof(uint));
-            ebo.SubData(0, indices);
+            ebo.CreateEmpty(indices.Count * sizeof(uint));
+            ebo.SubData(0, indices.ToArray());
 
             //link vertex attributes
             int stride = BlockVertex.GetSize();
@@ -92,6 +95,7 @@ namespace OurCraft.Rendering
             IntPtr uvOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.texUV));
             IntPtr normalOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.normal));
             IntPtr aoOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.ao));
+            IntPtr lightingOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.lighting));
 
             vao.LinkAttrib(vbo, 0, 1, VertexAttribPointerType.Short, false, stride, xPosOffset);
             vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.Float, false, stride, yPosOffset);
@@ -99,12 +103,15 @@ namespace OurCraft.Rendering
             vao.LinkAttrib(vbo, 3, 2, VertexAttribPointerType.HalfFloat, false, stride, uvOffset);
             vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
             vao.LinkAttribInt(vbo, 5, 1, VertexAttribIntegerType.UnsignedByte, stride, aoOffset);
+            vao.LinkAttribInt(vbo, 6, 1, VertexAttribIntegerType.UnsignedShort, stride, lightingOffset);
 
             vao.Unbind();
             vbo.Unbind();
             ebo.Unbind();
 
-            indexSize = (uint)indices.Length;
+            indexSize = (uint)indices.Count;
+            indices.Clear();
+            indices.Capacity = 0;
             vertexCount = (uint)vertCount;
             meshcount = 1;
         }

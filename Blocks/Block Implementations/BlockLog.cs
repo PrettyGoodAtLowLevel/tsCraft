@@ -35,5 +35,15 @@ namespace OurCraft.Blocks.Block_Implementations
             else if (hitNormal.Z != 0)
                 world.SetBlock(globalPos + hitNormal, new BlockState((byte)id).WithProperty(AXIS, Axis.Z));
         }
+
+        public override bool IsLightPassable(BlockState state)
+        {
+            return false;
+        }
+
+        public override bool IsLightSource(BlockState state)
+        {
+            return false;
+        }
     }
 }

@@ -323,7 +323,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
                 return feature;
 
             Console.WriteLine($"[SurfaceFeatureRegistry] Warning: Feature '{name}' not found!");
-            return null;
+            return Grass;
         }
 
     }

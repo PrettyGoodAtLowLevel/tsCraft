@@ -6,12 +6,14 @@ layout(location = 2) in float aZPos; //short mapped to float
 layout(location = 3) in vec2 aUV;
 layout(location = 4) in int aNormal;
 layout(location = 5) in int AOID;
+layout(location = 6) in int aLighting;
 
 //output variables to frag shader
 out vec2 TexCoords;
 flat out int NormalID;
 out float AO; //interpolated
 out vec3 FragPos;
+out vec3 lightColor;
 
 //positioning and transformations
 uniform mat4 camMatrix;
@@ -30,9 +32,15 @@ void main()
     vec4 worldPos = model * vec4(aPos, 1.0);  
     gl_Position = camMatrix * worldPos;
 
+    int L = int(aLighting);
+    float lightR = ((L >> 0) & 0xF) / 15.0;
+    float lightG = ((L >> 4) & 0xF) / 15.0;
+    float lightB = ((L >> 8) & 0xF) / 15.0;
+
     //upload attributes to frag shader
     NormalID = aNormal;
     TexCoords = aUV;
     FragPos = worldPos.xyz; //pass world-space position to fragment shader
-    AO = AOID / 255.0f;
+    AO = AOID / 255.0f;   
+    lightColor = vec3(lightR, lightG, lightB);
 }

@@ -100,10 +100,12 @@ namespace OurCraft.Blocks
         //builds geometry from cached block model uses ao helper methods and uv sampling helpers
         public static void BuildFromCachedModel(CachedBlockModel model, Vector3 pos,
         BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisState,
-        ChunkMeshData mesh, VoxelAOData aoData)
+        ChunkMeshData mesh, VoxelAOData aoData,
+        ushort topLight, ushort bottomLight, ushort frontLight, ushort backLight, ushort rightLight, ushort leftLight)
         {
             //neighbors array indexed by CubeFaces order used across your code
             BlockState[] neighbors = [ bottom, top, front, back, right, left ];
+            ushort[] lightValues = [bottomLight, topLight, frontLight, backLight, rightLight, leftLight];
 
             //iterate cuboids and faces
             foreach (var cuboid in model.Cuboids)
@@ -115,9 +117,10 @@ namespace OurCraft.Blocks
                 for (int f = 0; f < 6; f++)
                 {
                     CubeFaces faceDir = (CubeFaces)f;
+                    ushort lightValue = lightValues[f];
                     CachedFace face = cuboid.Faces[f];
                     if (face == null) continue; //skip if no face
-
+                    
                     //if the face is cullable, check the same visibility rule you already use
                     if (face.Cullable)
                     {
@@ -126,7 +129,6 @@ namespace OurCraft.Blocks
                         if (!BlockMeshHelper.IsFaceVisible(thisState, neighborState, faceDir))
                             continue; //fully culled -> skip
                     }
-
                     //compute atlas subrect for this cached face UV (cached UV is normalized relative to tile: 0->1)
                     //face.UV = (u0_norm, v0_norm, u1_norm, v1_norm) in tile space
                     float u0 = BlockMeshHelper.GetTextureX(face.TextureID) + face.UV.X * BlockMeshHelper.NormalizedBlockTextureX();
@@ -146,9 +148,9 @@ namespace OurCraft.Blocks
                         case CubeFaces.LEFT: aoBytes = VoxelAOHelper.GetAoBytes(VoxelAOHelper.LeftFaceFromCube(aoData)); break;
                         default: aoBytes = [ 0, 0, 0, 0 ]; break;
                     }
-
+                    
                     //add the face: this will compute v0->v3 positions per-face and call the AddQuadUV overload.
-                    AddModelFace(pos, from, to, faceDir, u0, v0, u1, v1, mesh, aoBytes);
+                    AddModelFace(pos, from, to, faceDir, u0, v0, u1, v1, mesh, aoBytes, lightValue);
                 }
             }
         }
@@ -157,11 +159,10 @@ namespace OurCraft.Blocks
         //adds a model face based on cuboid from/to and atlas uv rectangle (u0,v0,u1,v1).
         //uses the same AO corner ordering as blockmeshbuilder AddFullFace/AddSlab methods.        
         private static void AddModelFace(Vector3 blockPos, Vector3 from, Vector3 to, CubeFaces face, float u0, float v0, float u1, float v1,
-        ChunkMeshData mesh, byte[] aoBytes)
+        ChunkMeshData mesh, byte[] aoBytes, ushort lightValue)
         {
             //compute per-face corner positions in the same orientation your other methods use
             Vector3 v0p, v1p, v2p, v3p;
-
             switch (face)
             {
                 case CubeFaces.BOTTOM:
@@ -171,7 +172,7 @@ namespace OurCraft.Blocks
                     v3p = new Vector3(from.X, from.Y, to.Z);
                     //addQuad expects ao order: ev[0], ev[1], ev[3], ev[2] in your bottom code — follow that mapping:
                     AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, (byte)CubeFaces.BOTTOM, mesh,
-                        aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+                        aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2], lightValue);
                     break;
 
                 case CubeFaces.TOP:
@@ -180,7 +181,7 @@ namespace OurCraft.Blocks
                     v2p = new Vector3(to.X, to.Y, from.Z);
                     v3p = new Vector3(from.X, to.Y, from.Z);
                     AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, (byte)CubeFaces.TOP, mesh,
-                        aoBytes[2], aoBytes[3], aoBytes[1], aoBytes[0]);
+                        aoBytes[2], aoBytes[3], aoBytes[1], aoBytes[0], lightValue);
                     break;
 
                 case CubeFaces.FRONT:
@@ -189,7 +190,7 @@ namespace OurCraft.Blocks
                     v2p = new Vector3(to.X, to.Y, to.Z);
                     v3p = new Vector3(from.X, to.Y, to.Z);
                     AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, (byte)CubeFaces.FRONT, mesh,
-                        aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+                        aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2], lightValue);
                     break;
 
                 case CubeFaces.BACK:
@@ -198,7 +199,7 @@ namespace OurCraft.Blocks
                     v2p = new Vector3(from.X, to.Y, from.Z);
                     v3p = new Vector3(to.X, to.Y, from.Z);
                     AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, (byte)CubeFaces.BACK, mesh,
-                        aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3]);
+                        aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3], lightValue);
                     break;
 
                 case CubeFaces.RIGHT:
@@ -207,7 +208,7 @@ namespace OurCraft.Blocks
                     v2p = new Vector3(to.X, to.Y, from.Z);
                     v3p = new Vector3(to.X, to.Y, to.Z);
                     AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, (byte)CubeFaces.RIGHT, mesh,
-                        aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2]);
+                        aoBytes[0], aoBytes[1], aoBytes[3], aoBytes[2], lightValue);
                     break;
 
                 case CubeFaces.LEFT:
@@ -216,7 +217,7 @@ namespace OurCraft.Blocks
                     v2p = new Vector3(from.X, to.Y, to.Z);
                     v3p = new Vector3(from.X, to.Y, from.Z);
                     AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, (byte)CubeFaces.LEFT, mesh,
-                        aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3]);
+                        aoBytes[1], aoBytes[0], aoBytes[2], aoBytes[3], lightValue);
                     break;
 
                 default:
@@ -225,54 +226,55 @@ namespace OurCraft.Blocks
         }
 
         //x shaped blocks are hard to represent in cuboids so this is a sole helper method for adding them
-        public static void BuildXShapeBlock(Vector3 pos, int texID, ChunkMeshData mesh)
+        public static void BuildXShapeBlock(Vector3 pos, int texID, ChunkMeshData mesh,
+        ushort topLight, ushort bottomLight, ushort frontLight, ushort backLight, ushort rightLight, ushort leftLight)
         {
             float eps = 0.001f; //small inset to avoid z-fighting
 
             //first diagonal (\)
             AddQuad(pos, new Vector3(0.0f + eps, 0.0f, 0.0f + eps), new Vector3(1.0f - eps, 0.0f, 1.0f - eps),
             new Vector3(1.0f - eps, 1.0f, 1.0f - eps), new Vector3(0.0f + eps, 1.0f, 0.0f + eps),
-            texID, (byte)CubeFaces.FRONT.GetHashCode(), mesh);
+            texID, (byte)CubeFaces.FRONT.GetHashCode(), mesh, frontLight);
 
             AddQuad(pos, new Vector3(1.0f - eps, 0.0f, 1.0f - eps), new Vector3(0.0f + eps, 0.0f, 0.0f + eps),
             new Vector3(0.0f + eps, 1.0f, 0.0f + eps), new Vector3(1.0f - eps, 1.0f, 1.0f - eps),
-            texID, (byte)CubeFaces.BACK.GetHashCode(), mesh);
+            texID, (byte)CubeFaces.BACK.GetHashCode(), mesh, backLight);
 
             //second diagonal (/)
             AddQuad(pos, new Vector3(1.0f - eps, 0.0f, 0.0f + eps), new Vector3(0.0f + eps, 0.0f, 1.0f - eps),
             new Vector3(0.0f + eps, 1.0f, 1.0f - eps), new Vector3(1.0f - eps, 1.0f, 0.0f + eps),
-            texID, (byte)CubeFaces.RIGHT.GetHashCode(), mesh);
+            texID, (byte)CubeFaces.RIGHT.GetHashCode(), mesh, rightLight);
 
             AddQuad(pos, new Vector3(0.0f + eps, 0.0f, 1.0f - eps), new Vector3(1.0f - eps, 0.0f, 0.0f + eps),
             new Vector3(1.0f - eps, 1.0f, 0.0f + eps), new Vector3(0.0f + eps, 1.0f, 1.0f - eps),
-            texID, (byte)CubeFaces.LEFT.GetHashCode(), mesh);
+            texID, (byte)CubeFaces.LEFT.GetHashCode(), mesh, leftLight);
         }
 
         //add quad from raw vertices
-        private static void AddQuad(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh)
+        private static void AddQuad(Vector3 pos, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, int texID, byte normal, ChunkMeshData mesh, ushort lightValue)
         {
             mesh.AddChunkMeshData(new BlockVertex(pos + v0,
-            new Vector2(BlockMeshHelper.GetTextureX(texID), BlockMeshHelper.GetTextureY(texID)), normal));
+            new Vector2(BlockMeshHelper.GetTextureX(texID), BlockMeshHelper.GetTextureY(texID)), normal, 0, lightValue));
 
             mesh.AddChunkMeshData(new BlockVertex(pos + v1,
-            new Vector2(BlockMeshHelper.GetTextureX(texID) + BlockMeshHelper.NormalizedBlockTextureX(), BlockMeshHelper.GetTextureY(texID)), normal));
+            new Vector2(BlockMeshHelper.GetTextureX(texID) + BlockMeshHelper.NormalizedBlockTextureX(), BlockMeshHelper.GetTextureY(texID)), normal, 0, lightValue));
 
             mesh.AddChunkMeshData(new BlockVertex(pos + v2,
-            new Vector2(BlockMeshHelper.GetTextureX(texID) + BlockMeshHelper.NormalizedBlockTextureX(), BlockMeshHelper.GetTextureY(texID) + BlockMeshHelper.NormalizedBlockTextureY()), normal));
+            new Vector2(BlockMeshHelper.GetTextureX(texID) + BlockMeshHelper.NormalizedBlockTextureX(), BlockMeshHelper.GetTextureY(texID) + BlockMeshHelper.NormalizedBlockTextureY()), normal, 0, lightValue));
 
             mesh.AddChunkMeshData(new BlockVertex(pos + v3,
-            new Vector2(BlockMeshHelper.GetTextureX(texID), BlockMeshHelper.GetTextureY(texID) + BlockMeshHelper.NormalizedBlockTextureY()), normal));
+            new Vector2(BlockMeshHelper.GetTextureX(texID), BlockMeshHelper.GetTextureY(texID) + BlockMeshHelper.NormalizedBlockTextureY()), normal, 0, lightValue));
         }
 
         //addQuad that uses explicit atlas-normalized u/v rectangle (u0,v0,u1,v1).
         //this mirrors existing AddQuad behavior but supports subrects (for partial-UV faces).
         private static void AddQuadUV(Vector3 pos, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3,
-        float u0, float v0, float u1, float v1, byte normal, ChunkMeshData mesh, byte av0, byte av1, byte av2, byte av3)
-        {
-            mesh.AddChunkMeshData(new BlockVertex(pos + p0, new Vector2(u0, v0), normal, av0));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p1, new Vector2(u1, v0), normal, av1));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p2, new Vector2(u1, v1), normal, av2));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p3, new Vector2(u0, v1), normal, av3));
+        float u0, float v0, float u1, float v1, byte normal, ChunkMeshData mesh, byte av0, byte av1, byte av2, byte av3, ushort lightValue)
+        {           
+            mesh.AddChunkMeshData(new BlockVertex(pos + p0, new Vector2(u0, v0), normal, av0, lightValue));
+            mesh.AddChunkMeshData(new BlockVertex(pos + p1, new Vector2(u1, v0), normal, av1, lightValue));
+            mesh.AddChunkMeshData(new BlockVertex(pos + p2, new Vector2(u1, v1), normal, av2, lightValue));
+            mesh.AddChunkMeshData(new BlockVertex(pos + p3, new Vector2(u0, v1), normal, av3, lightValue));
         }
 
         //overload without AO params (keeps parity with blockmeshbuilder other AddQuad)

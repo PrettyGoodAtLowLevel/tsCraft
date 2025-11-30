@@ -3,12 +3,13 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Blocks;
+using OurCraft.Blocks.Block_Properties;
 using OurCraft.Rendering;
 using OurCraft.utility;
 using OurCraft.World;
-using OurCraft.Blocks.Block_Properties;
-using static OurCraft.Physics.VoxelPhysics;
 using OurCraft.World.Terrain_Generation;
+using System.Runtime.CompilerServices;
+using static OurCraft.Physics.VoxelPhysics;
 
 namespace OurCraft
 {
@@ -28,6 +29,7 @@ namespace OurCraft
         Chunkmanager world;
         Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 7.5f, 25);   
         ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(8); //threads for initial chunk generation
+        ThreadPoolSystem lightingThread = new ThreadPoolSystem(1); //worker threads for lighting
         Renderer renderer;
         ushort currentBlock;
         double timer = 0;
@@ -39,7 +41,7 @@ namespace OurCraft
             base.OnLoad();
             CursorState = CursorState.Grabbed;
             BlockData.InitBlocks();
-            world = new Chunkmanager(Program.renderDistance, ref cam, ref worldGenThreads);
+            world = new Chunkmanager(Program.renderDistance, ref cam, ref worldGenThreads, ref lightingThread);
             renderer = new Renderer(ref world, ref cam, screenWidth, screenHeight);
             world.Generate();
             currentBlock = BlockRegistry.GetBlock("Grass Block");
@@ -66,6 +68,7 @@ namespace OurCraft
             cam.HandleInput(KeyboardState, MouseState, this, (float)args.Time);
             bool hitBlock = RaycastVoxel(cam.Position, cam.Orientation, 4.0f, (x, y, z) => world.GetBlockState(new Vector3(x, y, z)).BlockID != BlockIDs.AIR_BLOCK, out VoxelRaycastHit hit);
 
+            //gameplay
             if (MouseState.IsButtonPressed(MouseButton.Left))
             {
                 if (hitBlock)
@@ -103,12 +106,38 @@ namespace OurCraft
             if (KeyboardState.IsKeyDown(Keys.Z)) renderer.fov = 20;
             else renderer.fov = 90;
 
+
+            //debugging
+            if (KeyboardState.IsKeyPressed(Keys.Q))
+            {
+                Console.Clear();
+                Chunk? chunk = world.GetChunkPlayerIsIn();
+                if ( chunk != null)
+                {
+                    Console.WriteLine("Chunk (" + chunk.Pos.X + ", " + chunk.Pos.Z +  ") Debug");
+                    Console.WriteLine("state: " + chunk.GetState());
+                    Console.WriteLine("fully lit: " + chunk.fullyLit);
+                    Console.WriteLine("Currently lighting? " + chunk.lighting);
+                    Console.WriteLine("Meshing? " + chunk.meshing);
+                    Console.WriteLine("Has neighbors? " + world.ChunkLightable(chunk.Pos));
+
+                    //get local chunk positions
+                    ushort value = world.GetBlockLight(cam.Position);
+                    Console.WriteLine("red: " + ((value >> 0) & 0xF) + ", green: " + ((value >> 4) & 0xF) + ", blue: " + ((value >> 8) & 0xF));
+                    BlockState state = world.GetBlockState(cam.Position);
+                    Console.WriteLine("Light source? " + state.GetBlock.IsLightSource(state));
+                    chunk.LogLightSourceCount();
+                    chunk.LogGenStats();
+                }
+            }
+
             if (KeyboardState.IsKeyPressed(Keys.R))
             {
                 Console.Clear();
-                NoiseRouter.DebugPrint((int)cam.Position.X, (int)cam.Position.Z);
+                NoiseRouter.DebugPrint((int)cam.Position.X, (int)cam.Position.Y);
             }
 
+            //update world and log fps
             world.Update((float)args.Time, (float)rawTime);
             timer += args.Time;
 

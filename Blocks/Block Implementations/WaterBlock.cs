@@ -13,5 +13,16 @@ namespace OurCraft.Blocks.Block_Implementations
         {
             IsSolid = false;
         }
+
+        //light can pass through semi transparent water
+        public override bool IsLightPassable(BlockState state)
+        {
+            return true;
+        }
+
+        public override bool IsLightSource(BlockState state)
+        {
+            return false;
+        }
     }
 }

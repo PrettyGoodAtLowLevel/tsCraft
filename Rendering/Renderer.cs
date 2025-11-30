@@ -57,8 +57,6 @@ namespace OurCraft.Rendering
             postProcessingQuad.Draw();           
         }
 
-
-
         //draws chunks without any post processing
         private void DrawRawChunks(float time)
         {
@@ -142,11 +140,12 @@ namespace OurCraft.Rendering
             //create all shaders
             shader.Create("default.vert", "default.frag");
             postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
-            skyColor = new Vector3(0.5f, 0.6f, 0.8f);
+            skyColor = new Vector3(0.0f, 0.0f, 0.0f);
 
             //-----set up block shaders-----
             shader.Activate();
             shader.SetVector3("skyColor", skyColor);
+            shader.SetVector3("globalLightColor", new Vector3(1.0f, 1.0f, 1.0f));
             shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE - 20);
             shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE);
             shader.SetFloat("fogDensity", 0.5f);

@@ -53,5 +53,19 @@ namespace OurCraft.Blocks.Block_Implementations
                 return;
             }
         }
+
+        //if double slab, then is opaque, if single slab then light can pass through
+        public override bool IsLightPassable(BlockState state)
+        {
+            SlabType thisState = state.GetProperty(SLAB_TYPE);
+
+            if (thisState == SlabType.Double) return false;
+            return true;
+        }
+
+        public override bool IsLightSource(BlockState state)
+        {
+            return false;
+        }
     }
 }

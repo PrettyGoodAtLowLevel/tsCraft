@@ -1,4 +1,5 @@
-﻿using OurCraft.Blocks.Block_Implementations;
+﻿using OpenTK.Mathematics;
+using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.BlockShapeData;
 
 //contains all the indexes and data for each different block type
@@ -63,6 +64,11 @@ namespace OurCraft.Blocks
             BlockIDs.ICE_BLOCK = RegisterBlock(new FullBlock("Ice Block", BlockShapesRegistry.IceBlockShape, BlockIDs.ICE_BLOCK));
             BlockIDs.GRAVEL_BLOCK = RegisterBlock(new FullBlock("Gravel Block", BlockShapesRegistry.GravelBlockShape, BlockIDs.GRAVEL_BLOCK));
             BlockIDs.CACTUS_BLOCK = RegisterBlock(new FullBlock("Cactus Block", BlockShapesRegistry.CactusBlockShape, BlockIDs.CACTUS_BLOCK));
+
+            //
+            BlockIDs.REDSTONE_BLOCK = RegisterBlock(new FullLightBlock("Redstone Block", BlockShapesRegistry.RedstoneBlockShape, BlockIDs.REDSTONE_BLOCK, new Vector3i(15, 0, 0)));
+            BlockIDs.EMERALD_BLOCK = RegisterBlock(new FullLightBlock("Emerald Block", BlockShapesRegistry.EmeraldBlockShape, BlockIDs.EMERALD_BLOCK, new Vector3i(0, 15, 0)));
+            BlockIDs.LAPIZ_BLOCK = RegisterBlock(new FullLightBlock("Lapiz Block", BlockShapesRegistry.LapizBlockShape, BlockIDs.LAPIZ_BLOCK, new Vector3i(0, 0, 15)));
         }
 
         //get block from id
@@ -125,6 +131,9 @@ namespace OurCraft.Blocks
         public static ushort GRAVEL_BLOCK = 0;
         public static ushort DEAD_BUSH_BLOCK = 0;
         public static ushort CACTUS_BLOCK = 0;
+        public static ushort REDSTONE_BLOCK = 0;
+        public static ushort EMERALD_BLOCK = 0;
+        public static ushort LAPIZ_BLOCK = 0;
     }
 
     //dictionary for mapping ids to strings

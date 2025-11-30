@@ -5,6 +5,7 @@ in vec2 TexCoords;
 flat in int NormalID;
 in float AO;
 in vec3 FragPos;
+in vec3 lightColor;
 
 //output fragment color
 out vec4 FragColor;
@@ -15,6 +16,7 @@ uniform vec3 cameraPos;
 
 //sky color
 uniform vec3 skyColor =  vec3(0.5, 0.3, 0.4);
+uniform vec3 globalLightColor = vec3(1.0, 1.0, 1.0);
 
 //lighting parameters
 uniform vec3 lightDir = vec3(0.2, 1.0, 0.3); //direction to the light
@@ -51,15 +53,19 @@ void main()
     float diff = max(dot(normal, lightDirNorm), 0.0);
     
     //combine ambient and diffuse
-    vec3 ambient = ambientStrength * skyColor;
-    vec3 diffuse = diff * skyColor;
+    vec3 ambient = ambientStrength * globalLightColor;
+    vec3 diffuse = diff * globalLightColor;
     vec3 lighting = ambient + diffuse;
+    vec3 lightFinal = pow(lightColor, vec3(2.2));
     
     //apply AO
     float aoFactor = clamp(AO, 0.0, 1.0);   
     if (!useAO) aoFactor = 0.0;
     
-    vec3 litColor = texColor.rgb * lighting * (1.0 - aoFactor);
+    //combine texture, lighting, and block light
+    vec3 ambience = vec3(0.01);
+    vec3 litColor = texColor.rgb * (lighting) * (lightFinal + ambience); // ADDITIVE
+    litColor *= (1.0 - aoFactor);
     
     //compute distance to camera
     float dist = length(FragPos - cameraPos);

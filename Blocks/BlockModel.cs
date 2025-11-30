@@ -54,7 +54,7 @@ namespace OurCraft.Blocks
         }
 
         //actually load the thing
-        public static BlockModel? Load(string fileName)
+        public static BlockModel Load(string fileName)
         {
             string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Resources/BlockModels/{fileName}";
             string json = File.ReadAllText(path);
@@ -63,9 +63,17 @@ namespace OurCraft.Blocks
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            };
+            }; 
+            var result = JsonSerializer.Deserialize<BlockModel>(json, options);
 
-            return JsonSerializer.Deserialize<BlockModel>(json, options);
+            //just in case thing doesnt exist return empty model, will break meshing though
+            if (result == null)
+            {
+                Console.WriteLine("Block Model does not exist in file directory: " + path);
+                return new BlockModel();
+            }
+
+            return result;
         }
     }
 

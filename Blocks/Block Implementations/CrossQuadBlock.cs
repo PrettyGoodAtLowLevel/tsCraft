@@ -22,11 +22,17 @@ namespace OurCraft.Blocks.Block_Implementations
 
         public override void UpdateBlockState(Vector3 globalPos, BlockState thisBlock, Chunkmanager world)
         {
-            if (world.GetBlockState(globalPos + new Vector3i(0, -1, 0)).BlockID == BlockIDs.AIR_BLOCK)
-            {
-                Console.WriteLine("deleting");
-                world.SetBlock(globalPos, new BlockState(BlockIDs.AIR_BLOCK));
-            }
+        }
+
+        //light can pass through non full blocks
+        public override bool IsLightPassable(BlockState state)
+        {
+            return true;
+        }
+
+        public override bool IsLightSource(BlockState state)
+        {
+            return false;
         }
     }
 }

@@ -58,6 +58,9 @@
 
         //--------building blocks-----------
         public static readonly int glassTex = 152;
+        public static readonly int redstoneBlockTex = 117;
+        public static readonly int emeraldBlockTex = 116;
+        public static readonly int lapizBlockTex = 115;
         public static readonly int whiteGlassTex = 367;
         public static readonly int purpleGlassTex = 368;
     }
@@ -119,6 +122,9 @@
             { "Glass", TextureIDs.glassTex },
             { "White_Glass", TextureIDs.whiteGlassTex },
             { "Purple_Glass", TextureIDs.purpleGlassTex },
+            { "Redstone_Block", TextureIDs.redstoneBlockTex},
+            { "Emerald_Block", TextureIDs.emeraldBlockTex},
+            { "Lapiz_Block", TextureIDs.lapizBlockTex},
         };
 
         //returns the integer texture ID for a given name.

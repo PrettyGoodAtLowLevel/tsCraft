@@ -39,6 +39,24 @@ namespace OurCraft.Blocks
         public virtual void UpdateBlockState(Vector3 globalPos,
         BlockState thisBlock, Chunkmanager world) { }
 
+        //determines if this block is a light source or not
+        public virtual bool IsLightSource(BlockState state)
+        {
+            return false;
+        }
+
+        //determines if light can pass through this block
+        public virtual bool IsLightPassable(BlockState state)
+        {
+            return false;
+        }
+
+        //gives you the light source value
+        public virtual Vector3i GetLightSourceLevel(BlockState state)
+        {
+            return new Vector3i(0, 0, 0);
+        }
+
         //get other block info
         public string GetBlockName() { return name; }
     }
