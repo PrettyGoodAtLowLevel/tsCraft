@@ -10,15 +10,14 @@ namespace OurCraft
     public struct BlockVertex
     {
         //assumes in local chunk coordinates
-        public BlockVertex(Vector3 pos, Vector2 uv, byte normal, byte ao = 0, ushort lightValue = 0)
+        public BlockVertex(Vector3 pos, Vector2 uv, ushort lightValue = 0, byte normal = 0)
         {
             x = EncodeToShort(pos.X);
             y = pos.Y;
             z = EncodeToShort(pos.Z);
             texUV = new Vector2h(uv);
-            this.normal = normal;
-            this.ao = ao;
             lighting = lightValue;
+            this.normal = normal;
         }
 
         //byte location = 0
@@ -30,13 +29,10 @@ namespace OurCraft
         public Vector2h texUV; //since only 0-1 coords, half precision float works fine
 
         //byte location = 12
-        public byte normal;
-
-        //byte location = 13
-        public byte ao = 0;
-
-        //byte location = 14
         public ushort lighting = 0;
+
+        //byte location = 15
+        public byte normal = 0;
 
         //always updates when adding new vertex properties
         public static int GetSize()

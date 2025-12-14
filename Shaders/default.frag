@@ -2,10 +2,10 @@
 
 //inputs
 in vec2 TexCoords;
-flat in int NormalID;
-in float AO;
 in vec3 FragPos;
 in vec3 lightColor;
+in float skyLight;
+flat in int NormalID;
 
 //output fragment color
 out vec4 FragColor;
@@ -15,27 +15,18 @@ uniform sampler2D tex0;
 uniform vec3 cameraPos;
 
 //sky color
-uniform vec3 skyColor =  vec3(0.5, 0.3, 0.4);
-uniform vec3 globalLightColor = vec3(1.0, 1.0, 1.0);
-
-//lighting parameters
-uniform vec3 lightDir = vec3(0.2, 1.0, 0.3); //direction to the light
-uniform float ambientStrength = 0.3;
+uniform vec3 skyColor;
 
 //fog parameters
 uniform float fogStart = 150.0;
 uniform float fogEnd = 300.0;
-uniform bool useAO = false;
 
-//hardcoded face normals
-const vec3 faceNormals[6] = vec3[]
-(
-    vec3(0.0, -1.0, 0.0), //bottom (0)
-    vec3(0.0, 1.0, 0.0),  //top (1)
-    vec3(0.0, 0.0, 1.0),  //front (2)
-    vec3(0.0, 0.0, -1.0), //back (3)
-    vec3(1.0, 0.0, 0.0),  //right (4)
-    vec3(-1.0, 0.0, 0.0)  //left (5)
+//shade the colors slightly based on face
+const float faceLight[6] = float[]
+( 
+    0.4, 1.0,
+    0.7, 0.7,
+    0.6, 0.6
 );
 
 void main()
@@ -44,28 +35,16 @@ void main()
     vec4 texColor = texture(tex0, TexCoords);
     
     if(texColor.a < 0.01) discard; //skip fully transparent
-    
-    //get normal from array
-    vec3 normal = faceNormals[NormalID];
-    
-    //diffuse lighting (Lambertian)
-    vec3 lightDirNorm = normalize(lightDir);
-    float diff = max(dot(normal, lightDirNorm), 0.0);
-    
-    //combine ambient and diffuse
-    vec3 ambient = ambientStrength * globalLightColor;
-    vec3 diffuse = diff * globalLightColor;
-    vec3 lighting = ambient + diffuse;
-    vec3 lightFinal = pow(lightColor, vec3(2.2));
-    
-    //apply AO
-    float aoFactor = clamp(AO, 0.0, 1.0);   
-    if (!useAO) aoFactor = 0.0;
+
+    //block and sky light
+    vec3 skyLighting = pow(skyLight, 2.0) * skyColor;
+    vec3 blockLighting = pow(lightColor, vec3(2.0));
+    vec3 lightFinal = max(blockLighting, skyLighting);   
     
     //combine texture, lighting, and block light
     vec3 ambience = vec3(0.01);
-    vec3 litColor = texColor.rgb * (lighting) * (lightFinal + ambience); // ADDITIVE
-    litColor *= (1.0 - aoFactor);
+    vec3 litColor = texColor.rgb  * (lightFinal + ambience); // ADDITIVE
+    litColor *= faceLight[NormalID];
     
     //compute distance to camera
     float dist = length(FragPos - cameraPos);

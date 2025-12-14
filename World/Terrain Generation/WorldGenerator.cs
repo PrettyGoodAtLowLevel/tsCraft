@@ -15,7 +15,7 @@ namespace OurCraft.World.Terrain_Generation
         //determines low fidelity shape of terrain
         public static NoiseRegion GetTerrainRegion(int x, int z)
         {
-            if (FlatWorld) return new NoiseRegion(130, 0, BiomeData.EmptyBiome, 0);
+            if (FlatWorld) return new NoiseRegion(130, 0, BiomeData.Tundra, 0);
 
             //get terrain shaping noises
             float continentalness = NoiseRouter.GetRegionalNoise(x, z);
@@ -51,7 +51,7 @@ namespace OurCraft.World.Terrain_Generation
         //indexes into the biome table with the current temp, humidity, and vegetation
         public static Biome GetBiome(int temp, int humid, int veg)
         {
-            return BiomeData.FindBiome(temp,humid,veg);
+            return BiomeData.FindBiome(temp, humid, veg);
         }
 
         //creates the detailed shape of terrain by adding 3d detail to the raw heightmap

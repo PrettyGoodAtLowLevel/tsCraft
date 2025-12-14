@@ -23,5 +23,10 @@ namespace OurCraft.Blocks.Block_Implementations
         {
             return false;
         }
+
+        public override int GetLightAttenuation(BlockState state)
+        {
+            return 0;
+        }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Rendering;
+using OurCraft.Graphics;
 using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 
@@ -23,6 +23,11 @@ namespace OurCraft.Blocks.Block_Implementations
         public override bool IsLightSource(BlockState state)
         {
             return false;
+        }
+
+        public override int GetLightAttenuation(BlockState state)
+        {
+            return 1;
         }
     }
 }

@@ -1,7 +1,8 @@
 using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.Rendering;
+using OurCraft.Graphics;
+using OurCraft.Graphics.Voxel_Lighting;
 
 namespace OurCraft.Blocks.Meshing
 {
@@ -16,24 +17,20 @@ namespace OurCraft.Blocks.Meshing
         public CachedBlockModel cachedModelBottom = new();
 
         //add slab type mesh
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, VoxelAOData aOData,
-        ushort topLight, ushort bottomLight, ushort frontLight, ushort backLight, ushort rightLight, ushort leftLight)
+        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, LightingData lightData, ushort thisLight)
         {
             SlabType type = SlabBlock.SLAB_TYPE.Decode(thisState.MetaData);
 
             switch (type)
             {
                 case SlabType.Double:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
-                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
                     break;
                 case SlabType.Top:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
-                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
                     break;
                 default:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, bottom, top, front, back, right, left, thisState, mesh, aOData,
-                    topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
+                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
                     break;
             }
         }

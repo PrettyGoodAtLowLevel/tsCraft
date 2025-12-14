@@ -4,7 +4,7 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.Rendering;
+using OurCraft.Graphics;
 using OurCraft.utility;
 using OurCraft.World;
 using OurCraft.World.Terrain_Generation;
@@ -29,7 +29,7 @@ namespace OurCraft
         Chunkmanager world;
         Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 7.5f, 25);   
         ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(8); //threads for initial chunk generation
-        ThreadPoolSystem lightingThread = new ThreadPoolSystem(1); //worker threads for lighting
+        ThreadPoolSystem lightingThread = new ThreadPoolSystem(1); //worker thread for lighting
         Renderer renderer;
         ushort currentBlock;
         double timer = 0;
@@ -111,23 +111,11 @@ namespace OurCraft
             if (KeyboardState.IsKeyPressed(Keys.Q))
             {
                 Console.Clear();
-                Chunk? chunk = world.GetChunkPlayerIsIn();
-                if ( chunk != null)
+                ChunkCoord coord = world.GetPlayerChunk();
+                Chunk? chunk = world.GetChunk(coord);
+                if (chunk != null)
                 {
-                    Console.WriteLine("Chunk (" + chunk.Pos.X + ", " + chunk.Pos.Z +  ") Debug");
-                    Console.WriteLine("state: " + chunk.GetState());
-                    Console.WriteLine("fully lit: " + chunk.fullyLit);
-                    Console.WriteLine("Currently lighting? " + chunk.lighting);
-                    Console.WriteLine("Meshing? " + chunk.meshing);
-                    Console.WriteLine("Has neighbors? " + world.ChunkLightable(chunk.Pos));
-
-                    //get local chunk positions
-                    ushort value = world.GetBlockLight(cam.Position);
-                    Console.WriteLine("red: " + ((value >> 0) & 0xF) + ", green: " + ((value >> 4) & 0xF) + ", blue: " + ((value >> 8) & 0xF));
-                    BlockState state = world.GetBlockState(cam.Position);
-                    Console.WriteLine("Light source? " + state.GetBlock.IsLightSource(state));
-                    chunk.LogLightSourceCount();
-                    chunk.LogGenStats();
+                    Console.WriteLine(chunk.GetState());
                 }
             }
 

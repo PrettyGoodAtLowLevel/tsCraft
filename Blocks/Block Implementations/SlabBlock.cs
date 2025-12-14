@@ -1,4 +1,4 @@
-﻿using OurCraft.Rendering;
+﻿using OurCraft.Graphics;
 using OpenTK.Mathematics;
 using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
@@ -61,6 +61,14 @@ namespace OurCraft.Blocks.Block_Implementations
 
             if (thisState == SlabType.Double) return false;
             return true;
+        }
+
+        public override int GetLightAttenuation(BlockState state)
+        {
+            SlabType thisState = state.GetProperty(SLAB_TYPE);
+
+            if (thisState == SlabType.Double) return 15;
+            return 0;
         }
 
         public override bool IsLightSource(BlockState state)

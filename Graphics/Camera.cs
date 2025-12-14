@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace OurCraft.Rendering
+namespace OurCraft.Graphics
 {
     //manipulates the vertex shader to simulate 3d
     public class Camera //also could be player currently

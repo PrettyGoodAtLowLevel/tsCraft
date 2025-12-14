@@ -59,10 +59,23 @@ namespace OurCraft.utility
             ((light.Z & 0xF) << 8) | ((sky & 0xF) << 12));
         }
 
+        //unpacks a full lighting value
+        public static void UnpackLight16(ushort light, ref byte r, ref byte g, ref byte b, ref byte s)
+        {
+            r = (byte)((light >> 0) & 0xF); g = (byte)((light >> 4) & 0xF);
+            b = (byte)((light >> 8) & 0xF); s = (byte)((light >> 12) & 0xF);
+        }
+
         //same thing but for vector3i and only for the block light
         public static Vector3i UnpackLight16Block(ushort light)
         {
             return new Vector3i((light >> 0) & 0xF, (light >> 4) & 0xF, (light >> 8) & 0xF);
+        }
+
+        //get skylight from packed light
+        public static byte UnpackLight16Sky(ushort light)
+        {
+            return (byte)((light >> 12) & 0xF);
         }
     }
 

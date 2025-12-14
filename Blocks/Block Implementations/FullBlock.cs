@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.Rendering;
+using OurCraft.Graphics;
 using OurCraft.World;
 using System.Xml.Linq;
 

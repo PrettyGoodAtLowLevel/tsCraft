@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 using OurCraft.openGL_objects;
 using OurCraft.World;
 
-namespace OurCraft.Rendering
+namespace OurCraft.Graphics
 {
     //does all the drawing
     //draws chunks, ui, entities, particle systems, etc
@@ -20,6 +20,8 @@ namespace OurCraft.Rendering
         private readonly Shader postShader = new Shader(); 
         private readonly FullscreenQuad postProcessingQuad;
         private int screenWidth, screenHeight;
+
+        //atmosphere
         public Vector3 skyColor = Vector3.Zero;
 
         public Renderer(ref Chunkmanager chunks, ref Camera cam, int width, int height)
@@ -140,27 +142,26 @@ namespace OurCraft.Rendering
             //create all shaders
             shader.Create("default.vert", "default.frag");
             postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
-            skyColor = new Vector3(0.0f, 0.0f, 0.0f);
+            skyColor = new Vector3(0.05f, 0.015f, 0.02f);
 
             //-----set up block shaders-----
             shader.Activate();
             shader.SetVector3("skyColor", skyColor);
-            shader.SetVector3("globalLightColor", new Vector3(1.0f, 1.0f, 1.0f));
-            shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE - 20);
-            shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE);
+            shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE + 1020);
+            shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE + 1020);
             shader.SetFloat("fogDensity", 0.5f);
 
             //-----post processing----
             //tweak for weird screen effects
             postShader.Activate();
             postShader.SetInt("sceneTex", 0);
-            postShader.SetFloat("caStrength", 0.025f);
-            postShader.SetFloat("vignetteStrength", 1.0f);
-            postShader.SetFloat("saturation", 1.35f);
-            postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.1f)); 
+            postShader.SetFloat("caStrength", 0.0f);
+            postShader.SetFloat("vignetteStrength", 0.0f);
+            postShader.SetFloat("saturation", 1.0f);
+            postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.0f)); 
             postShader.SetFloat("tintIntensity", 0.1f);
             postShader.SetVector2("uResolution", new Vector2(screenWidth, screenHeight));
-            postShader.SetFloat("aaStrength", 0.2f);
+            postShader.SetFloat("aaStrength", 0.0f);
             
         }
 

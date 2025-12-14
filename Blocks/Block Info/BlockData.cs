@@ -17,7 +17,7 @@ namespace OurCraft.Blocks
         //register all of the blocks
         public static void InitBlocks()
         {
-            //natural blocks
+            //
             BlockIDs.AIR_BLOCK = RegisterBlock(new AirBlock("Air", BlockShapesRegistry.AirBlockShape, BlockIDs.AIR_BLOCK));
             BlockIDs.GRASS_BLOCK = RegisterBlock(new FullBlock("Grass Block", BlockShapesRegistry.GrassBlockShape, BlockIDs.GRASS_BLOCK));
             BlockIDs.DIRT_BLOCK = RegisterBlock(new FullBlock("Dirt", BlockShapesRegistry.DirtBlockShape, BlockIDs.DIRT_BLOCK));
@@ -27,16 +27,16 @@ namespace OurCraft.Blocks
             BlockIDs.STONE_BLOCK = RegisterBlock(new FullBlock("Stone", BlockShapesRegistry.StoneBlockShape, BlockIDs.STONE_BLOCK));
             BlockIDs.WATER_BLOCK = RegisterBlock(new WaterBlock("Water", BlockShapesRegistry.WaterBlockShape, BlockIDs.WATER_BLOCK));
 
-            //x shaped natural blocks
+            //
             BlockIDs.ROSE_BLOCK = RegisterBlock(new CrossQuadBlock("Rose", BlockShapesRegistry.CrossRoseShape, BlockIDs.ROSE_BLOCK));
             BlockIDs.X_GRASS_BLOCK = RegisterBlock(new CrossQuadBlock("Grass", BlockShapesRegistry.CrossGrassShape, BlockIDs.X_GRASS_BLOCK));
             BlockIDs.DEAD_BUSH_BLOCK = RegisterBlock(new CrossQuadBlock("Dead Bush", BlockShapesRegistry.DeadBushCrossShape, BlockIDs.DEAD_BUSH_BLOCK));
 
-            //building blocks
+            //
             BlockIDs.STONE_SLAB_BLOCK = RegisterBlock(new SlabBlock("Stone Slab", BlockShapesRegistry.StoneSlabShape, BlockIDs.STONE_SLAB_BLOCK));  
             BlockIDs.GLASS_BLOCK = RegisterBlock(new GlassBlock("Glass", BlockShapesRegistry.GlassBlockShape, BlockIDs.GLASS_BLOCK));
 
-            //wood
+            //
             BlockIDs.OAK_PLANKS_BLOCK = RegisterBlock(new FullBlock("Oak Planks", BlockShapesRegistry.OakPlanksBlockShape, BlockIDs.OAK_PLANKS_BLOCK));
             BlockIDs.OAK_LOG_BLOCK = RegisterBlock(new BlockLog("Oak Log", BlockShapesRegistry.OakLogBlockShape, BlockIDs.OAK_LOG_BLOCK));
             BlockIDs.OAK_SLAB_BLOCK = RegisterBlock(new SlabBlock("Oak Slab", BlockShapesRegistry.OakSlabShape, BlockIDs.OAK_SLAB_BLOCK));

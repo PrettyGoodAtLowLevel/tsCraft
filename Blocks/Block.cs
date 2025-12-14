@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Rendering;
+using OurCraft.Graphics;
 using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 
@@ -55,6 +55,12 @@ namespace OurCraft.Blocks
         public virtual Vector3i GetLightSourceLevel(BlockState state)
         {
             return new Vector3i(0, 0, 0);
+        }
+
+        //gives you the skylight attenuation, 15 equals no light, 0 equals all light
+        public virtual int GetLightAttenuation(BlockState state)
+        {
+            return 15;
         }
 
         //get other block info

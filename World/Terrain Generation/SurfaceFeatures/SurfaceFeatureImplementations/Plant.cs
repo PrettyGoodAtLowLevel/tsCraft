@@ -22,16 +22,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
         //simply replace starting block with plant block
         public override void PlaceFeature(Vector3i startPos, Chunk chunk)
         {
-            int count = NoiseRouter.GetVariation(startPos.X + chunk.Pos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.Pos.Z * SubChunk.SUBCHUNK_SIZE, 5, NoiseRouter.seed, 100);
-
-            if (count > 10)
+            int count = NoiseRouter.GetVariation(startPos.X + chunk.Pos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.Pos.Z * SubChunk.SUBCHUNK_SIZE, 5, NoiseRouter.seed, 100);          
             chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, new BlockState(BlockID));
-            else if (count > 7)
-                chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, new BlockState(BlockIDs.REDSTONE_BLOCK));
-            else if (count > 4)
-                chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, new BlockState(BlockIDs.LAPIZ_BLOCK));
-            else
-                chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, new BlockState(BlockIDs.EMERALD_BLOCK));
         }
     }
 }

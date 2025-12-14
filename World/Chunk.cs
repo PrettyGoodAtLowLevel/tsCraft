@@ -2,13 +2,12 @@
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.Meshing;
-using OurCraft.Rendering;
+using OurCraft.Graphics;
 using OurCraft.utility;
 using OurCraft.World.Terrain_Generation;
 using OurCraft.World.Terrain_Generation.SurfaceFeatures;
-using System;
-using System.Diagnostics;
-using static OurCraft.Rendering.Camera;
+using static OurCraft.Graphics.Camera;
+using OurCraft.Graphics.Voxel_Lighting;
 
 namespace OurCraft.World
 {
@@ -81,20 +80,6 @@ namespace OurCraft.World
     //holds mesh and block data for a part of the world
     public class Chunk
     {
-        //---explanation---
-
-        //chunks are collections of subchunks (which hold the block and mesh data)
-        //chunks are treated as sections of the world that group voxel and mesh data together
-        //this is so that every block is not treated as an individiual (that would then mean many draw calls, which is bad for gpu)
-        //the chunks are 32 by 32 subchunks, that are then stacked on top of eachother 12 times, this creates a 32 by 384 by 32 chunk column
-
-        //---data---
-        //Pos - global position of chunk for subchunks to use when building meshes
-        //subchunk count and chunk height - already explained
-        //subChunks - the actual collection of subchunks
-        //state - chunks generation state (intialized, only block ids, ready to mesh, meshed, deleted) useful for synchronization
-        //cam, batchedMesh - rendering info, batchedMesh combines mesh data into one big buffer, mesh data is seperate so update times are fast, with minimal draw calls
-
         //rendering
         public readonly ChunkMesh batchedMesh;
         public readonly ChunkMesh transparentMesh;
@@ -103,21 +88,14 @@ namespace OurCraft.World
         public ChunkCoord Pos { get; private set; }
         public const int SUBCHUNK_COUNT = 12;
         public const int CHUNK_HEIGHT = SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT;
+
         public SubChunk[] subChunks = new SubChunk[SUBCHUNK_COUNT];
+        public ushort[,,] lightMap = new ushort[0, 0, 0];
+        public ushort[,] heightMap = new ushort[0, 0]; 
 
         //generation data
         volatile ChunkState state;
-        public volatile bool meshing = false;
-        public volatile bool lighting = false;
-        public volatile bool fullyLit = false;
-        public List<int> changes = new();
-        public ushort[,,] lightMap = new ushort[0,0,0];
-
-        //generation debug
-        public int voxelGenTime = 0;   
-        public int lightingTime = 0;
-        public int meshingTime = 0;
-        public int uploadTime = 0;
+        public List<int> changes = [];             
 
         //frustum culling
         public Vector3 chunkMin;
@@ -130,9 +108,6 @@ namespace OurCraft.World
             state = ChunkState.Initialized;
             batchedMesh = new ChunkMesh();
             transparentMesh = new ChunkMesh();
-            meshing = false;
-            lighting = false;
-            fullyLit = false;
 
             //initialize subchunks
             for (int i = 0; i < SUBCHUNK_COUNT; i++)
@@ -147,44 +122,33 @@ namespace OurCraft.World
         public void InitLightMap()
         {
             lightMap = new ushort[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT, SubChunk.SUBCHUNK_SIZE];
+            heightMap = new ushort[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
 
-            int defaultR = 0;
-            int defaultG = 0;
-            int defaultB = 0;
-            int defaultSky = 15;
-
-            ushort defaultLight =
-            (ushort)
-            (
-                (defaultR & 0xF) |
-                ((defaultG & 0xF) << 4) |
-                ((defaultB & 0xF) << 8) |
-                ((defaultSky & 0xF) << 12)
-            );
+            const int sky0 = 0;
+            ushort defaultLight = sky0;
 
             for (int x = 0; x < SubChunk.SUBCHUNK_SIZE; x++)
             {
-                for(int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
+                for (int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
                 {
-                    for(int y = 0; y < SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT; y++)
-                    { 
-                        lightMap[x, y, z] = defaultLight;
+                    heightMap[x, z] = CHUNK_HEIGHT - 1;
+                    for (int y = 0; y < SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT; y++)
+                    {                  
+                         lightMap[x, y, z] = defaultLight;
                     }
                 }
-            }
+            }            
         }
 
         //fills in all subchunks with block id data
         public void CreateVoxelMap()
         {          
-            Stopwatch sw = Stopwatch.StartNew();
             if (state != ChunkState.Initialized) return;
-
-            //initalize light to 0 and create noise regions          
+            //prefill lightmap
             InitLightMap();
-            NoiseRegion[,] noiseRegions = new NoiseRegion[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
 
-            //calculate the terrain regions
+            //create noise regions
+            NoiseRegion[,] noiseRegions = new NoiseRegion[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
             for (int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
             {
                 for (int x = 0; x < SubChunk.SUBCHUNK_SIZE; x++)
@@ -202,7 +166,6 @@ namespace OurCraft.World
                 subChunk.CreateDensityMap(noiseRegions);                
             }
 
-
             //surface paint the subchunks
             foreach (var subChunk in subChunks)
             {
@@ -214,50 +177,45 @@ namespace OurCraft.World
             {              
                 subChunk.PlaceSurfaceFeatures(noiseRegions);            
             }
-            sw.Stop();
-            voxelGenTime += (int)sw.ElapsedMilliseconds;
+            
             //update state
-            state = ChunkState.VoxelOnly;     
+            state = ChunkState.VoxelOnly;
         }
 
         //creates all subchunk mesh data
         public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
             Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
-        {        
-            Stopwatch sw = Stopwatch.StartNew();
-            if (state != ChunkState.VoxelOnly) return;          
+        {
+            if (!HasVoxelData()) return;
+            foreach(var subChunk in subChunks)
+            {
+                subChunk.ClearMesh();
+            }
 
             foreach (var subChunk in subChunks)
             {
                 subChunk.CreateChunkMesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            }
-            state = ChunkState.Meshed;
-
+            }        
+            
             int totalVertexCount = 0;
-
             foreach (var subChunk in subChunks)
             {
                 totalVertexCount += subChunk.SolidGeo.vertices.Count;
             }
             batchedMesh.SetupIndices(totalVertexCount);
             transparentMesh.SetupIndices(totalVertexCount);
-            sw.Stop();
-            meshingTime += (int)sw.ElapsedMilliseconds;
 
-            meshing = false;
+            if (state == ChunkState.VoxelOnly)
+                state = ChunkState.Meshed;
         }
 
         //builds the combined subchunk mesh data
         public void SendMeshToOpenGL()
         {
-            Stopwatch sw = Stopwatch.StartNew();
             if (state == ChunkState.Deleted || state == ChunkState.VoxelOnly || state == ChunkState.Initialized)
                 return;
-
             UploadSolidMesh();
             UploadTranparentMesh();
-            sw.Stop();
-            uploadTime += (int)sw.ElapsedMilliseconds;
             state = ChunkState.Built;
         }
         
@@ -308,7 +266,6 @@ namespace OurCraft.World
 
             //preallocate size
             var totalVertices = new List<BlockVertex>(totalVertexCount);
-
             int vertexOffset = 0;
 
             //append mesh data
@@ -341,34 +298,10 @@ namespace OurCraft.World
             transparentMesh.Draw(shader, camera);
         }
 
-        //makes all subchunk meshes empty
-        public void ClearChunkMesh()
-        {
-            foreach (var subChunk in subChunks)
-            {
-                subChunk.ClearMesh();
-            }
-            meshing = false;
-            batchedMesh.ClearMesh();
-            transparentMesh.ClearMesh();
-            state = ChunkState.VoxelOnly;
-        }
-
-        public void SetVoxelOnly()
-        {
-            state = ChunkState.VoxelOnly;
-        }
-
         //dispose all subchunk meshes properly
         public void Delete()
         {
             state = ChunkState.Deleted;
-            meshing = false;
-            lighting = false;
-            foreach(var subChunk in subChunks)
-            {
-                subChunk.Delete();
-            }
             batchedMesh.Delete();
             transparentMesh.Delete();
         }
@@ -376,9 +309,11 @@ namespace OurCraft.World
         //set chunk ready to delete
         public void MarkForDeletion()
         {
-            meshing = false;
-            lighting = false;
             state = ChunkState.Deleted;
+            foreach(var subChunk in subChunks)
+            {
+                subChunk.isAllAir = true;
+            }
         }
 
         //get state
@@ -403,24 +338,6 @@ namespace OurCraft.World
         public bool Deleted()
         {
             return state == ChunkState.Deleted;
-        }
-
-        //checks if chunk is drawable
-        public static bool IsBoxInFrustum(FrustumPlane[] planes, Vector3 min, Vector3 max)
-        {
-            foreach (var plane in planes)
-            {
-                Vector3 positiveVertex = new Vector3(
-                    plane.Normal.X >= 0 ? max.X : min.X,
-                    plane.Normal.Y >= 0 ? max.Y : min.Y,
-                    plane.Normal.Z >= 0 ? max.Z : min.Z
-                );
-
-                if (plane.GetSignedDistanceToPoint(positiveVertex) < 0)
-                    return false;
-            }
-
-            return true;
         }
 
         //block manipulation
@@ -456,17 +373,18 @@ namespace OurCraft.World
             return subChunks[subChunkY].GetBlockState(x, localY, z);
         }
 
-        //trys to set the block in a chunk safely
+        //sets block and sets chunk as dirty
         public void SetBlock(int x, int y, int z, BlockState state)
         {
             if (HasVoxelData() == false || y < 0 || y > CHUNK_HEIGHT - 1) return;
-
+            changes.Add(y);
             //get subchunk position
             int subChunkY = y / SubChunk.SUBCHUNK_SIZE;
             int localY = y % SubChunk.SUBCHUNK_SIZE;
             subChunks[subChunkY].SetBlock(x, localY, z, state);
         }
 
+        //gives back skylight and block light from local position
         public ushort GetLight(int x, int y, int z)
         {            
             if (HasVoxelData() == false || !PosValid(x, y, z))
@@ -476,6 +394,7 @@ namespace OurCraft.World
             return lightMap[x, y, z];
         }
 
+        //sets a whole light value position, dont use this unless needed
         public void SetLight(int x, int y, int z, ushort value)
         {
             if (HasVoxelData() == false || !PosValid(x, y, z))
@@ -483,6 +402,46 @@ namespace OurCraft.World
                 return;
             }
             lightMap[x, y, z] = value;
+        }
+
+        //sets only the block rgb colors at a light value position
+        public void SetBlockLight(int x, int y, int z, Vector3i value)
+        {
+            if (HasVoxelData() == false || !PosValid(x, y, z))
+                return;
+
+            //preserve the upper 4 bits for skylight
+            ushort current = lightMap[x, y, z];    
+            ushort preserved = (ushort)(current & 0xF000);
+
+            //pack blocklight into the lower 12 bits
+            ushort packed = (ushort)((value.X & 0xF) |
+            ((value.Y & 0xF) << 4) | ((value.Z & 0xF) << 8));
+
+            lightMap[x, y, z] = (ushort)(preserved | packed);
+        }
+
+        //sets a skylight value at a local position in the chunk
+        public void SetSkyLight(int x, int y, int z, int value)
+        {
+            if (!PosValid(x, y, z)) return;
+
+            //read the current light value
+            ushort current = lightMap[x, y, z];
+
+            //rreserve the lower 12 bits of block lights
+            ushort preservedBlockLight = (ushort)(current & 0x0FFF);
+            ushort newSkyLight = (ushort)((value & 0xF) << 12);
+
+            //combine preserved block light with new sky light
+            lightMap[x, y, z] = (ushort)(preservedBlockLight | newSkyLight);
+        }
+
+        public void SetHeightMap(int x, int z, int value)
+        {
+            if (!PosValid(x, z)) return;
+            if (value >= CHUNK_HEIGHT) heightMap[x, z] = CHUNK_HEIGHT;
+            heightMap[x, z] = (ushort)value;
         }
 
         //unsafe setblock
@@ -534,9 +493,6 @@ namespace OurCraft.World
                 subChunks[idx].Remesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
             }
 
-            batchedMesh.ClearMesh();
-            transparentMesh.ClearMesh();
-
             int totalVertexCount = 0;
 
             foreach (var subChunk in subChunks)
@@ -552,60 +508,47 @@ namespace OurCraft.World
             changes.Clear();
         }
 
-        //checks if a position fits in a chunk
+        //debug and helpers
+
+        //checks if a position fits in a chunk, for many axis
         public static bool PosValid(int x, int y, int z)
         {
             return x >= 0 && x < SubChunk.SUBCHUNK_SIZE && z >= 0 && z < SubChunk.SUBCHUNK_SIZE && y >= 0 && y < SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT;
         }
 
-        //light debugs
-        public void LogLightSourceCount()
+        //overload only for x and z layers of a chunk
+        public static bool PosValid(int x, int z)
         {
-            int totalLightSources = 0;
-            foreach(var subChunk in subChunks)
-            {
-                totalLightSources += subChunk.lightSources.Count;
-            }
-
-            Console.WriteLine("Total Chunk Light Sources: " + totalLightSources);
+            return x >= 0 && x < SubChunk.SUBCHUNK_SIZE && z >= 0 && z < SubChunk.SUBCHUNK_SIZE;
         }
 
-        //generation debug
-        public void LogGenStats()
+        //checks if chunk is in camera view
+        public static bool IsBoxInFrustum(FrustumPlane[] planes, Vector3 min, Vector3 max)
         {
-            Console.WriteLine("\nChunk ( " + Pos.X + ", " + Pos.Z + ")  Debug Stats");
-            Console.WriteLine("Voxel Gen Time: " + voxelGenTime);
-            Console.WriteLine("Lighting Time: " + lightingTime);
-            Console.WriteLine("Mesh Gen Time: " + meshingTime);
-            Console.WriteLine("Upload Time: " + uploadTime);
-            Console.WriteLine("Total Gen Time: " + (voxelGenTime + lightingTime + meshingTime + uploadTime));
+            foreach (var plane in planes)
+            {
+                Vector3 positiveVertex = new Vector3(
+                    plane.Normal.X >= 0 ? max.X : min.X,
+                    plane.Normal.Y >= 0 ? max.Y : min.Y,
+                    plane.Normal.Z >= 0 ? max.Z : min.Z
+                );
+
+                if (plane.GetSignedDistanceToPoint(positiveVertex) < 0)
+                    return false;
+            }
+
+            return true;
         }
     }
 
     //small part of a chunk that contains block data and mesh data
     public class SubChunk
     {
-        //---explanation---
-
-        //subchunks contain all the actual block and mesh data for a chunk
-        //we split things into subchunks so that block states, and block remeshing is easier
-        //we only draw subchunks and meshes that have vertex data, so if a mesh has no faces or is all air, dont draw it
-        //this makes things easier for remeshing while making initial generation still fast
-
-        //---data---
-        //subchunk size - how big a subchunk is in blocks^3
-        //blocksPalette - all the different blocks in this subchunk
-        //blockIndices - way of computing the data for the blockPalette
-        //isAllAir - determines if all the blocks are just the AIR_BLOCK id
-        //yPos, in which part of the parent chunk is this subchunk located in
-        //parent - the chunk that contains this subchunk
-        //chunkmesh - for geometry data the combined parent batched mesh can use
-
         public const int SUBCHUNK_SIZE = 32;
         private IBlockIndexStorage blockIndices;
         private readonly BlockPalette palette;
         public List<ushort> lightSources = new List<ushort>();
-        private bool isAllAir = true;
+        public bool isAllAir = true;
         public int YPos { get; private set; } = 0;
         readonly Chunk parent;
         public ChunkMeshData SolidGeo { get; private set; }
@@ -733,7 +676,7 @@ namespace OurCraft.World
         //tries to create the mesh data
         public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
-            if (isAllAir) return; //dont create mesh if chunk is completely air                  
+            if (isAllAir) return; //dont create mesh if chunk is completely air          
             for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--)
                 for (int x = SUBCHUNK_SIZE - 1; x >= 0; x--)
                     for (int z = SUBCHUNK_SIZE - 1; z >= 0; z--)
@@ -768,60 +711,35 @@ namespace OurCraft.World
             && block.blockShape.IsFullOpaqueBlock)
                 return;
 
-            ushort topLight = GetLightSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 1, 0, leftC, rightC, frontC, backC);
-            ushort bottomLight = GetLightSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, -1, 0, leftC, rightC, frontC, backC); 
-            ushort frontLight = GetLightSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, 1, leftC, rightC, frontC, backC); 
-            ushort backLight = GetLightSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, -1, leftC, rightC, frontC, backC); 
-            ushort leftLight = GetLightSafe((int)pos.X, (int)pos.Y, (int)pos.Z, -1, 0, 0, leftC, rightC, frontC, backC); 
-            ushort rightLight = GetLightSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 1, 0, 0, leftC, rightC, frontC, backC);
+            ushort thisLight = parent.GetLight((int)meshPos.X, (int)meshPos.Y, (int)meshPos.Z);
 
-            VoxelAOData aoData = GetVoxelAOData(pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            LightingData lightData = GetLightData(pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
             ChunkMeshData meshRef = block.blockShape.IsTranslucent ? TransparentGeo : SolidGeo;
-            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, meshRef, state, aoData, topLight, bottomLight, frontLight, backLight, rightLight, leftLight);
+            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, meshRef, state, lightData, thisLight);
         }
 
-        //returns the values necessary for computing voxel ambient occlusion
-        private VoxelAOData GetVoxelAOData(Vector3 pos,
-        Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
+        //returns the values necessary for computing the light values for meshing
+        private LightingData GetLightData(Vector3 pos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
         Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
-            VoxelAOData ao = new VoxelAOData();
+            LightingData ld = new();
             int x = (int)pos.X;
             int y = (int)pos.Y;
             int z = (int)pos.Z;
 
             //helper to get neighbor block safely
-            BlockState N(int ox, int oy, int oz) => GetNeighborBlockSafe(x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            
+            ushort L(int ox, int oy, int oz) => GetLightSafe(x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            ld.thisLight = L(0, 0, 0);
+
             //top face + top corners
-            ao.topFront = N(0, +1, +1).GetBlock.IsSolid;
-            ao.topBack = N(0, +1, -1).GetBlock.IsSolid;
-            ao.topLeft = N(-1, +1, 0).GetBlock.IsSolid;
-            ao.topRight = N(+1, +1, 0).GetBlock.IsSolid;
+            ld.topLight = L(0, +1, 0);
+            ld.bottomLight = L(0, -1, 0);
+            ld.frontLight = L(0, 0, +1);
+            ld.backLight = L(0, 0, -1);
+            ld.rightLight = L(1, 0, 0);
+            ld.leftLight = L(-1, 0, 0);
 
-            ao.topBackLeft = N(-1, +1, -1).GetBlock.IsSolid;  //back-left
-            ao.topBackRight = N(+1, +1, -1).GetBlock.IsSolid; //back-right
-            ao.topFrontLeft = N(-1, +1, +1).GetBlock.IsSolid; //front-left
-            ao.topFrontRight = N(+1, +1, +1).GetBlock.IsSolid;//front-right
-
-            //bottom face + bottom corners
-            ao.bottomFront = N(0, -1, +1).GetBlock.IsSolid;
-            ao.bottomBack = N(0, -1, -1).GetBlock.IsSolid;
-            ao.bottomLeft = N(-1, -1, 0).GetBlock.IsSolid;
-            ao.bottomRight = N(+1, -1, 0).GetBlock.IsSolid;
-
-            ao.bottomBackLeft = N(-1, -1, -1).GetBlock.IsSolid;  //back-left
-            ao.bottomBackRight = N(+1, -1, -1).GetBlock.IsSolid; //back-right
-            ao.bottomFrontLeft = N(-1, -1, +1).GetBlock.IsSolid; //front-left
-            ao.bottomFrontRight = N(+1, -1, +1).GetBlock.IsSolid;//front-right
-
-            //side corners
-            ao.backLeft = N(-1, 0, -1).GetBlock.IsSolid;  //back-left
-            ao.backRight = N(+1, 0, -1).GetBlock.IsSolid; //back-right
-            ao.frontLeft = N(-1, 0, +1).GetBlock.IsSolid; //front-left
-            ao.frontRight = N(+1, 0, +1).GetBlock.IsSolid;//front-right
-
-            return ao;
+            return ld;
         }
 
         //rebuilds the subchunk mesh data when modifying a block
@@ -833,13 +751,6 @@ namespace OurCraft.World
 
         //clears the mesh data
         public void ClearMesh()
-        {
-            SolidGeo.ClearMesh();
-            TransparentGeo.ClearMesh();
-        }
-
-        //clears all the chunk mesh data
-        public void Delete()
         {
             SolidGeo.ClearMesh();
             TransparentGeo.ClearMesh();
@@ -879,18 +790,15 @@ namespace OurCraft.World
 
         //gets the lighting value of a block safely
         public ushort GetLightSafe(int x, int y, int z, int offsetX, int offsetY, int offsetZ,
-        Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC)
+        Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
             int nx = x + offsetX;
-            int globalY = (YPos * SUBCHUNK_SIZE) + y;
-            int ny = globalY + offsetY;
+            int ny = YPos * SUBCHUNK_SIZE + y + offsetY; //global Y
             int nz = z + offsetZ;
 
-            //out of world bounds (vertical) return default
+            //out of world bounds (vertical)
             if (ny < 0 || ny >= 384)
-            {
-                return (ushort)((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((0 & 0xF) << 12));
-            }
+                return ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((15 & 0xF) << 12));
 
             //start with this chunk as default
             Chunk? targetChunk = parent;
@@ -900,36 +808,42 @@ namespace OurCraft.World
             bool nzBack = nz < 0;
             bool nzFront = nz >= SUBCHUNK_SIZE;
 
-            bool isDiagonal = (nxLeft || nxRight) && (nzBack || nzFront);
-            if (isDiagonal)
+            //if diagonal: prefer corner chunks
+            if (nxLeft && nzBack)
             {
-                //without corner chunks, we can't access diagonal neighbors
-                return ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((0 & 0xF) << 12));
+                targetChunk = c1; //back-left
             }
+            else if (nxRight && nzBack)
+            {
+                targetChunk = c2; //back-right
+            }
+            else if (nxLeft && nzFront)
+            {
+                targetChunk = c3; //front-right
+            }
+            else if (nxRight && nzFront)
+            {
+                targetChunk = c4; //front-left
+            }
+            else
+            {
+                //non-diagonal: choose along X or Z
+                if (nxLeft) targetChunk = leftC;
+                else if (nxRight) targetChunk = rightC;
 
-            //non-diagonal: choose along X or Z (not both)
-            if (nxLeft)
-                targetChunk = leftC;
-            else if (nxRight)
-                targetChunk = rightC;
-            else if (nzBack)
-                targetChunk = backC;
-            else if (nzFront)
-                targetChunk = frontC;
+                if (nzBack) targetChunk = backC;
+                else if (nzFront) targetChunk = frontC;
+            }
 
             if (targetChunk == null || !targetChunk.HasVoxelData())
-            {
-                return ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((0 & 0xF) << 12));
-            }
+                return ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((15 & 0xF) << 12));
 
-            //convert to local coordinates inside target chunk
+            //convert to local coordinates inside target chunk/subchunk
+            //this handles -1 -> SUBCHUNK_SIZE-1 mapping etc.
             int localX = ((nx % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
             int localZ = ((nz % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
 
-            //use global Y to access the lightmap
-            ushort value = targetChunk.GetLight(localX, ny, localZ);
-
-            return value;
+            return targetChunk.GetLight(localX, ny, localZ);
         }
 
         //helper to fetch neighbor types safely — now supports corner chunks (c1..c4)
@@ -941,8 +855,7 @@ namespace OurCraft.World
             int nz = z + offsetZ;
 
             //out of world bounds (vertical)
-            if (ny < 0 || ny >= 384)
-                return new BlockState(BlockIDs.AIR_BLOCK);
+            if (ny < 0 || ny >= 384) return new BlockState(BlockIDs.AIR_BLOCK);
 
             //start with this chunk as default
             Chunk? targetChunk = parent;
