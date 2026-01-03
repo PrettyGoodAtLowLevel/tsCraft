@@ -1,4 +1,5 @@
-﻿namespace OurCraft.Blocks.Block_Properties
+﻿//contains a list of block state properties that blockstates can implement
+namespace OurCraft.Blocks.Block_Properties
 {
     //for log rotation
     public enum Axis : byte 

@@ -3,8 +3,8 @@ using OpenTK.Mathematics;
 
 namespace OurCraft
 {
-    //compiles txt files into shader source code for openGL
-    //also allows to activate the set shader source code for the current rendering path
+    //compiles .vert and .frag files into shader source code for openGL
+    //also allows to set the shader source for the current rendering path, and allows to manipulate currently bound shader uniforms
     public class Shader
     {
         //members
@@ -24,7 +24,7 @@ namespace OurCraft
 
             //load vshader
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vertexShader, vertexCode);
+            GL.ShaderSource(vertexShader, vertexCode); 
             GL.CompileShader(vertexShader);
             CheckShaderCompile(vertexShader, "VERTEX");
 
@@ -64,8 +64,7 @@ namespace OurCraft
 
         //changes a uniform bool value
         public void SetBool(string name, bool value)
-        {
-            this.Activate();
+        { 
             int loc = GL.GetUniformLocation(ID, name);
             int val = value == true ? 1 : 0;
             GL.Uniform1(loc, val);
@@ -85,6 +84,13 @@ namespace OurCraft
             GL.Uniform1(loc, value);
         }
 
+        //sets a shader matrix value
+        public void SetMatrix4(string name, ref Matrix4 value)
+        {
+            int loc = GL.GetUniformLocation(ID, name);
+            GL.UniformMatrix4(loc, false, ref value);
+        }
+
         //changes a uniform vector3 value
         public void SetVector3(string name, Vector3 value)
         {
@@ -100,7 +106,7 @@ namespace OurCraft
         }
 
         //check shader errors
-        private void CheckShaderCompile(int shader, string type)
+        private static void CheckShaderCompile(int shader, string type)
         {
             GL.GetShader(shader, ShaderParameter.CompileStatus, out int success);
             if (success == 0)
@@ -111,7 +117,7 @@ namespace OurCraft
         }
 
         //check shader errors
-        private void CheckProgramLink(int program)
+        private static void CheckProgramLink(int program)
         {
             GL.GetProgram(program, GetProgramParameterName.LinkStatus, out int success);
             if (success == 0)

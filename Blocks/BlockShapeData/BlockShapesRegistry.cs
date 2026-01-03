@@ -3,12 +3,12 @@
 namespace OurCraft.Blocks.BlockShapeData
 {
     //holds all of the block shapes
+    //eventually we will refrence block definitions to refrence the actual json models, in a json file itself
     public static class BlockShapesRegistry
     {
         //Empty
         public static EmptyBlockShape AirBlockShape { get; } = new()
-        {
-        };
+        { };
 
         //Natural full blocks
         public static FullBlockModelShape GrassBlockShape { get; } = new()

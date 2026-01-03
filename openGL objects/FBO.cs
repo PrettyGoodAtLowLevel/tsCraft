@@ -50,8 +50,7 @@ namespace OurCraft.openGL_objects
 
             //error checking
             var status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
-            if (status != FramebufferErrorCode.FramebufferComplete)
-                throw new Exception("Framebuffer not complete: " + status);
+            if (status != FramebufferErrorCode.FramebufferComplete) throw new Exception("Framebuffer not complete: " + status);
 
             //unbind
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);

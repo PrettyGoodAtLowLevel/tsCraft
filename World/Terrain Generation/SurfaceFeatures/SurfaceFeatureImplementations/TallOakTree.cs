@@ -8,8 +8,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
     //oak tree shape but a bit taller
     public class TallOakTree : SurfaceFeature
     {
-        public ushort LogBlockID { get; set; } = 0;
-        public ushort LeavesBlockID { get; set; } = 0;
+        public BlockState LogBlock { get; set; }
+        public BlockState LeavesBlock { get; set; }
 
         readonly int maxHeight = 15;
 
@@ -26,7 +26,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 if (!Chunk.PosValid(lx, ly, lz)) return false;
 
                 BlockState above = chunk.GetBlockUnsafe(lx, ly, lz);
-                if (above.BlockID != BlockIDs.AIR_BLOCK) return false;
+                if (above != Block.AIR) return false;
             }
 
             int wx = startPos.X;
@@ -42,8 +42,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
             BlockState check3 = chunk.GetBlockUnsafe(wx, wy, wz + 2);
             BlockState check4 = chunk.GetBlockUnsafe(wx, wy, wz - 2);
 
-            if (check1.BlockID != BlockIDs.AIR_BLOCK || check2.BlockID != BlockIDs.AIR_BLOCK ||
-            check3.BlockID != BlockIDs.AIR_BLOCK || check4.BlockID != BlockIDs.AIR_BLOCK)
+            if (check1 != Block.AIR || check2 != Block.AIR ||
+            check3 != Block.AIR || check4 != Block.AIR)
                 return false;
 
             return true;
@@ -52,7 +52,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
         //place a random facing log procedurally across the world
         public override void PlaceFeature(Vector3i startPos, Chunk chunk)
         {
-            int count = 8 + NoiseRouter.GetVariation(startPos.X + chunk.Pos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.Pos.Z * SubChunk.SUBCHUNK_SIZE, 5, NoiseRouter.seed, 5);
+            int count = 8 + NoiseRouter.GetVariation(startPos.X + chunk.ChunkPos.X * Chunk.CHUNK_WIDTH, startPos.Y, startPos.Z + chunk.ChunkPos.Z * Chunk.CHUNK_WIDTH, 5, NoiseRouter.seed, 5);
 
             //place log
             int top = 0;
@@ -63,7 +63,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 int wz = startPos.Z;
                 top++;
                 //place the log
-                chunk.SetBlockUnsafe(wx, wy, wz, new BlockState(LogBlockID).WithProperty(BlockLog.AXIS, Axis.Y));
+                chunk.SetBlockUnsafe(wx, wy, wz, LogBlock.With(BlockLog.AXIS, Axis.Y));
             }
 
             //place first leaves
@@ -98,9 +98,9 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                     if (Math.Abs(dx) == radius && Math.Abs(dz) == radius)
                         continue;
 
-                    if (chunk.GetBlockUnsafe(x, startPos.Y + offsetY, z).BlockID != LogBlockID)
+                    if (chunk.GetBlockUnsafe(x, startPos.Y + offsetY, z) != LogBlock)
                     {
-                        chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, new BlockState(LeavesBlockID));
+                        chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, LeavesBlock);
                     }
                 }
             }
@@ -113,9 +113,9 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
             {
                 for (int z = startPos.Z - radius; z <= startPos.Z + radius; z++)
                 {
-                    if (chunk.GetBlockUnsafe(x, startPos.Y + offsetY, z).BlockID != LogBlockID)
+                    if (chunk.GetBlockUnsafe(x, startPos.Y + offsetY, z) != LogBlock)
                     {
-                        chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, new BlockState(LeavesBlockID));
+                        chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, LeavesBlock);
                     }
                 }
             }

@@ -9,17 +9,20 @@ namespace OurCraft.Blocks.Block_Implementations
         base(name, shape, id)
         { }
 
+        //light can pass through leaves, even if the model looks opaque
         public override bool IsLightPassable(BlockState state)
         {
             return true;
         }
 
+        //the leaves themselves are not light sources
         public override bool IsLightSource(BlockState state)
         {
             return false;
         }
 
-        public override int GetLightAttenuation(BlockState state)
+        //skylight can mostly pass through leaves
+        public override int GetSkyLightAttenuation(BlockState state)
         {
             return 1;
         }

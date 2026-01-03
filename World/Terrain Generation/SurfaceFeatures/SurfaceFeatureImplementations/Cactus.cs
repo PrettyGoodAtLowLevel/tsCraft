@@ -6,14 +6,14 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
 {
     public class Cactus : SurfaceFeature
     {
-        public ushort BlockID { get; set; } = 0;
+        public BlockState CactusBlock { get; set; }
 
         //the placing itself is dynamic to the chunk
         public override bool CanPlaceFeature(Vector3i startPos, Chunk chunk)
         {
             var below = chunk.GetBlockUnsafe(startPos.X, startPos.Y - 1, startPos.Z);
 
-            if (below.BlockID != PlaceOn && below.BlockID != AltPlaceOn) return false;
+            if (below != PlaceOn && below != AltPlaceOn) return false;
 
             for (int i = 0; i < 6; i++)
             {
@@ -30,7 +30,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 
 
                 //stop placing if space is not valid
-                if (current.BlockID != BlockIDs.AIR_BLOCK)
+                if (current != Block.AIR)
                     return false;
             }
 
@@ -40,7 +40,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
         //place a random facing log procedurally across the world
         public override void PlaceFeature(Vector3i startPos, Chunk chunk)
         {
-            int count = 2 + NoiseRouter.GetVariation(startPos.X + chunk.Pos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.Pos.Z * SubChunk.SUBCHUNK_SIZE, 5, NoiseRouter.seed, 3);
+            int count = 2 + NoiseRouter.GetVariation(startPos.X + chunk.ChunkPos.X * Chunk.CHUNK_WIDTH, startPos.Y, startPos.Z + chunk.ChunkPos.Z * Chunk.CHUNK_WIDTH, 5, NoiseRouter.seed, 3);
 
             for (int i = 0; i < count; i++)
             {
@@ -48,7 +48,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 int wy = startPos.Y + i;
                 int wz = startPos.Z;
 
-                chunk.SetBlockUnsafe(wx, wy, wz, new BlockState(BlockID));
+                chunk.SetBlockUnsafe(wx, wy, wz, CactusBlock);
             }
         }
     }

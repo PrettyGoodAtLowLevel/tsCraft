@@ -2,7 +2,7 @@
 
 namespace OurCraft.Graphics.Voxel_Lighting
 {
-    //contains data of all the surrounding blocks for ambient occlusion
+    //contains data of all the surrounding blocks for light baking
     public struct LightingData
     {
         public ushort thisLight, bottomLight, topLight;

@@ -7,8 +7,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
 {
     public class TallSpruceTree : SurfaceFeature
     {
-        public ushort LogBlockID { get; set; } = 0;
-        public ushort LeavesBlockID { get; set; } = 0;
+        public BlockState LogBlock { get; set; }
+        public BlockState LeavesBlock { get; set; }
 
         readonly int maxHeight = 16;
 
@@ -25,7 +25,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 if (!Chunk.PosValid(lx, ly, lz)) return false;
 
                 BlockState above = chunk.GetBlockUnsafe(lx, ly, lz);
-                if (above.BlockID != BlockIDs.AIR_BLOCK) return false;
+                if (above != Block.AIR) return false;
             }
 
             int wx = startPos.X;
@@ -41,8 +41,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
             BlockState check3 = chunk.GetBlockUnsafe(wx, wy, wz + 3);
             BlockState check4 = chunk.GetBlockUnsafe(wx, wy, wz - 3);
 
-            if (check1.BlockID != BlockIDs.AIR_BLOCK || check2.BlockID != BlockIDs.AIR_BLOCK ||
-            check3.BlockID != BlockIDs.AIR_BLOCK || check4.BlockID != BlockIDs.AIR_BLOCK)
+            if (check1 != Block.AIR || check2 != Block.AIR ||
+            check3 != Block.AIR || check4 != Block.AIR)
                 return false;
 
             return true;
@@ -62,7 +62,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 int wz = startPos.Z;
                 top++;
                 //place the log
-                chunk.SetBlockUnsafe(wx, wy, wz, new BlockState(LogBlockID).WithProperty(BlockLog.AXIS, Axis.Y));
+                chunk.SetBlockUnsafe(wx, wy, wz, LogBlock.With(BlockLog.AXIS, Axis.Y));
             }
 
             //place first leaves
@@ -85,7 +85,7 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
             PlaceRing(startPos, radius - 2, fifthY, chunk);
 
             int finalY = firstY + 6;
-            PlaceRing(startPos, radius - 2, finalY, chunk, true);
+            PlaceRing(startPos, radius - 2, finalY, chunk, replace:true);
         }
 
         //place a ring of leaves with a set position and radius
@@ -102,14 +102,14 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                     if (Math.Abs(dx) == radius && Math.Abs(dz) == radius)
                         continue;
 
-                    if (chunk.GetBlockUnsafe(x, startPos.Y + offsetY, z).BlockID != LogBlockID)
+                    if (chunk.GetBlockUnsafe(x, startPos.Y + offsetY, z) != LogBlock)
                     {
-                        chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, new BlockState(LeavesBlockID));
+                        chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, LeavesBlock);
                     }
                     else
                     {
                         if (replace == true)
-                            chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, new BlockState(LeavesBlockID));
+                            chunk.SetBlockUnsafe(x, startPos.Y + offsetY, z, LeavesBlock);
                     }
                 }
             }

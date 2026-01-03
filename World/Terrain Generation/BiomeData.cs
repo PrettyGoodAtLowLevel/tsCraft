@@ -1,8 +1,4 @@
-﻿using OpenTK.Graphics.OpenGL;
-using OurCraft.Blocks;
-using OurCraft.World.Terrain_Generation.SurfaceFeatures;
-
-namespace OurCraft.World.Terrain_Generation
+﻿namespace OurCraft.World.Terrain_Generation
 {
     //these enums are soley used for a lookup chart and dont effect the behavior of the biome, only the placement
     //measures overall temperature
@@ -40,14 +36,9 @@ namespace OurCraft.World.Terrain_Generation
     //rather than use a million -if statements
     public static class BiomeData
     {
-        public static Biome Plains { get; private set; }
-        public static Biome Desert { get; private set; }
         public static Biome Tundra { get; private set; }
         public static Biome ColdDesert { get; private set; }
-        public static Biome Taiga { get; private set; }
         public static Biome FrozenPeaks { get; private set; }
-        public static Biome WeirdForest { get; private set; }
-        public static Biome Forest { get; private set; }
 
         //for superflat worlds
         public static Biome EmptyBiome { get; private set; }
@@ -59,38 +50,23 @@ namespace OurCraft.World.Terrain_Generation
         static BiomeData()
         {
             //initialize the biome table and biomes
-            Plains = new Biome();
-            Desert = new Biome();
             Tundra = new Biome();
             ColdDesert = new Biome();
-            Taiga = new Biome();
             FrozenPeaks = new Biome();
-            WeirdForest = new Biome();
-            Forest = new Biome();
-            EmptyBiome = LoadBiomeQuick("EmptyBiome.json");
+            EmptyBiome = new Biome();
 
             biomeTable = new Biome[TemperatureIndex.HOT.GetHashCode() + 1,
             HumidityIndex.WET.GetHashCode() + 1,
-            VegetationIndex.DENSE.GetHashCode() + 1];
+            VegetationIndex.DENSE.GetHashCode() + 1];          
+        }
 
-            //set up biomes
+        //loads up all the biomes
+        public static void Init()
+        {
+            EmptyBiome = LoadBiomeQuick("EmptyBiome.json");
             InitBiomes();
             InitializeBiomeTable();
             PropagateBiomeTable();
-
-            //debug test for biome table propagation
-            /*
-            for (int t = 0; t < 5; t++)
-            {
-                for (int h = 0; h < 5; h++)
-                {
-                    for (int v = 0; v < 3; v++)
-                    {
-                        Console.WriteLine($"{(TemperatureIndex)t}, {(HumidityIndex)h}, {(VegetationIndex)v} = {biomeTable[t, h, v].Name}");
-                    }
-                }
-            }     
-            */
         }
 
         //get the biome
@@ -101,14 +77,9 @@ namespace OurCraft.World.Terrain_Generation
 
         public static void InitBiomes()
         {
-            InitPlains();
-            InitDesert();
             InitTundra();
             InitColdDesert();
-            InitTaiga();
             InitFrozenPeaks();
-            InitWeirdForest();
-            InitForest();
         }
 
         //create biomes
@@ -206,20 +177,7 @@ namespace OurCraft.World.Terrain_Generation
         }
 
         //----biome initializations----
-        //will move this to another file later one
-        //basic biome
-        public static void InitPlains()
-        {
-            Plains = LoadBiomeQuick("Plains.json");
-            biomes.Add(Plains);
-        }
-
-        //the hot biome
-        public static void InitDesert()
-        {
-            Desert = LoadBiomeQuick("Desert.json");
-            biomes.Add(Desert);
-        }
+        //will move this to another file later on
 
         //the cold biome
         public static void InitTundra()
@@ -235,32 +193,11 @@ namespace OurCraft.World.Terrain_Generation
             biomes.Add(ColdDesert);
         }
 
-        //the middle biome
-        public static void InitTaiga()
-        {
-            Taiga = LoadBiomeQuick("Taiga.json");
-            biomes.Add(Taiga);
-        }
-
         //the cold alternative
         public static void InitFrozenPeaks()
         {
             FrozenPeaks = LoadBiomeQuick("FrozenPeaks.json");
             biomes.Add(FrozenPeaks);
-        }
-
-        //hot biome alternative
-        public static void InitWeirdForest()
-        {
-            WeirdForest = LoadBiomeQuick("WeirdForest.json");
-            biomes.Add(WeirdForest);
-        }
-
-        //basic biome alternative
-        public static void InitForest()
-        {
-            Forest = LoadBiomeQuick("Forest.json");
-            biomes.Add(Forest);
         }
 
         //helper method for quickly loading in biomes

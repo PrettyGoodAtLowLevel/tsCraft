@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
+using OurCraft.Blocks.Block_Properties;
 
 namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
 {
@@ -10,8 +11,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
     public abstract class SurfaceFeature
     {
         public string Name { get; set; } = "new Surface Feature";
-        public ushort PlaceOn { get; set; } = 0;
-        public ushort AltPlaceOn { get; set; } = 0;
+        public BlockState PlaceOn { get; set; }
+        public BlockState AltPlaceOn { get; set; }
 
         public bool CanPlaceUnderWater { get; set; } = false; //not going to be implemented for now
 

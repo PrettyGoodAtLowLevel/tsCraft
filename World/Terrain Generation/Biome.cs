@@ -1,4 +1,5 @@
 ﻿using OurCraft.Blocks;
+using OurCraft.Blocks.Block_Properties;
 using OurCraft.World.Terrain_Generation.SurfaceFeatures;
 using System.Text.Json;
 
@@ -22,19 +23,19 @@ namespace OurCraft.World.Terrain_Generation
         public int OceanHeight { get; set; } = 110;
 
         //block data
-        public ushort WaterBlock { get; set; } = BlockIDs.WATER_BLOCK;
-        public ushort WaterSurfaceBlock { get; set; } = BlockIDs.WATER_BLOCK;
-        public ushort SurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
-        public ushort SubSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
+        public BlockState WaterBlock { get; set; }
+        public BlockState WaterSurfaceBlock { get; set; }
+        public BlockState SurfaceBlock { get; set; }
+        public BlockState SubSurfaceBlock { get; set; }
 
-        public ushort PeakSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
-        public ushort PeakSubSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
+        public BlockState PeakSurfaceBlock { get; set; }
+        public BlockState PeakSubSurfaceBlock { get; set; }
 
-        public ushort ShoreSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
-        public ushort ShoreSubSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
+        public BlockState ShoreSurfaceBlock { get; set; }
+        public BlockState ShoreSubSurfaceBlock { get; set; }
 
-        public ushort OceanSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
-        public ushort OceanSubSurfaceBlock { get; set; } = BlockIDs.STONE_BLOCK;
+        public BlockState OceanSurfaceBlock { get; set; }
+        public BlockState OceanSubSurfaceBlock { get; set; }
 
         //surface features list
         public List<BiomeSurfaceFeature> SurfaceFeatures = [];
@@ -90,6 +91,7 @@ namespace OurCraft.World.Terrain_Generation
     //helper for loading biome json and converting it to runtime biome data
     public static class BiomeLoader
     {
+        //loads a json config in c# off a file from json file
         public static BiomeJson LoadBiomeConfig(string path)
         {
             string filePath = "C:/Users/alial/OneDrive/Desktop/OurCraft/Resources/Data/WorldGen/Biomes/"+path;
@@ -97,6 +99,7 @@ namespace OurCraft.World.Terrain_Generation
             return JsonSerializer.Deserialize<BiomeJson>(json)!;
         }
 
+        //converts json c# implementation of biome to cached blockstate info
         public static Biome ToRuntimeBiome(BiomeJson config)
         {
             var biome = new Biome
@@ -111,31 +114,27 @@ namespace OurCraft.World.Terrain_Generation
                 ShoreHeight = config.Heights.Shore,
                 PeakHeight = config.Heights.Peak,
 
-                WaterBlock = BlockRegistry.GetBlock(config.Blocks.Water),
-                WaterSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.WaterSurface),
-                SurfaceBlock = BlockRegistry.GetBlock(config.Blocks.Surface),
-                SubSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.SubSurface),
-                PeakSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.PeakSurface),
-                PeakSubSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.PeakSubSurface),
-                ShoreSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.ShoreSurface),
-                ShoreSubSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.ShoreSubSurface),
-                OceanSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.OceanSurface),
-                OceanSubSurfaceBlock = BlockRegistry.GetBlock(config.Blocks.OceanSubSurface),
+                WaterBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.Water),
+                WaterSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.WaterSurface),
+                SurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.Surface),
+                SubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.SubSurface),
+                PeakSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.PeakSurface),
+                PeakSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.PeakSubSurface),
+                ShoreSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.ShoreSurface),
+                ShoreSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.ShoreSubSurface),
+                OceanSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.OceanSurface),
+                OceanSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.OceanSubSurface),
             };
 
             foreach (var feature in config.SurfaceFeatures)
             {
-                biome.SurfaceFeatures.Add(
-                    new BiomeSurfaceFeature(
-                        SurfaceFeatureRegistry.GetFeature(feature.Name),
-                        feature.Chance
-                    )
-                );
+                biome.SurfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.GetFeature(feature.Name), feature.Chance));
             }
 
             return biome;
         }
 
+        //parsing biome data enums
         public static int TemperatureIndexFromName(string temp)
         {
             return (int)((TemperatureIndex)Enum.Parse(typeof(TemperatureIndex), temp.ToUpper()));

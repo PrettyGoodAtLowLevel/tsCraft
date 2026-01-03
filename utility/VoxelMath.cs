@@ -18,15 +18,15 @@ namespace OurCraft.utility
             return t * t * (3f - 2f * t);
         }
 
-        //helper methods for packing and unpacking light values and math
-        public static int Mod(int value, int size)
+        //does modulus, with the size needing to be a power of 2
+        public static int ModPow2(int value, int size)
         {
-            int m = value % size;
-            return m < 0 ? m + size : m;
+            int mask = size - 1;
+            return (value & mask);
         }
 
-        //does floor division
-        public static int FloorDiv(int a, int b)
+        //does floor division with the divisor needing to be a power of 2
+        public static int FloorDivPow2(int a, int b)
         {
             int div = a / b;
             int rem = a % b;

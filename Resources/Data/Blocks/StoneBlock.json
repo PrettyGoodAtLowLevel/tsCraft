@@ -1,0 +1,15 @@
+{
+  "Name": "Stone Block",
+  "IsSolid": true,
+  "Type": "FullBlock",
+
+  "IsLightSource": false,
+  "LightRed": 0,
+  "LightGreen": 0,
+  "LightBlue": 0,
+  "SkyLightAttenuation": 15,
+
+  "Models": {
+    "Default": "Natural/StoneBlock.json"
+  }
+}

@@ -33,7 +33,6 @@ namespace OurCraft.Physics
             return m;
         }
 
-        // Helper methods
         //move by specified amount
         public void Translate(Vector3 delta)
         {

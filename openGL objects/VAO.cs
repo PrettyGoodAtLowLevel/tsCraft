@@ -10,7 +10,7 @@ namespace OurCraft
 
         public void Create() => ID = GL.GenVertexArray();
 
-        //float attribute (vec2/vec3...)
+        //float attribute vec2, vec3
         public void LinkAttrib(VBO vbo, int layout, int numComponents, VertexAttribPointerType type, bool normalize, int stride, IntPtr offset)
         {
             vbo.Bind();
@@ -20,7 +20,7 @@ namespace OurCraft
             vbo.Unbind();
         }
 
-        //integer attribute
+        //integer attribute, int, byte, short
         public void LinkAttribInt(VBO vbo, int layout, int numComponents, VertexAttribIntegerType type, int stride, IntPtr offset)
         {
             vbo.Bind();

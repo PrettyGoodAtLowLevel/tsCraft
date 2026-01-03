@@ -13,10 +13,10 @@ namespace OurCraft.Blocks.Meshing
         }
         public CachedBlockModel cachedModel = new();
 
-        //just build a full block, nothing crazy
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, LightingData lightData, ushort thisLight)
-        {
-            BlockModelMeshBuilder.BuildFromCachedModel(cachedModel, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
+        //just build a full cube block, nothing crazy
+        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)
+        {           
+            BlockMeshBuilder.BuildFromCachedModel(cachedModel, pos, nb, mesh, lightData);
         }
 
         //full block face getting is simple

@@ -7,28 +7,23 @@ namespace OurCraft
     public class EBO
     {
         public int ID { get; private set; }
-        public int capacity { get; private set; }
 
         //methods
         public EBO() { ID = 0; }
 
         //create ebo with list of vertex order
-        public void CreateEmpty(int sizeInBytes, BufferUsageHint usage = BufferUsageHint.DynamicDraw)
+        public void Create()
         {
             ID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, sizeInBytes, IntPtr.Zero, usage);
-            capacity = sizeInBytes;
         }
 
-        public void SubData<T>(int offsetInBytes, T[] data) where T : struct
+        public void BufferData(uint[] data)
         {
-            int sizeInBytes = Marshal.SizeOf<T>() * data.Length;
-            if (offsetInBytes + sizeInBytes > capacity)
-                throw new InvalidOperationException("Data upload exceeds VBO capacity!");
+            int sizeInBytes = Marshal.SizeOf<uint>() * data.Length;
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
-            GL.BufferSubData(BufferTarget.ElementArrayBuffer, (IntPtr)offsetInBytes, sizeInBytes, data);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, sizeInBytes, data, BufferUsageHint.StaticDraw);
         }
 
         //activate current ebo

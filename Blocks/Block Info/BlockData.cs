@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Implementations;
+using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.BlockShapeData;
 
 //contains all the indexes and data for each different block type
@@ -8,6 +9,7 @@ namespace OurCraft.Blocks
     //list of all block data in the game
     //includes actual block data
     //to add a block, create a block id for that block and then use "Register Block"
+    //eventually this will get reworked into using json definitions for blocks and just load those file combiniations
     public static class BlockData
     {
         //all blocks
@@ -74,10 +76,6 @@ namespace OurCraft.Blocks
         //get block from id
         public static Block GetBlock(int ID)
         {
-            if (ID == BlockIDs.INVALID_BLOCK || ID > MAXBLOCKID || ID < 0)
-            {
-                return blocks[0];
-            }
             return blocks[ID];
         }
 
@@ -89,6 +87,7 @@ namespace OurCraft.Blocks
             ushort id = (ushort)blocks.Count;
             blocks.Add(block);
             block.SetID(id);
+            block.StateContainer = BlockStateExtensions.GenerateStates(block);
             MAXBLOCKID = id;
             BlockRegistry.AddBlock(block.GetBlockName(), id);
             return id;
@@ -98,7 +97,7 @@ namespace OurCraft.Blocks
     //contains all block ids for using in the block list
     public static class BlockIDs
     {
-        public static ushort INVALID_BLOCK = 255;
+        public static ushort INVALID_BLOCK = ushort.MaxValue;
         public static ushort SNOWY_GRASS_BLOCK = 0;
         public static ushort AIR_BLOCK = 0;
         public static ushort GRASS_BLOCK = 0;
@@ -146,9 +145,14 @@ namespace OurCraft.Blocks
             blockRegistry.Add(name, id);
         }
 
-        public static ushort GetBlock(string name)
+        public static ushort GetBlockID(string name)
         {
             return blockRegistry[name];
+        }
+
+        public static BlockState GetDefaultBlockState(string name)
+        {
+            return BlockData.GetBlock(GetBlockID(name)).DefaultState;
         }
     };
 }

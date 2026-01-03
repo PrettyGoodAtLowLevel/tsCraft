@@ -8,18 +8,18 @@ namespace OurCraft.Physics
         {
             public Vector3i blockPos; //grid position of the hit block
             public Vector3i faceNormal; //the face that was hit (e.g., (1,0,0) for +X)
-            public float distance; //distance from ray origin to hit
+            public double distance; //distance from ray origin to hit
         }
 
         //uses dda algorithm to check if we are hitting a block or not
         //Func<int, int, int, bool> = A callback to check if a block is solid 
-        public static bool RaycastVoxel(Vector3 origin, Vector3 direction, float maxDistance, Func<int, int, int, bool> isSolidBlock, out VoxelRaycastHit hit)
+        public static bool RaycastVoxel(Vector3d origin, Vector3 direction, float maxDistance, Func<int, int, int, bool> isSolidBlock, out VoxelRaycastHit hit)
         {
             hit = default;
 
-            int x = (int)MathF.Floor(origin.X);
-            int y = (int)MathF.Floor(origin.Y);
-            int z = (int)MathF.Floor(origin.Z);
+            int x = (int)Math.Floor(origin.X);
+            int y = (int)Math.Floor(origin.Y);
+            int z = (int)Math.Floor(origin.Z);
 
             direction = Vector3.Normalize(direction);
 
@@ -27,19 +27,19 @@ namespace OurCraft.Physics
             int stepY = Math.Sign(direction.Y);
             int stepZ = Math.Sign(direction.Z);
 
-            float dx = (direction.X == 0) ? float.MaxValue : Math.Abs(1f / direction.X);
-            float dy = (direction.Y == 0) ? float.MaxValue : Math.Abs(1f / direction.Y);
-            float dz = (direction.Z == 0) ? float.MaxValue : Math.Abs(1f / direction.Z);
+            double dx = (direction.X == 0) ? float.MaxValue : Math.Abs(1f / direction.X);
+            double dy = (direction.Y == 0) ? float.MaxValue : Math.Abs(1f / direction.Y);
+            double dz = (direction.Z == 0) ? float.MaxValue : Math.Abs(1f / direction.Z);
 
-            float nextVoxelBoundaryX = (stepX > 0) ? (MathF.Floor(origin.X) + 1) : MathF.Floor(origin.X);
-            float nextVoxelBoundaryY = (stepY > 0) ? (MathF.Floor(origin.Y) + 1) : MathF.Floor(origin.Y);
-            float nextVoxelBoundaryZ = (stepZ > 0) ? (MathF.Floor(origin.Z) + 1) : MathF.Floor(origin.Z);
+            double nextVoxelBoundaryX = (stepX > 0) ? (Math.Floor(origin.X) + 1) : Math.Floor(origin.X);
+            double nextVoxelBoundaryY = (stepY > 0) ? (Math.Floor(origin.Y) + 1) : Math.Floor(origin.Y);
+            double nextVoxelBoundaryZ = (stepZ > 0) ? (Math.Floor(origin.Z) + 1) : Math.Floor(origin.Z);
 
-            float tMaxX = (direction.X == 0) ? float.MaxValue : (nextVoxelBoundaryX - origin.X) / direction.X;
-            float tMaxY = (direction.Y == 0) ? float.MaxValue : (nextVoxelBoundaryY - origin.Y) / direction.Y;
-            float tMaxZ = (direction.Z == 0) ? float.MaxValue : (nextVoxelBoundaryZ - origin.Z) / direction.Z;
+            double tMaxX = (direction.X == 0) ? double.MaxValue : (nextVoxelBoundaryX - origin.X) / direction.X;
+            double tMaxY = (direction.Y == 0) ? double.MaxValue : (nextVoxelBoundaryY - origin.Y) / direction.Y;
+            double tMaxZ = (direction.Z == 0) ? double.MaxValue : (nextVoxelBoundaryZ - origin.Z) / direction.Z;
 
-            float distanceTraveled = 0f;
+            double distanceTraveled = 0f;
 
             while (distanceTraveled <= maxDistance)
             {

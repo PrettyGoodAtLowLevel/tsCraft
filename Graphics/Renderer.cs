@@ -63,7 +63,6 @@ namespace OurCraft.Graphics
         private void DrawRawChunks(float time)
         {
             //setup
-            SetGeneralChunkShaderUniforms(time);
             UpdateCamera();
             ClearScene();
             ChunkMesh.globalBlockTexture.Bind();
@@ -87,14 +86,6 @@ namespace OurCraft.Graphics
             GL.BlendFunc(BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
             GL.DepthMask(true);
             GL.Enable(EnableCap.DepthTest);
-
-            //sort chunks by distance
-            visibleChunks.Sort((a, b) =>
-            {
-                float distA = (a.batchedMesh.transform.position - sceneCamera.Position).LengthSquared;
-                float distB = (b.batchedMesh.transform.position - sceneCamera.Position).LengthSquared;
-                return distA.CompareTo(distB);
-            });
 
             foreach (var chunk in visibleChunks)
             {
@@ -129,26 +120,19 @@ namespace OurCraft.Graphics
             sceneCamera.SendToShader(shader, "camMatrix");
         }
 
-        //update shader uniforms for chunk rendering
-        private void SetGeneralChunkShaderUniforms(double time)
-        {
-            shader.Activate();
-            shader.SetVector3("cameraPos", sceneCamera.Position);
-        }
-
         //make shaders work properly
         private void InitShaders()
         {
             //create all shaders
             shader.Create("default.vert", "default.frag");
             postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
-            skyColor = new Vector3(0.05f, 0.015f, 0.02f);
+            skyColor = new Vector3(0.5f, 0.6f, 0.7f);
 
             //-----set up block shaders-----
             shader.Activate();
             shader.SetVector3("skyColor", skyColor);
-            shader.SetFloat("fogStart", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE + 1020);
-            shader.SetFloat("fogEnd", chunks.RenderDistance * SubChunk.SUBCHUNK_SIZE + 1020);
+            shader.SetFloat("fogStart", chunks.RenderDistance * Chunk.CHUNK_WIDTH - 20);
+            shader.SetFloat("fogEnd", chunks.RenderDistance * Chunk.CHUNK_WIDTH);
             shader.SetFloat("fogDensity", 0.5f);
 
             //-----post processing----
@@ -159,37 +143,54 @@ namespace OurCraft.Graphics
             postShader.SetFloat("vignetteStrength", 0.0f);
             postShader.SetFloat("saturation", 1.0f);
             postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.0f)); 
-            postShader.SetFloat("tintIntensity", 0.1f);
+            postShader.SetFloat("tintIntensity", 0.0f);
             postShader.SetVector2("uResolution", new Vector2(screenWidth, screenHeight));
             postShader.SetFloat("aaStrength", 0.0f);
             
         }
 
+        //makes the sky dark
+        public void ToggleNight()
+        {
+            skyColor = new Vector3(0.001f, 0.001f, 0.001f);
+            shader.Activate();
+            shader.SetVector3("skyColor", skyColor);
+
+        }
+
+        //makes the sky bright
+        public void ToggleDay()
+        {
+            skyColor = new Vector3(0.5f, 0.6f, 0.7f);
+            shader.Activate();
+            shader.SetVector3("skyColor", skyColor);
+        }
+
         //configure openGL properly
-        private void ConfigureOpenGL(int width, int height)
+        private static void ConfigureOpenGL(int width, int height)
         {
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(TriangleFace.Back);
             GL.Enable(EnableCap.FramebufferSrgb);
-            GL.Viewport(0, 0, width, height);
-        }
-
-        public void ToggleAOOff()
-        {            
-            shader.SetBool("useAO", false);  
-        }
-
-        public void ToggleAOOn()
-        {
-            shader.SetBool("useAO", true);
+            GL.Viewport(0, 0, width, height); 
         }
 
         //gets all the visible chunks
         private List<Chunk> GetVisibleChunks()
         {
-            return chunks.ChunkMap.Values.Where(c => c.GetState() == ChunkState.Built &&
-            Chunk.IsBoxInFrustum(sceneCamera.GetFrustum(), c.chunkMin, c.chunkMax)).ToList();
+            Vector3 camPos = (Vector3)sceneCamera.Position;
+
+            return chunks.ChunkMap.Values.Where(c =>
+            {
+                if (c.GetState() != ChunkState.Built) return false;
+
+                //shift chunk bounds into camera-relative space
+                Vector3 min = (Vector3)c.ChunkMin - camPos;
+                Vector3 max = (Vector3)c.ChunkMax - camPos;
+
+                return Chunk.IsBoxInFrustum(sceneCamera.GetFrustum(), min, max);
+            }).ToList();
         }
     }
 }

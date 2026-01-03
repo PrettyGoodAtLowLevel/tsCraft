@@ -10,134 +10,132 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
         public static Dictionary<string, SurfaceFeature> featureMap = new Dictionary<string, SurfaceFeature>();
 
         //plants
-        public static Plant Grass { get; private set; }
-        public static Plant Rose { get; private set; }
-        public static Plant DeadBush { get; private set; }
-        public static Plant OakLeaves { get; private set; }
-        public static Plant SpruceLeaves { get; private set; }
-        public static Plant JungleLeaves { get; private set; }
+        public static Plant Grass { get; private set; } = new();
+        public static Plant Rose { get; private set; } = new();
+        public static Plant DeadBush { get; private set; } = new();
+        public static Plant OakLeaves { get; private set; } = new();
+        public static Plant SpruceLeaves { get; private set; } = new();
+        public static Plant JungleLeaves { get; private set; } = new();
 
         //log like
-        public static FallenLog OakLog { get; private set; }
-        public static FallenLog SpruceLog { get; private set; }
-        public static FallenLog JungleLog { get; private set; }
-        public static Cactus Cactus { get; private set; }
-        public static Cactus IceCactus { get; private set; }
+        public static FallenLog OakLog { get; private set; } = new();
+        public static FallenLog SpruceLog { get; private set; } = new();
+        public static FallenLog JungleLog { get; private set; } = new();
+        public static Cactus Cactus { get; private set; } = new();
+        public static Cactus IceCactus { get; private set; } = new();
 
         //trees
-        public static Tree OakTree { get; private set; }
-        public static Tree BirchTree { get; private set; }      
-        public static Tree JungleTree { get; private set; }
-        public static SpruceTree SpruceTree { get; private set; }
+        public static Tree OakTree { get; private set; } = new();
+        public static Tree BirchTree { get; private set; } = new();
+        public static Tree JungleTree { get; private set; } = new();
+        public static SpruceTree SpruceTree { get; private set; } = new();
 
         //weird trees
-        public static Tree SpruceOakTree { get; private set; }
-        public static SpruceTree OakSpruceTree { get; private set; }
-        public static SpruceTree FrozenTree { get; private set; }
+        public static Tree SpruceOakTree { get; private set; } = new();
+        public static SpruceTree OakSpruceTree { get; private set; } = new();
+        public static SpruceTree FrozenTree { get; private set; } = new();
 
         //tall trees
-        public static TallOakTree TallOakTree { get; private set; }
-        public static TallSpruceTree TallSpruceTree { get; private set; }
-        public static TallOakTree TallOakJungleTree { get; private set; }
-        public static TallSpruceTree TallSpruceJungleTree { get; private set; }
+        public static TallOakTree TallOakTree { get; private set; } = new();
+        public static TallSpruceTree TallSpruceTree { get; private set; } = new();
+        public static TallOakTree TallOakJungleTree { get; private set; } = new();
+        public static TallSpruceTree TallSpruceJungleTree { get; private set; } = new();
 
         //bushes
-        public static Bush OakBush { get; private set; }
-        public static Bush SpruceBush { get; private set; }
-        public static Bush JungleBush { get; private set; }
+        public static Bush OakBush { get; private set; } = new();
+        public static Bush SpruceBush { get; private set; } = new();
+        public static Bush JungleBush { get; private set; } = new();
 
-        static SurfaceFeatureRegistry()
+        public static void InitializeFeatures()
         {
             //one block plants
             Grass = new()
             {
                 Name = "Grass Plant",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Grass")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                PlantBlock = BlockRegistry.GetDefaultBlockState("Grass")
             };
 
             Rose = new()
             {
                 Name = "Rose Plant",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Rose")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                PlantBlock = BlockRegistry.GetDefaultBlockState("Rose")
             };
 
             DeadBush = new()
             {
                 Name = "Dead Bush Plant",
-                PlaceOn = BlockRegistry.GetBlock("Sand"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snow"),
-                BlockID = BlockRegistry.GetBlock("Dead Bush")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Sand"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snow"),
+                PlantBlock = BlockRegistry.GetDefaultBlockState("Dead Bush")
             };
 
             OakLeaves = new()
             {
                 Name = "Oak Leaves Plant",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Oak Leaves")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                PlantBlock = BlockRegistry.GetDefaultBlockState("Oak Leaves")
             };
 
             SpruceLeaves = new()
             {
                 Name = "Spruce Leaves Plant",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Spruce Leaves")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                PlantBlock = BlockRegistry.GetDefaultBlockState("Spruce Leaves")
             };
 
             JungleLeaves = new()
             {
                 Name = "Jungle Leaves Plant",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Jungle Leaves")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                PlantBlock = BlockRegistry.GetDefaultBlockState("Jungle Leaves")
             };
-
-
 
             //logs and cacti, tube like
             OakLog = new()
             {
                 Name = "Fallen Oak Log",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Oak Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Oak Log"),
             };
 
             SpruceLog = new()
             {
                 Name = "Fallen Spruce Log",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Spruce Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Spruce Log"),
             };
 
             JungleLog = new()
             {
                 Name = "Fallen Jungle Log",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Jungle Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Jungle Log"),
             };
 
             Cactus = new()
             {
                 Name = "Cactus",
-                PlaceOn = BlockRegistry.GetBlock("Sand"),
-                AltPlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Cactus Block")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Sand"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                CactusBlock = BlockRegistry.GetDefaultBlockState("Cactus Block")
             };
 
             IceCactus = new()
             {
                 Name = "Icy Cactus",
-                PlaceOn = BlockRegistry.GetBlock("Snow"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                BlockID = BlockRegistry.GetBlock("Ice Block")
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Snow"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                CactusBlock = BlockRegistry.GetDefaultBlockState("Ice Block")
             };
 
 
@@ -145,132 +143,132 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures
             OakTree = new()
             {
                 Name = "Oak Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Oak Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Oak Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Oak Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Oak Log"),
             };
 
             BirchTree = new()
             {
                 Name = "Birch Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Birch Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Birch Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Birch Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Birch Log"),
             };
 
             JungleTree = new()
             {
                 Name = "Jungle Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Jungle Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Jungle Log"),
             };
 
-            SpruceTree = new ()
+            SpruceTree = new()
             {
                 Name = "Spruce Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Spruce Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Spruce Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Spruce Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Spruce Log"),
             };
 
             //weird trees
             SpruceOakTree = new()
             {
                 Name = "Spruce Oak Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Spruce Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Spruce Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Spruce Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Spruce Log"),
             };
 
             OakSpruceTree = new()
             {
                 Name = "Oak Spruce Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Oak Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Oak Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Oak Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Oak Log"),
             };
 
             FrozenTree = new()
             {
                 Name = "Frozen Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Snow"),
-                LogBlockID = BlockRegistry.GetBlock("Ice Block"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Snow"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Ice Block"),
             };
 
             //tall trees
             TallOakTree = new()
             {
                 Name = "Tall Oak Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Oak Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Oak Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Oak Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Oak Log"),
             };
 
             TallSpruceTree = new()
             {
                 Name = "Tall Spruce Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Spruce Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Spruce Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Spruce Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Spruce Log"),
             };
 
             TallOakJungleTree = new()
             {
                 Name = "Tall Oak Jungle Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Jungle Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Jungle Log"),
             };
 
             TallSpruceJungleTree = new()
             {
                 Name = "Tall Spruce Jungle Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Jungle Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Jungle Log"),
             };
 
             //bushes
             OakBush = new()
             {
                 Name = "Oak Bush",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Oak Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Oak Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Oak Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Oak Log"),
             };
 
             SpruceBush = new()
             {
                 Name = "Tall Spruce Tree",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Spruce Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Spruce Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Spruce Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Spruce Log"),
             };
 
             JungleBush = new()
             {
                 Name = "Jungle Bush",
-                PlaceOn = BlockRegistry.GetBlock("Grass Block"),
-                AltPlaceOn = BlockRegistry.GetBlock("Snowy Grass Block"),
-                LeavesBlockID = BlockRegistry.GetBlock("Jungle Leaves"),
-                LogBlockID = BlockRegistry.GetBlock("Jungle Log"),
+                PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
+                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
+                LeavesBlock = BlockRegistry.GetDefaultBlockState("Jungle Leaves"),
+                LogBlock = BlockRegistry.GetDefaultBlockState("Jungle Log"),
             };
-            RegisterFeatures();            
+            RegisterFeatures();
         }
 
         public static void RegisterFeatures()

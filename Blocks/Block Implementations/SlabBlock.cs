@@ -11,47 +11,34 @@ namespace OurCraft.Blocks.Block_Implementations
     {
         public static readonly EnumProperty<SlabType> SLAB_TYPE;
 
-        //initializes the bits for a slab state
+        //initializes the bits for a slab state implementation
         static SlabBlock()
         {
             var layout = new PropertyLayoutBuilder();
             SLAB_TYPE = layout.AddEnum<SlabType>();
         }
 
-        //default constructor
+        //default constructor, assigns the slab type cominations to THIS instance
         public SlabBlock(string name, BlockShape shape, ushort id) :
         base(name, shape, id)
-        { }
+        { 
+            Properties.Add(SLAB_TYPE);
+        }
 
-        //determines how we place a slab in the world based on the slab we hit
+        //determines how we place a slab in the world based on the block we hit
         public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, Chunkmanager world)
         {
             SlabType thisBlockState = thisBlock.GetProperty(SLAB_TYPE);
-            if (hitNormal.Y == 1 && thisBlock.BlockID == id && thisBlockState == SlabType.Bottom)
-            {
-                world.SetBlock(globalPos, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Double));
-                return;
-            }
-            else if (hitNormal.Y == -1 && thisBlock.BlockID == id && thisBlockState == SlabType.Top)
-            {
-                world.SetBlock(globalPos, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Double));
-                return;
-            }
-            else if (hitNormal.Y == 1)
-            {
-                world.SetBlock(globalPos + hitNormal, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Bottom));
-                return;
-            }
-            else if (hitNormal.Y == -1)
-            {
-                world.SetBlock(globalPos + hitNormal, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Top));
-                return;
-            }
-            else
-            {
-                world.SetBlock(globalPos + hitNormal, new BlockState(id).WithProperty(SLAB_TYPE, SlabType.Bottom));
-                return;
-            }
+            SlabType stateToPlace = SlabType.Bottom;
+
+            if (hitNormal.Y == 1 && thisBlock.BlockID == id && thisBlockState == SlabType.Bottom) stateToPlace = SlabType.Double;
+            else if (hitNormal.Y == -1 && thisBlock.BlockID == id && thisBlockState == SlabType.Top) stateToPlace = SlabType.Double;
+            else if (hitNormal.Y == 1) stateToPlace = SlabType.Bottom;
+            else if (hitNormal.Y == -1) stateToPlace = SlabType.Top;
+
+            BlockState state = DefaultState.With(SLAB_TYPE, stateToPlace);
+            if (stateToPlace == SlabType.Double) world.SetBlock(globalPos, state);
+            else world.SetBlock(globalPos + hitNormal, state);
         }
 
         //if double slab, then is opaque, if single slab then light can pass through
@@ -63,7 +50,8 @@ namespace OurCraft.Blocks.Block_Implementations
             return true;
         }
 
-        public override int GetLightAttenuation(BlockState state)
+        //if double slab, then is opaque, if single slab then light can pass through
+        public override int GetSkyLightAttenuation(BlockState state)
         {
             SlabType thisState = state.GetProperty(SLAB_TYPE);
 
@@ -71,6 +59,15 @@ namespace OurCraft.Blocks.Block_Implementations
             return 0;
         }
 
+        //finds the slab state
+        public override void DebugState(BlockState thisBlock)
+        {
+            base.DebugState(thisBlock);
+            SlabType slabType = thisBlock.GetProperty(SLAB_TYPE);            
+            Console.WriteLine(", Slab Type: " + slabType.ToString());
+        }
+
+        //slab isnt a light source
         public override bool IsLightSource(BlockState state)
         {
             return false;

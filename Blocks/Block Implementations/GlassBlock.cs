@@ -17,14 +17,16 @@ namespace OurCraft.Blocks.Block_Implementations
             return true;
         }
 
+        //the glass itself is not light
         public override bool IsLightSource(BlockState state)
         {
             return false;
         }
 
-        public override int GetLightAttenuation(BlockState state)
+        //sky light fully passes through glass
+        public override int GetSkyLightAttenuation(BlockState state)
         {
-            return 1;
+            return 0;
         }
     }
 }

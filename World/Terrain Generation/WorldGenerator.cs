@@ -1,5 +1,6 @@
 ﻿
-using System;
+using OurCraft.Blocks;
+using OurCraft.Blocks.Block_Properties;
 
 namespace OurCraft.World.Terrain_Generation
 {
@@ -11,6 +12,16 @@ namespace OurCraft.World.Terrain_Generation
         public const int MIN_HEIGHT = 90;
         public const int MAX_HEIGHT = 320;
         public static bool FlatWorld = true;
+
+        public static BlockState WorldBlock;
+        public static BlockState EmptyBlock;
+
+        //global blocks of the world gen
+        public static void SetGlobalBlocks()
+        {
+            WorldBlock = BlockRegistry.GetDefaultBlockState("Stone");
+            EmptyBlock = BlockRegistry.GetDefaultBlockState("Air");
+        }
 
         //determines low fidelity shape of terrain
         public static NoiseRegion GetTerrainRegion(int x, int z)
@@ -75,7 +86,7 @@ namespace OurCraft.World.Terrain_Generation
         }
 
         //finds the surface block of the world based on biome and height
-        public static ushort GetSurfaceBlock(Biome biome, int height)
+        public static BlockState GetSurfaceBlock(Biome biome, int height)
         {
             if (height < biome.OceanHeight) return biome.OceanSurfaceBlock;
             else if (height < biome.ShoreHeight) return biome.ShoreSurfaceBlock;
@@ -84,7 +95,7 @@ namespace OurCraft.World.Terrain_Generation
         }
 
         //finds the subsurface block based on biome and height
-        public static ushort GetSubSurfaceBlock(Biome biome, int height)
+        public static BlockState GetSubSurfaceBlock(Biome biome, int height)
         {
             if (height < biome.OceanHeight) return biome.OceanSubSurfaceBlock;
             else if (height < biome.ShoreHeight) return biome.ShoreSubSurfaceBlock;

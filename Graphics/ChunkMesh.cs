@@ -1,6 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OurCraft.Physics;
+using OurCraft.World;
 using System.Runtime.InteropServices;
 
 namespace OurCraft.Graphics
@@ -15,10 +16,6 @@ namespace OurCraft.Graphics
         //only loads in block textures to optimize mesh building since this mesh is only for blocks
         //each chunk has one of these that combines all subchunk mesh data for one combined mesh
 
-        //positioning
-        private Matrix4 modelMat = Matrix4.Identity;
-        public Transform transform = new();
-
         //gl objects
         private readonly VAO vao;
         private readonly VBO vbo;
@@ -27,7 +24,7 @@ namespace OurCraft.Graphics
 
         //mesh stats
         private List<uint> indices = new List<uint>();
-        private uint indexSize = 0;
+        private uint indexCount = 0;
         private uint vertexCount = 0;
 
         //initialize everything
@@ -36,6 +33,12 @@ namespace OurCraft.Graphics
             vao = new VAO();
             vbo = new VBO();
             ebo = new EBO();
+        }
+
+        ~ChunkMesh()
+        {
+            vertexCount = 0;
+            indexCount = 0;
         }
 
         //since this is a chunk/blocks, only load block textures 
@@ -63,10 +66,10 @@ namespace OurCraft.Graphics
                 indices.Add((uint)(vi + 0));
             }
         }
-
+        
         //send mesh data to gpu
         public void SetupMesh(List<BlockVertex> vertices)
-        {
+        {            
             if (vertices.Count == 0) return;
             if (indices.Count == 0) return;
 
@@ -80,10 +83,10 @@ namespace OurCraft.Graphics
             int vertCount = vertices.Count;
 
             //upload vertices
-            vbo.CreateEmpty(vertCount * BlockVertex.GetSize());
-            vbo.SubData(0, vertices.ToArray());
-            ebo.CreateEmpty(indices.Count * sizeof(uint));
-            ebo.SubData(0, indices.ToArray());
+            vbo.Create();
+            vbo.BufferData(vertices.ToArray());
+            ebo.Create();
+            ebo.BufferData(indices.ToArray());
 
             //link vertex attributes
             int stride = BlockVertex.GetSize();
@@ -98,14 +101,14 @@ namespace OurCraft.Graphics
             vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.Float, false, stride, yPosOffset);
             vao.LinkAttrib(vbo, 2, 1, VertexAttribPointerType.Short, false, stride, zPosOffset);
             vao.LinkAttrib(vbo, 3, 2, VertexAttribPointerType.HalfFloat, false, stride, uvOffset);
-            vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedShort, stride, lightingOffset);
+            vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedShort, stride, lightingOffset); 
             vao.LinkAttribInt(vbo, 5, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
 
             vao.Unbind();
             vbo.Unbind();
             ebo.Unbind();
 
-            indexSize = (uint)indices.Count;
+            indexCount = (uint)indices.Count;
             indices.Clear();
             indices.Capacity = 0;
             vertexCount = (uint)vertCount;
@@ -114,7 +117,7 @@ namespace OurCraft.Graphics
         //clear gl objects
         public void Delete()
         {
-            indexSize = 0;
+            indexCount = 0;
             vertexCount = 0;
             vao.Delete();
             vbo.Delete();
@@ -128,18 +131,20 @@ namespace OurCraft.Graphics
         }
 
         //draw with shader
-        public void Draw(Shader shader, Camera camera)
+        public void Draw(Shader shader, Vector3d chunkWorldPos, Camera sceneCamera)
         {
             if (!HasMesh()) return;
             shader.Activate();
 
             //set uniform model matrix for vshader
-            modelMat = transform.Matrix();
-            GL.UniformMatrix4(GL.GetUniformLocation(shader.ID, "model"), false, ref modelMat);
+            Vector3d camWorldPos = sceneCamera.Position;
+            Vector3 relPos = (Vector3)(chunkWorldPos - camWorldPos);
+            Matrix4 model = Matrix4.CreateTranslation(relPos);
+            shader.SetMatrix4("model", ref model);
 
             //bind vertex data and textures, then draw
             vao.Bind();
-            GL.DrawElements(PrimitiveType.Triangles, (int)indexSize, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            GL.DrawElements(PrimitiveType.Triangles, (int)indexCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
             vao.Unbind();
         }
     }

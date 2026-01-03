@@ -2,6 +2,7 @@
 using OurCraft.World;
 using OurCraft.World.Terrain_Generation;
 
+#pragma warning disable
 //entry point (actually durr)
 static class Program
 {

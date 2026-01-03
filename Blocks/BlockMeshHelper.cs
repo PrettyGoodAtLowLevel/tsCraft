@@ -37,8 +37,8 @@ namespace OurCraft.Blocks
         //gets the state of each block from face type, then checks if the faces should be visible
         public static bool IsFaceVisible(BlockState thisState, BlockState neighborState, CubeFaces face)
         {
-            FaceType thisFace = BlockData.GetBlock(thisState.BlockID).blockShape.GetBlockFace(face, thisState);
-            FaceType neighborFace = neighborState.GetBlock.blockShape.GetBlockFace(Opposite(face), neighborState);
+            FaceType thisFace = thisState.BlockShape.GetBlockFace(face, thisState);
+            FaceType neighborFace = neighborState.BlockShape.GetBlockFace(Opposite(face), neighborState);
 
             return ShouldRenderFace(thisFace, neighborFace);
         }
@@ -63,14 +63,13 @@ namespace OurCraft.Blocks
             //same-shaped partial faces (e.g. two bottom slabs) cull each other 
             if (current == neighbor &&
             //(unless they dont take up full cube space or are leaves or are water top)
-            current != FaceType.INDENTED && neighbor != FaceType.INDENTED
-            && current != FaceType.LEAVES && neighbor != FaceType.LEAVES) return false;
+            current != FaceType.INDENTED && neighbor != FaceType.INDENTED) return false;
 
             //otherwise, show face
             return true;
         }
 
-        //-------texture getters----------
+        //bunch of texture uv math helpers down here
         public static float GetTextureX(int textureID)
         {
             int x = textureID % textureSizeInBlocksX;
@@ -96,131 +95,81 @@ namespace OurCraft.Blocks
     }
 
     //builds block shapes from cached block model data
-    public static class BlockModelMeshBuilder
+    public static class BlockMeshBuilder
     {
         //builds geometry from cached block model uses ao helper methods and uv sampling helpers
-        public static void BuildFromCachedModel(CachedBlockModel model, Vector3 pos,
-        BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisState,
-        ChunkMeshData mesh, LightingData lightingData)
+        public static void BuildFromCachedModel(CachedBlockModel model, Vector3 pos, NeighborBlocks nb,
+        ChunkMeshData mesh, LightingData ld)
         {
             //neighbors array indexed by CubeFaces order used across your code
-            BlockState[] neighbors = [ bottom, top, front, back, right, left ];
+            BlockState[] neighbors = [nb.bottom, nb.top, nb.front, nb.back, nb.right, nb.left];
+            ushort[] lights = [ld.bottomLight, ld.topLight, ld.frontLight, ld.backLight, ld.rightLight, ld.leftLight];
 
             //iterate cuboids and faces
             foreach (var cuboid in model.Cuboids)
             {
-                //cuboid.From/To are in 0 -> 1 (baked)
-                Vector3 from = cuboid.From;
-                Vector3 to = cuboid.To;
-
                 for (int f = 0; f < 6; f++)
                 {
                     CubeFaces faceDir = (CubeFaces)f;
                     CachedFace face = cuboid.Faces[f];
-                    if (face == null) continue; //skip if no face
                     
-                    //if the face is cullable, check the same visibility rule you already use
+                    //if the face is cullable, check visibility rule
                     if (face.Cullable)
                     {
-                        //use the existing IsFaceVisible - it expects BlockState this & neighbor + face
+                        //check if block is visible or not
                         BlockState neighborState = neighbors[f];
-                        if (!BlockMeshHelper.IsFaceVisible(thisState, neighborState, faceDir))
-                            continue; //fully culled -> skip
+                        if (!BlockMeshHelper.IsFaceVisible(nb.thisState, neighborState, faceDir)) continue;
                     }
-                    //compute atlas subrect for this cached face UV (cached UV is normalized relative to tile: 0->1)
-                    //face.UV = (u0_norm, v0_norm, u1_norm, v1_norm) in tile space
-                    float u0 = BlockMeshHelper.GetTextureX(face.TextureID) + face.UV.X * BlockMeshHelper.NormalizedBlockTextureX();
-                    float v0 = BlockMeshHelper.GetTextureY(face.TextureID) + face.UV.Y * BlockMeshHelper.NormalizedBlockTextureY();
-                    float u1 = BlockMeshHelper.GetTextureX(face.TextureID) + face.UV.Z * BlockMeshHelper.NormalizedBlockTextureX();
-                    float v1 = BlockMeshHelper.GetTextureY(face.TextureID) + face.UV.W * BlockMeshHelper.NormalizedBlockTextureY();
-
-                    //compute AO bytes for this face using existing helpers
-                    ushort lighting;
-                    switch (faceDir)
-                    {
-                        case CubeFaces.BOTTOM: lighting = lightingData.bottomLight; break;
-                        case CubeFaces.TOP: lighting = lightingData.topLight; break;
-                        case CubeFaces.FRONT: lighting = lightingData.frontLight; break;
-                        case CubeFaces.BACK: lighting = lightingData.backLight; break;
-                        case CubeFaces.RIGHT: lighting = lightingData.rightLight; break;
-                        case CubeFaces.LEFT: lighting = lightingData.leftLight; break;
-                        default: lighting = 0; break;
-                    }
-                    
+                    ushort lighting = lights[f];                   
                     //add the face: this will compute v0->v3 positions per-face and call the AddQuadUV overload.
-                    AddModelFace(pos, from, to, faceDir, u0, v0, u1, v1, mesh, lighting);
+                    AddModelFace(pos, cuboid, faceDir, face.UV.X, face.UV.Y, face.UV.Z, face.UV.W, mesh, lighting);
                 }
             }
         }
-
         
         //adds a model face based on cuboid from/to and atlas uv rectangle (u0,v0,u1,v1).
         //uses the same AO corner ordering as blockmeshbuilder AddFullFace/AddSlab methods.        
-        private static void AddModelFace(Vector3 blockPos, Vector3 from, Vector3 to, CubeFaces face, float u0, float v0, float u1, float v1,
-        ChunkMeshData mesh, ushort lightValue)
+        private static void AddModelFace(Vector3 blockPos, CachedCuboid cuboid, CubeFaces face, float u0, float v0, float u1, float v1,
+        ChunkMeshData mesh, ushort light)
         {
-            //compute per-face corner positions in the same orientation your other methods use
-            Vector3 v0p, v1p, v2p, v3p;
+            CachedCuboid c = cuboid;
+
             switch (face)
             {
                 case CubeFaces.BOTTOM:
-                    v0p = new Vector3(from.X, from.Y, from.Z);
-                    v1p = new Vector3(to.X, from.Y, from.Z);
-                    v2p = new Vector3(to.X, from.Y, to.Z);
-                    v3p = new Vector3(from.X, from.Y, to.Z);
-                    //addQuad expects ao order: ev[0], ev[1], ev[3], ev[2] in your bottom code — follow that mapping:
-                    AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, mesh,
-                    lightValue, (byte)CubeFaces.BOTTOM);
+                    AddQuadUV(blockPos, c.bv0p, c.bv1p, c.bv2p, c.bv3p, u0, v0, u1, v1, mesh, light, normal: 0);
                     break;
 
                 case CubeFaces.TOP:
-                    v0p = new Vector3(from.X, to.Y, to.Z);
-                    v1p = new Vector3(to.X, to.Y, to.Z);
-                    v2p = new Vector3(to.X, to.Y, from.Z);
-                    v3p = new Vector3(from.X, to.Y, from.Z);
-                    AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, mesh,
-                    lightValue, (byte)CubeFaces.TOP);
+                    AddQuadUV(blockPos, c.tv0p, c.tv1p, c.tv2p, c.tv3p, u0, v0, u1, v1, mesh, light, normal: 1);
                     break;
 
                 case CubeFaces.FRONT:
-                    v0p = new Vector3(from.X, from.Y, to.Z);
-                    v1p = new Vector3(to.X, from.Y, to.Z);
-                    v2p = new Vector3(to.X, to.Y, to.Z);
-                    v3p = new Vector3(from.X, to.Y, to.Z);
-                    AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, mesh,
-                    lightValue, (byte)CubeFaces.FRONT);
+                    AddQuadUV(blockPos, c.fv0p, c.fv1p, c.fv2p, c.fv3p, u0, v0, u1, v1, mesh, light, normal: 2);
                     break;
 
                 case CubeFaces.BACK:
-                    v0p = new Vector3(to.X, from.Y, from.Z);
-                    v1p = new Vector3(from.X, from.Y, from.Z);
-                    v2p = new Vector3(from.X, to.Y, from.Z);
-                    v3p = new Vector3(to.X, to.Y, from.Z);
-                    AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, mesh,
-                    lightValue, (byte)CubeFaces.BACK);
+                    AddQuadUV(blockPos, c.bcv0p, c.bcv1p, c.bcv2p, c.bcv3p, u0, v0, u1, v1, mesh, light, normal: 3);
                     break;
 
                 case CubeFaces.RIGHT:
-                    v0p = new Vector3(to.X, from.Y, to.Z);
-                    v1p = new Vector3(to.X, from.Y, from.Z);
-                    v2p = new Vector3(to.X, to.Y, from.Z);
-                    v3p = new Vector3(to.X, to.Y, to.Z);
-                    AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, mesh,
-                    lightValue, (byte)CubeFaces.RIGHT);
+                    AddQuadUV(blockPos, c.rv0p, c.rv1p, c.rv2p, c.rv3p, u0, v0, u1, v1, mesh, light, normal: 4);
                     break;
 
                 case CubeFaces.LEFT:
-                    v0p = new Vector3(from.X, from.Y, from.Z);
-                    v1p = new Vector3(from.X, from.Y, to.Z);
-                    v2p = new Vector3(from.X, to.Y, to.Z);
-                    v3p = new Vector3(from.X, to.Y, from.Z);
-                    AddQuadUV(blockPos, v0p, v1p, v2p, v3p, u0, v0, u1, v1, mesh,
-                    lightValue, (byte)CubeFaces.LEFT);
+                    AddQuadUV(blockPos, c.lv0p, c.lv1p, c.lv2p, c.lv3p, u0, v0, u1, v1, mesh, light, normal: 5);
                     break;
+            }       
+        }
 
-                default:
-                    return;
-            }
+        //addQuad that uses explicit atlas-normalized u/v rectangle (u0,v0,u1,v1).
+        private static void AddQuadUV(Vector3 pos, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3,
+        float u0, float v0, float u1, float v1, ChunkMeshData mesh, ushort lightValue, byte normal)
+        {
+            mesh.AddChunkMeshData(new BlockVertex(pos + p0, new Vector2(u0, v0), lightValue, normal));
+            mesh.AddChunkMeshData(new BlockVertex(pos + p1, new Vector2(u1, v0), lightValue, normal));
+            mesh.AddChunkMeshData(new BlockVertex(pos + p2, new Vector2(u1, v1), lightValue, normal));
+            mesh.AddChunkMeshData(new BlockVertex(pos + p3, new Vector2(u0, v1), lightValue, normal));
         }
 
         //x shaped blocks are hard to represent in cuboids so this is a sole helper method for adding them
@@ -266,17 +215,6 @@ namespace OurCraft.Blocks
             mesh.AddChunkMeshData(new BlockVertex(pos + v3,
             new Vector2(BlockMeshHelper.GetTextureX(texID), BlockMeshHelper.GetTextureY(texID) + BlockMeshHelper.NormalizedBlockTextureY()),
             lightValue, normal));
-        }
-
-        //addQuad that uses explicit atlas-normalized u/v rectangle (u0,v0,u1,v1).
-        //this mirrors existing AddQuad behavior but supports subrects (for partial-UV faces).
-        private static void AddQuadUV(Vector3 pos, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3,
-        float u0, float v0, float u1, float v1, ChunkMeshData mesh, ushort lightValue, byte normal)
-        {           
-            mesh.AddChunkMeshData(new BlockVertex(pos + p0, new Vector2(u0, v0), lightValue, normal));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p1, new Vector2(u1, v0), lightValue, normal));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p2, new Vector2(u1, v1), lightValue, normal));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p3, new Vector2(u0, v1), lightValue, normal));
         }
     }
 }

@@ -8,6 +8,7 @@ namespace OurCraft.Graphics
     //manipulates the vertex shader to simulate 3d
     public class Camera //also could be player currently
     {
+        //for frustum culling
         public struct FrustumPlane
         {
             public Vector3 Normal;
@@ -19,6 +20,7 @@ namespace OurCraft.Graphics
             }
         }
 
+        //find the frustum view of the camera
         public static FrustumPlane[] ExtractFrustumPlanes(Matrix4 matrix)
         {
             FrustumPlane[] planes = new FrustumPlane[6];
@@ -74,8 +76,9 @@ namespace OurCraft.Graphics
         //screen settings
         private int width;
         private int height;
+
         //3d space
-        public Vector3 Position = Vector3.Zero;
+        public Vector3d Position = Vector3.Zero;
         public Vector3 Orientation = -Vector3.UnitZ;
         private Vector3 Up = Vector3.UnitY;
 
@@ -98,7 +101,7 @@ namespace OurCraft.Graphics
         //updates the camera matrix with a view and perspective function
         public void UpdateMatrix(float fovDeg, float nearPlane, float farPlane)
         {
-            var view = Matrix4.LookAt(Position, Position + Orientation, Up);
+            var view = Matrix4.LookAt(Vector3.Zero, Orientation, Up);
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(fovDeg), (float)width / height, nearPlane, farPlane);
             cameraMatrix = view * projection;
         }
@@ -107,12 +110,12 @@ namespace OurCraft.Graphics
         {
             return ExtractFrustumPlanes(cameraMatrix);
         }
+
         //updates the uniform matrix value in the shader
         public void SendToShader(Shader shader, string uniformName)
         {
             shader.Activate();
-            int uniformLocation = GL.GetUniformLocation(shader.ID, uniformName);
-            GL.UniformMatrix4(uniformLocation, false, ref cameraMatrix);
+            shader.SetMatrix4(uniformName, ref cameraMatrix);
         }
 
         //does all the movement for the camera
@@ -154,7 +157,7 @@ namespace OurCraft.Graphics
             float rotX = Sensitivity * mouseDelta.Y / height;
             float rotY = Sensitivity * mouseDelta.X / width;
 
-            // Vertical rotation (pitch)
+            //vertical rotation (pitch)
             var right2 = Vector3.Normalize(Vector3.Cross(Orientation, Up));
             var newOrientation = Vector3.Transform(Orientation, Quaternion.FromAxisAngle(right2, MathHelper.DegreesToRadians(-rotX)));
 
@@ -164,7 +167,7 @@ namespace OurCraft.Graphics
             if (Speed < 0)
                 Speed = 0;
 
-            // Horizontal rotation (yaw)
+            //horizontal rotation (yaw)
             Orientation = Vector3.Transform(Orientation, Quaternion.FromAxisAngle(Up, MathHelper.DegreesToRadians(-rotY)));
         }
     }

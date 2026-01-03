@@ -1,8 +1,8 @@
-﻿using OurCraft.Blocks.Block_Properties;
+﻿using OpenTK.Graphics.ES11;
+using OpenTK.Mathematics;
+using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.Graphics.Voxel_Lighting;
-using OpenTK.Mathematics;
-using OpenTK.Graphics.ES11;
 
 namespace OurCraft.Blocks
 {
@@ -30,7 +30,6 @@ namespace OurCraft.Blocks
         WATERTOP,
         WATERBOTTOM,
         GLASS,          //duh
-        LEAVES,
     }
 
     //represents a shape of a block so that the meshing code is more abstract and clean
@@ -43,9 +42,7 @@ namespace OurCraft.Blocks
         public bool IsTranslucent { get; set; } = false;
 
         //how does this block shape get added to the world based on state
-        public virtual void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top,
-        BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, LightingData aoData, ushort thisLight)
-        { }
+        public virtual void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData aoData) { }
 
         //gets the face type from a specified block state
         public virtual FaceType GetBlockFace(CubeFaces faceSide, BlockState state) { return FaceType.FULLBLOCK; }
@@ -78,6 +75,7 @@ namespace OurCraft.Blocks
             return (FaceType)Enum.Parse(typeof(FaceType), name.ToUpper());
         }
 
+        //helper for recieving texture values from json strings
         public static int GetTextureID(string name)
         {
             return TextureRegistry.GetTextureID(name);

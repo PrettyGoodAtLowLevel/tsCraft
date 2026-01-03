@@ -21,10 +21,6 @@
         public void ClearMesh()
         {
             vertices.Clear();
-            if (vertices.Count == 0)
-            {
-                vertices.Capacity = 0;
-            }
         }
     }
 }

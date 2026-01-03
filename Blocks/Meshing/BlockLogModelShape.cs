@@ -7,6 +7,7 @@ using OurCraft.Graphics.Voxel_Lighting;
 
 namespace OurCraft.Blocks.Meshing
 {
+    //interpets the log blockstate and adds the correct model based on that
     public class BlockLogModelShape : BlockShape
     {
         public BlockLogModelShape()
@@ -19,21 +20,18 @@ namespace OurCraft.Blocks.Meshing
         public CachedBlockModel cachedModelZ = new();
 
         //add log type mesh
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, LightingData lightData, ushort thisLight)
+        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)
         {
-            Axis axis = BlockLog.AXIS.Decode(thisState.MetaData);
+            Axis axis = nb.thisState.GetProperty(BlockLog.AXIS);
 
             switch (axis)
             {
                 case Axis.X:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelX, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
-                    break;
+                    BlockMeshBuilder.BuildFromCachedModel(cachedModelX, pos, nb, mesh, lightData); break;
                 case Axis.Y:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelY, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
-                    break;
+                    BlockMeshBuilder.BuildFromCachedModel(cachedModelY, pos, nb, mesh, lightData); break;
                 default:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
-                    break;
+                    BlockMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, nb, mesh, lightData); break;
             }
         }
 

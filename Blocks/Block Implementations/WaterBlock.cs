@@ -20,12 +20,14 @@ namespace OurCraft.Blocks.Block_Implementations
             return true;
         }
 
+        //water isnt a light source
         public override bool IsLightSource(BlockState state)
         {
             return false;
         }
 
-        public override int GetLightAttenuation(BlockState state)
+        //skylight mostly passes through water, but deep oceans are dark
+        public override int GetSkyLightAttenuation(BlockState state)
         {
             return 1;
         }

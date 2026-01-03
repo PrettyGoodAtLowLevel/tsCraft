@@ -1,7 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.Blocks.Meshing;
 using OurCraft.Graphics;
 using OurCraft.utility;
 using OurCraft.World.Terrain_Generation;
@@ -80,225 +79,42 @@ namespace OurCraft.World
     //holds mesh and block data for a part of the world
     public class Chunk
     {
+        public const int HEIGHT_IN_SUBCHUNKS = 24;
+        public const int WIDTH_IN_SUBCHUNKS = 2;
+        public const int CHUNK_HEIGHT = SubChunk.SUBCHUNK_SIZE * HEIGHT_IN_SUBCHUNKS;
+        public const int CHUNK_WIDTH = SubChunk.SUBCHUNK_SIZE * WIDTH_IN_SUBCHUNKS;
+
         //rendering
         public readonly ChunkMesh batchedMesh;
         public readonly ChunkMesh transparentMesh;
 
-        //world data
-        public ChunkCoord Pos { get; private set; }
-        public const int SUBCHUNK_COUNT = 12;
-        public const int CHUNK_HEIGHT = SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT;
+        //positioning
+        public ChunkCoord ChunkPos { get; private set; }
+        public Vector3d ChunkMin { get; private set; }
+        public Vector3d ChunkMax { get; private set; }
+        public Vector3d WorldPos { get; private set; }
 
-        public SubChunk[] subChunks = new SubChunk[SUBCHUNK_COUNT];
+        //block and generation data
+        public SubChunk[,,] subChunks = new SubChunk[0, 0, 0];
         public ushort[,,] lightMap = new ushort[0, 0, 0];
-        public ushort[,] heightMap = new ushort[0, 0]; 
-
-        //generation data
+        public int MaxSolidY { get; private set; } = CHUNK_HEIGHT - 1; //highest y layer with only air blocks
         volatile ChunkState state;
-        public List<int> changes = [];             
-
-        //frustum culling
-        public Vector3 chunkMin;
-        public Vector3 chunkMax;
+        public volatile bool meshing = false;
+        public List<Vector3i> changes = [];
+        private bool[,,] subChunkDirty = new bool[0, 0, 0];       
 
         //basic constructor
         public Chunk(ChunkCoord coord)
         {         
-            Pos = coord;
+            ChunkPos = coord;
             state = ChunkState.Initialized;
             batchedMesh = new ChunkMesh();
             transparentMesh = new ChunkMesh();
-
-            //initialize subchunks
-            for (int i = 0; i < SUBCHUNK_COUNT; i++)
-            {
-                subChunks[i] = new SubChunk(this, i);
-            }
-            chunkMin = new Vector3(Pos.X * SubChunk.SUBCHUNK_SIZE, 0, Pos.Z * SubChunk.SUBCHUNK_SIZE);
-            chunkMax = chunkMin + new Vector3(SubChunk.SUBCHUNK_SIZE, SUBCHUNK_COUNT * SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE);
+            ChunkMin = new Vector3d(ChunkPos.X * CHUNK_WIDTH, 0, ChunkPos.Z * CHUNK_WIDTH);
+            ChunkMax = ChunkMin + new Vector3d(CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_WIDTH);
         }
 
-        //set all lightmap values to default
-        public void InitLightMap()
-        {
-            lightMap = new ushort[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT, SubChunk.SUBCHUNK_SIZE];
-            heightMap = new ushort[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
-
-            const int sky0 = 0;
-            ushort defaultLight = sky0;
-
-            for (int x = 0; x < SubChunk.SUBCHUNK_SIZE; x++)
-            {
-                for (int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
-                {
-                    heightMap[x, z] = CHUNK_HEIGHT - 1;
-                    for (int y = 0; y < SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT; y++)
-                    {                  
-                         lightMap[x, y, z] = defaultLight;
-                    }
-                }
-            }            
-        }
-
-        //fills in all subchunks with block id data
-        public void CreateVoxelMap()
-        {          
-            if (state != ChunkState.Initialized) return;
-            //prefill lightmap
-            InitLightMap();
-
-            //create noise regions
-            NoiseRegion[,] noiseRegions = new NoiseRegion[SubChunk.SUBCHUNK_SIZE, SubChunk.SUBCHUNK_SIZE];
-            for (int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
-            {
-                for (int x = 0; x < SubChunk.SUBCHUNK_SIZE; x++)
-                {
-                    int globalX =  Pos.X * SubChunk.SUBCHUNK_SIZE + x;
-                    int globalZ = Pos.Z * SubChunk.SUBCHUNK_SIZE + z;
-                    NoiseRegion noiseRegion = WorldGenerator.GetTerrainRegion(globalX, globalZ);
-                    noiseRegions[x, z] = noiseRegion;
-                }
-            }
-
-            //create base density map
-            foreach (var subChunk in subChunks)
-            {
-                subChunk.CreateDensityMap(noiseRegions);                
-            }
-
-            //surface paint the subchunks
-            foreach (var subChunk in subChunks)
-            {
-                subChunk.SurfacePaint(noiseRegions);
-            }
-
-            //slap on surface feature
-            foreach (var subChunk in subChunks)
-            {              
-                subChunk.PlaceSurfaceFeatures(noiseRegions);            
-            }
-            
-            //update state
-            state = ChunkState.VoxelOnly;
-        }
-
-        //creates all subchunk mesh data
-        public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
-            Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
-        {
-            if (!HasVoxelData()) return;
-            foreach(var subChunk in subChunks)
-            {
-                subChunk.ClearMesh();
-            }
-
-            foreach (var subChunk in subChunks)
-            {
-                subChunk.CreateChunkMesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            }        
-            
-            int totalVertexCount = 0;
-            foreach (var subChunk in subChunks)
-            {
-                totalVertexCount += subChunk.SolidGeo.vertices.Count;
-            }
-            batchedMesh.SetupIndices(totalVertexCount);
-            transparentMesh.SetupIndices(totalVertexCount);
-
-            if (state == ChunkState.VoxelOnly)
-                state = ChunkState.Meshed;
-        }
-
-        //builds the combined subchunk mesh data
-        public void SendMeshToOpenGL()
-        {
-            if (state == ChunkState.Deleted || state == ChunkState.VoxelOnly || state == ChunkState.Initialized)
-                return;
-            UploadSolidMesh();
-            UploadTranparentMesh();
-            state = ChunkState.Built;
-        }
-        
-        //combines the vertex data into one big mesh for solid geometry
-        private void UploadSolidMesh()
-        {         
-            //compute size upfront
-            int totalVertexCount = 0;
-
-            foreach (var subChunk in subChunks)
-            {
-                totalVertexCount += subChunk.SolidGeo.vertices.Count;
-            }
-
-            //preallocate size
-            var totalVertices = new List<BlockVertex>(totalVertexCount);
-
-            int vertexOffset = 0;
-
-            //append mesh data
-            foreach (var subChunk in subChunks)
-            {
-                ChunkMeshData geo = subChunk.SolidGeo;
-                if (geo.vertices.Count == 0)
-                    continue;
-
-                //append vertices
-                totalVertices.AddRange(geo.vertices);
-
-                vertexOffset += geo.vertices.Count;
-            }
-
-            //mesh upload
-            batchedMesh.SetupMesh(totalVertices);
-            batchedMesh.transform.SetPosition(new Vector3(Pos.X * SubChunk.SUBCHUNK_SIZE, 0, Pos.Z * SubChunk.SUBCHUNK_SIZE));
-        }
-
-        //same thing as the regular mesh, but for transparent water geometry
-        private void UploadTranparentMesh()
-        {
-            //compute size upfront
-            int totalVertexCount = 0;
-
-            foreach (var subChunk in subChunks)
-            {
-                totalVertexCount += subChunk.TransparentGeo.vertices.Count;
-            }
-
-            //preallocate size
-            var totalVertices = new List<BlockVertex>(totalVertexCount);
-            int vertexOffset = 0;
-
-            //append mesh data
-            foreach (var subChunk in subChunks)
-            {
-                ChunkMeshData geo = subChunk.TransparentGeo;
-                if (geo.vertices.Count == 0)
-                    continue;
-
-                //append vertices
-                totalVertices.AddRange(geo.vertices);
-
-                vertexOffset += geo.vertices.Count;
-            }
-
-            //mesh upload
-            transparentMesh.SetupMesh(totalVertices);
-            transparentMesh.transform.SetPosition(new Vector3(Pos.X * SubChunk.SUBCHUNK_SIZE, 0, Pos.Z * SubChunk.SUBCHUNK_SIZE));
-        }
-
-        //draws all the subchunk opaque meshes
-        public void Draw(Shader shader, Camera camera)
-        {
-            batchedMesh.Draw(shader, camera);       
-        }
-
-        //draws all of the transparent stuff in a subchunk
-        public void DrawTransparent(Shader shader, Camera camera)
-        {
-            transparentMesh.Draw(shader, camera);
-        }
-
-        //dispose all subchunk meshes properly
+        //clears batched mesh gl object data
         public void Delete()
         {
             state = ChunkState.Deleted;
@@ -306,14 +122,228 @@ namespace OurCraft.World
             transparentMesh.Delete();
         }
 
+        //scans chunk from top down to find the first y layer with blocks
+        public int GetMaxSolidY()
+        {
+            const int max = CHUNK_HEIGHT - 1;
+
+            for(int sy = HEIGHT_IN_SUBCHUNKS - 1; sy >= 0; sy--)
+            {
+                for(int sx = 0; sx < WIDTH_IN_SUBCHUNKS; sx++)
+                {
+                    for (int sz = 0; sz < WIDTH_IN_SUBCHUNKS; sz++)
+                    {
+                        SubChunk subChunk = subChunks[sx, sy, sz];
+                        if (subChunk.IsAllAir()) continue;
+                        return ScanSubChunkLayer(subChunk) + 1;
+                    }
+                }
+            }
+
+            return max;
+        }
+
+        //helper for getting max solid y
+        public static int ScanSubChunkLayer(SubChunk subChunk)
+        {
+            for(int y = SubChunk.SUBCHUNK_SIZE - 1; y >= 0; y--)
+            {
+                for(int x = 0; x < SubChunk.SUBCHUNK_SIZE; x++)
+                {
+                    for(int z = 0; z < SubChunk.SUBCHUNK_SIZE; z++)
+                    {
+                        BlockState state = subChunk.GetBlockState(x, y, z);
+                        if (state != Block.AIR)
+                        {
+                            return y + (subChunk.ChunkYPos * SubChunk.SUBCHUNK_SIZE);
+                        }
+                    }
+                }
+            }
+            return -1;
+        }
+
+        //set all lightmap values to default
+        public void InitLightMap()
+        {
+            lightMap = new ushort[CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_WIDTH];
+
+            const int sky0 = 0;
+            const ushort sky15 = ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((15 & 0xF) << 12));
+
+            for (int x = 0; x < CHUNK_WIDTH; x++)
+            {
+                for (int z = 0; z < CHUNK_WIDTH; z++)
+                {
+                    for (int y = 0; y < CHUNK_HEIGHT; y++)
+                    {
+                        if (y < MaxSolidY) lightMap[x, y, z] = sky0;
+                        else lightMap[x, y, z] = sky15;
+                    }
+                }
+            }            
+        }
+
+        //fills in all subchunks with block state data
+        public void CreateVoxelMap()
+        {          
+            if (state != ChunkState.Initialized) return;
+
+            //initalize
+            WorldPos = new Vector3d(ChunkPos.X * CHUNK_WIDTH, 0, ChunkPos.Z * CHUNK_WIDTH);
+
+            //initialize subchunks
+            subChunkDirty = new bool[WIDTH_IN_SUBCHUNKS, HEIGHT_IN_SUBCHUNKS, WIDTH_IN_SUBCHUNKS];
+            subChunks = new SubChunk[WIDTH_IN_SUBCHUNKS, HEIGHT_IN_SUBCHUNKS, WIDTH_IN_SUBCHUNKS];
+            for (int x = 0; x < WIDTH_IN_SUBCHUNKS; x++)
+            {
+                for (int y = 0; y < HEIGHT_IN_SUBCHUNKS; y++)
+                {
+                    for (int z = 0; z < WIDTH_IN_SUBCHUNKS; z++)
+                    {
+                        subChunks[x, y, z] = new SubChunk(this, x, y, z);
+                    }
+                }
+            }
+
+            //create noise regions
+            NoiseRegion[,] noiseRegions = new NoiseRegion[CHUNK_WIDTH, CHUNK_WIDTH];
+            for (int z = 0; z < CHUNK_WIDTH; z++)
+            {
+                for (int x = 0; x < CHUNK_WIDTH; x++)
+                {
+                    int globalX =  ChunkPos.X * CHUNK_WIDTH + x;
+                    int globalZ = ChunkPos.Z * CHUNK_WIDTH + z;
+                    NoiseRegion noiseRegion = WorldGenerator.GetTerrainRegion(globalX, globalZ);
+                    noiseRegions[x, z] = noiseRegion;
+                }
+            }
+
+            foreach(var subChunk in subChunks)
+            {
+                subChunk.CreateDensityMap(noiseRegions);
+            }
+
+            foreach(var subChunk in subChunks)
+            {
+                subChunk.SurfacePaint(noiseRegions);
+            }
+
+            foreach (var subChunk in subChunks)
+            {
+                subChunk.PlaceSurfaceFeatures(noiseRegions);
+            }
+
+            //do pre lighting stage lighting calculations
+            MaxSolidY = GetMaxSolidY() + 1;
+            InitLightMap();
+
+            //update state
+            state = ChunkState.VoxelOnly;
+        }
+
+        //creates all subchunk mesh data
+        public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
+        Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        {
+            if (!HasVoxelData()) return;
+            meshing = true;
+            foreach (var subChunk in subChunks)
+            {
+                subChunk.ClearMesh();
+            }
+
+            foreach (var subChunk in subChunks)
+            {
+                subChunk.CreateMeshData(leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            }
+
+            foreach (var subChunk in subChunks)
+            {
+                subChunk.SolidGeo.vertices.TrimExcess();
+                subChunk.TransparentGeo.vertices.TrimExcess();
+            }
+
+            if (state == ChunkState.VoxelOnly) state = ChunkState.Meshed;
+            meshing = false;
+        }
+
+        //builds the combined subchunk mesh data
+        public void SendMeshToOpenGL()
+        {
+            if (state == ChunkState.Deleted || state == ChunkState.VoxelOnly || state == ChunkState.Initialized || meshing)
+                return;
+
+            UploadBatchedMesh(batchedMesh, transparent: false);
+            UploadBatchedMesh(transparentMesh, transparent: true);
+
+            state = ChunkState.Built;
+        }
+
+        //combines vertex data of subchunks into one big openGL mesh
+        private void UploadBatchedMesh(ChunkMesh mesh, bool transparent = false)
+        {
+            //compute size upfront
+            int totalVertexCount = 0;
+
+            foreach(var subChunk in subChunks)
+            {
+                if (transparent)
+                {
+                    totalVertexCount += subChunk.TransparentGeo.vertices.Count;
+                }
+                else
+                {
+                    totalVertexCount += subChunk.SolidGeo.vertices.Count;
+                }
+            }
+
+            batchedMesh.SetupIndices(totalVertexCount);
+            transparentMesh.SetupIndices(totalVertexCount);
+
+            //preallocate size
+            var totalVertices = new List<BlockVertex>(totalVertexCount);
+
+            foreach(var subChunk in subChunks)
+            {
+                if (transparent)
+                {
+                    ChunkMeshData geo = subChunk.TransparentGeo;
+                    if (geo.vertices.Count == 0) continue;
+
+                    //append vertices
+                    totalVertices.AddRange(geo.vertices);
+                }
+                else
+                {
+                    ChunkMeshData geo = subChunk.SolidGeo;
+                    if (geo.vertices.Count == 0) continue;
+
+                    //append vertices
+                    totalVertices.AddRange(geo.vertices);
+                }
+            }
+
+            //mesh upload
+            mesh.SetupMesh(totalVertices);
+        }      
+
+        //draws all the subchunk opaque meshes
+        public void Draw(Shader shader, Camera cam)
+        {
+            batchedMesh.Draw(shader, WorldPos, cam);       
+        }
+
+        //draws all of the transparent stuff in a subchunk
+        public void DrawTransparent(Shader shader, Camera cam)
+        {
+            transparentMesh.Draw(shader, WorldPos, cam);
+        }
+
         //set chunk ready to delete
         public void MarkForDeletion()
         {
             state = ChunkState.Deleted;
-            foreach(var subChunk in subChunks)
-            {
-                subChunk.isAllAir = true;
-            }
         }
 
         //get state
@@ -329,7 +359,7 @@ namespace OurCraft.World
         }
 
         //gets if a chunk can be modified
-        public bool Remeshable()
+        public bool Modifiyable()
         {
             return state == ChunkState.Built;
         }
@@ -341,74 +371,106 @@ namespace OurCraft.World
         }
 
         //block manipulation
-
         //trys to get the block from a chunk
         public BlockState GetBlockSafe(int x, int globalY, int z)
         {
-            if (HasVoxelData() == false || globalY < 0 || globalY > CHUNK_HEIGHT - 1)
-            {
-                return new BlockState(0);
-            }
+            //fast modulus math
+            const int sb = SubChunk.SUBCHUNK_SIZE - 1;
+            if (HasVoxelData() == false || globalY < 0 || globalY >= CHUNK_HEIGHT) return Block.AIR;           
 
             //get subchunk position
             int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
-            int localY = globalY % SubChunk.SUBCHUNK_SIZE;
+            int localY = globalY & sb;
 
-            return subChunks[subChunkY].GetBlockState(x, localY, z);
+            int subChunkX = x / SubChunk.SUBCHUNK_SIZE;
+            int localX = x & sb;
+
+            int subChunkZ = z / SubChunk.SUBCHUNK_SIZE;
+            int localZ = z & sb;
+
+            return subChunks[subChunkX, subChunkY, subChunkZ].GetBlockState(localX, localY, localZ);
         }
 
         //instantly gets a block from a chunk, may fail
         public BlockState GetBlockUnsafe(int x, int globalY, int z)
         {
+            //fast modulus math
+            const int sb = SubChunk.SUBCHUNK_SIZE - 1;
             //doesnt check if has all blocks yet
-            if (globalY < 0 || globalY > CHUNK_HEIGHT - 1)
-            {
-                return new BlockState(0);
-            }
+            if (globalY < 0 || globalY >= CHUNK_HEIGHT) return Block.AIR;           
 
             //get subchunk position
             int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
-            int localY = globalY % SubChunk.SUBCHUNK_SIZE;
+            int localY = globalY & sb;
 
-            return subChunks[subChunkY].GetBlockState(x, localY, z);
+            int subChunkX = x / SubChunk.SUBCHUNK_SIZE;
+            int localX = x & sb;
+
+            int subChunkZ = z / SubChunk.SUBCHUNK_SIZE;
+            int localZ = z & sb;
+
+            return subChunks[subChunkX, subChunkY, subChunkZ].GetBlockState(localX, localY, localZ);
         }
 
         //sets block and sets chunk as dirty
-        public void SetBlock(int x, int y, int z, BlockState state)
+        public void SetBlock(int x, int globalY, int z, BlockState state)
         {
-            if (HasVoxelData() == false || y < 0 || y > CHUNK_HEIGHT - 1) return;
-            changes.Add(y);
+            //fast modulus math
+            const int sb = SubChunk.SUBCHUNK_SIZE - 1;
+            if (HasVoxelData() == false || globalY < 0 || globalY > CHUNK_HEIGHT - 1) return;
+            changes.Add(new Vector3i(x, globalY, z));
+
             //get subchunk position
-            int subChunkY = y / SubChunk.SUBCHUNK_SIZE;
-            int localY = y % SubChunk.SUBCHUNK_SIZE;
-            subChunks[subChunkY].SetBlock(x, localY, z, state);
+            int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
+            int localY = globalY & sb;
+
+            int subChunkX = x / SubChunk.SUBCHUNK_SIZE;
+            int localX = x & sb;
+
+            int subChunkZ = z / SubChunk.SUBCHUNK_SIZE;
+            int localZ = z & sb;
+
+            subChunks[subChunkX, subChunkY, subChunkZ].SetBlock(localX, localY, localZ, state);
+        }
+
+        //unsafe setblock, no checks before hand, doesnt mark chunk pos as dirty
+        public void SetBlockUnsafe(int x, int globalY, int z, BlockState state)
+        {
+            //fast modulus math
+            const int sb = SubChunk.SUBCHUNK_SIZE - 1;
+            if (globalY < 0 || globalY > CHUNK_HEIGHT - 1) return;
+
+            //get subchunk position
+            int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
+            int localY = globalY & sb;
+
+            int subChunkX = x / SubChunk.SUBCHUNK_SIZE;
+            int localX = x & sb;
+
+            int subChunkZ = z / SubChunk.SUBCHUNK_SIZE;
+            int localZ = z & sb;
+
+            subChunks[subChunkX, subChunkY, subChunkZ].SetBlock(localX, localY, localZ, state);
         }
 
         //gives back skylight and block light from local position
         public ushort GetLight(int x, int y, int z)
         {            
-            if (HasVoxelData() == false || !PosValid(x, y, z))
-            {
-                return 0;
-            }
+            if (HasVoxelData() == false || !PosValid(x, y, z)) return 0;       
             return lightMap[x, y, z];
         }
 
         //sets a whole light value position, dont use this unless needed
         public void SetLight(int x, int y, int z, ushort value)
         {
-            if (HasVoxelData() == false || !PosValid(x, y, z))
-            {
-                return;
-            }
+            if (HasVoxelData() == false || !PosValid(x, y, z)) return;          
             lightMap[x, y, z] = value;
         }
 
         //sets only the block rgb colors at a light value position
         public void SetBlockLight(int x, int y, int z, Vector3i value)
         {
-            if (HasVoxelData() == false || !PosValid(x, y, z))
-                return;
+            if (HasVoxelData() == false || !PosValid(x, y, z)) return;
 
             //preserve the upper 4 bits for skylight
             ushort current = lightMap[x, y, z];    
@@ -417,7 +479,6 @@ namespace OurCraft.World
             //pack blocklight into the lower 12 bits
             ushort packed = (ushort)((value.X & 0xF) |
             ((value.Y & 0xF) << 4) | ((value.Z & 0xF) << 8));
-
             lightMap[x, y, z] = (ushort)(preserved | packed);
         }
 
@@ -437,89 +498,64 @@ namespace OurCraft.World
             lightMap[x, y, z] = (ushort)(preservedBlockLight | newSkyLight);
         }
 
-        public void SetHeightMap(int x, int z, int value)
-        {
-            if (!PosValid(x, z)) return;
-            if (value >= CHUNK_HEIGHT) heightMap[x, z] = CHUNK_HEIGHT;
-            heightMap[x, z] = (ushort)value;
-        }
-
-        //unsafe setblock
-        public void SetBlockUnsafe(int x, int y, int z, BlockState state)
-        {
-            if (y < 0 || y > CHUNK_HEIGHT - 1) return;
-
-            //get subchunk position
-            int subChunkY = y / SubChunk.SUBCHUNK_SIZE;
-            int localY = y % SubChunk.SUBCHUNK_SIZE;
-            
-            subChunks[subChunkY].SetBlock(x, localY, z, state);
-        }
-
         //remesh subchunks that are effected by a block being broken or placed
         public void Remesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
-            //helper to safely add subchunk indices
-            bool TryAddSubChunk(HashSet<int> set, int idx)
-            {
-                if (idx >= 0 && idx < subChunks.Length)
-                {
-                    set.Add(idx);
-                    return true;
-                }
-                return false;
-            }
-
-            var toRemesh = new HashSet<int>();
-
+            const int sb = SubChunk.SUBCHUNK_SIZE - 1;
             for (int i = 0; i < changes.Count; i++)
             {
-                int globalY = changes[i];
-                int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
-                int localY = globalY % SubChunk.SUBCHUNK_SIZE;
+                var p = changes[i];
 
-                TryAddSubChunk(toRemesh, subChunkY);
+                int subX = p.X / SubChunk.SUBCHUNK_SIZE;
+                int subY = p.Y / SubChunk.SUBCHUNK_SIZE;
+                int subZ = p.Z / SubChunk.SUBCHUNK_SIZE;
 
-                if (localY == SubChunk.SUBCHUNK_SIZE - 1)
-                    TryAddSubChunk(toRemesh, subChunkY + 1);
+                int localX = p.X & sb; int localY = p.Y & sb; int localZ = p.Z & sb;
 
-                if (localY == 0)
-                    TryAddSubChunk(toRemesh, subChunkY - 1);
+                //mark owning subchunk
+                if ((uint)subX < WIDTH_IN_SUBCHUNKS && (uint)subY < HEIGHT_IN_SUBCHUNKS && (uint)subZ < WIDTH_IN_SUBCHUNKS) subChunkDirty[subX, subY, subZ] = true;
+
+                //X neighbors
+                if (localX == sb && subX + 1 < WIDTH_IN_SUBCHUNKS) subChunkDirty[subX + 1, subY, subZ] = true;
+                if (localX == 0 && subX > 0) subChunkDirty[subX - 1, subY, subZ] = true;
+
+                //Y neighbors
+                if (localY == sb && subY + 1 < HEIGHT_IN_SUBCHUNKS) subChunkDirty[subX, subY + 1, subZ] = true;
+                if (localY == 0 && subY > 0) subChunkDirty[subX, subY - 1, subZ] = true;
+
+                //Z neighbors
+                if (localZ == sb && subZ + 1 < WIDTH_IN_SUBCHUNKS) subChunkDirty[subX, subY, subZ + 1] = true;
+                if (localZ == 0 && subZ > 0) subChunkDirty[subX, subY, subZ - 1] = true;
             }
 
-            //remesh each unique subchunk exactly once
-            foreach (int idx in toRemesh)
+            //remesh dirty subchunks only once and reupload mesh
+            for (int x = 0; x < WIDTH_IN_SUBCHUNKS; x++)
             {
-                subChunks[idx].Remesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
+                for (int y = 0; y < HEIGHT_IN_SUBCHUNKS; y++)
+                {
+                    for (int z = 0; z < WIDTH_IN_SUBCHUNKS; z++)
+                    {
+                        if (!subChunkDirty[x, y, z]) continue;
+                        subChunks[x, y, z].Remesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
+                        subChunkDirty[x, y, z] = false;
+                    }
+                }
             }
-
-            int totalVertexCount = 0;
-
-            foreach (var subChunk in subChunks)
-            {
-                totalVertexCount += subChunk.SolidGeo.vertices.Count;
-            }
-            batchedMesh.SetupIndices(totalVertexCount);
-            transparentMesh.SetupIndices(totalVertexCount);
-
-            SendMeshToOpenGL();
-
-            //now that everything is updated, clear it
             changes.Clear();
+            SendMeshToOpenGL();
         }
 
         //debug and helpers
-
         //checks if a position fits in a chunk, for many axis
         public static bool PosValid(int x, int y, int z)
         {
-            return x >= 0 && x < SubChunk.SUBCHUNK_SIZE && z >= 0 && z < SubChunk.SUBCHUNK_SIZE && y >= 0 && y < SubChunk.SUBCHUNK_SIZE * SUBCHUNK_COUNT;
+            return x >= 0 && x < CHUNK_WIDTH && z >= 0 && z < CHUNK_WIDTH && y >= 0 && y < CHUNK_HEIGHT;
         }
 
         //overload only for x and z layers of a chunk
         public static bool PosValid(int x, int z)
         {
-            return x >= 0 && x < SubChunk.SUBCHUNK_SIZE && z >= 0 && z < SubChunk.SUBCHUNK_SIZE;
+            return x >= 0 && x < CHUNK_WIDTH && z >= 0 && z < CHUNK_WIDTH;
         }
 
         //checks if chunk is in camera view
@@ -543,22 +579,33 @@ namespace OurCraft.World
 
     //small part of a chunk that contains block data and mesh data
     public class SubChunk
-    {
-        public const int SUBCHUNK_SIZE = 32;
+    {        
+        public const int SUBCHUNK_SIZE = 16;
+        public const int CHUNK_WIDTH = SUBCHUNK_SIZE * Chunk.WIDTH_IN_SUBCHUNKS;
+
+        //positioning and parent data
+        public int ChunkXPos { get; private set; } = 0;
+        public int ChunkYPos { get; private set; } = 0;
+        public int ChunkZPos { get; private set; } = 0;
+        readonly Chunk parent;
+
+        //block storage
         private IBlockIndexStorage blockIndices;
         private readonly BlockPalette palette;
-        public List<ushort> lightSources = new List<ushort>();
-        public bool isAllAir = true;
-        public int YPos { get; private set; } = 0;
-        readonly Chunk parent;
+        public List<ushort> lightSources = [];             
+
+        //mesh data
         public ChunkMeshData SolidGeo { get; private set; }
         public ChunkMeshData TransparentGeo { get; private set; }
 
         //basic constructor
-        public SubChunk(Chunk parent, int yPos)
+        public SubChunk(Chunk parent, int xPos, int yPos, int zPos)
         { 
             this.parent = parent;
-            YPos = yPos;
+            ChunkXPos = xPos;
+            ChunkYPos = yPos;           
+            ChunkZPos = zPos;
+
             palette = new BlockPalette();
             blockIndices = new ByteBlockStorage(SUBCHUNK_SIZE * SUBCHUNK_SIZE * SUBCHUNK_SIZE);
             SolidGeo = new ChunkMeshData();
@@ -572,24 +619,26 @@ namespace OurCraft.World
             {             
                 for (int x = 0; x < SUBCHUNK_SIZE; x++)
                 {
-                    NoiseRegion noiseRegion = noiseRegions[x, z];
+                    NoiseRegion noiseRegion = noiseRegions[(ChunkXPos * SUBCHUNK_SIZE) + x, (ChunkZPos * SUBCHUNK_SIZE) + z];
                     for (int y = 0; y < SUBCHUNK_SIZE; y++)
                     {   
                         //create stone-air map
-                        int globalX = parent.Pos.X * SUBCHUNK_SIZE + x;
-                        int globalY = YPos * SUBCHUNK_SIZE + y;
-                        int globalZ = parent.Pos.Z * SUBCHUNK_SIZE + z;
+                        int globalX = (ChunkXPos * SUBCHUNK_SIZE) + x + (CHUNK_WIDTH * parent.ChunkPos.X);
+                        int globalY = (ChunkYPos * SUBCHUNK_SIZE) + y;
+                        int globalZ = (ChunkZPos * SUBCHUNK_SIZE) + z + (CHUNK_WIDTH * parent.ChunkPos.Z);
                         float density = WorldGenerator.GetDensity(globalX, globalY, globalZ, noiseRegion);
 
-                        //we use raw block ids for extra performance
-                        BlockState state = new(BlockIDs.AIR_BLOCK);                
-                        if (density > 0) state = new(BlockIDs.STONE_BLOCK);
+                        BlockState state = WorldGenerator.EmptyBlock;                
+                        if (density > 0) state = WorldGenerator.WorldBlock;
                         SetBlock(x, y, z, state);
 
                         //fill air blocks below sea level with water
-                        if (GetBlockState(x, y, z).BlockID == BlockIDs.AIR_BLOCK && globalY <= WorldGenerator.SEA_LEVEL)
+                        if (GetBlockState(x, y, z) == Block.AIR && globalY <= WorldGenerator.SEA_LEVEL)
                         {
-                            BlockState state2 = globalY == WorldGenerator.SEA_LEVEL ? new(noiseRegion.biome.WaterSurfaceBlock) : new(noiseRegion.biome.WaterBlock);
+                            BlockState state2 = 
+                                globalY == WorldGenerator.SEA_LEVEL ? noiseRegion.biome.WaterSurfaceBlock:
+                                noiseRegion.biome.WaterBlock;
+
                             SetBlock(x, y, z, state2);
                         }
                     }
@@ -597,22 +646,22 @@ namespace OurCraft.World
             }
         }
 
-        //paint the top layers with their respective biome surface block
+        //this code is atrocious
         public void SurfacePaint(NoiseRegion[,] noiseRegions)
         { 
             for(int z = 0; z < SUBCHUNK_SIZE; z++)
             {
                 for(int x = 0; x < SUBCHUNK_SIZE; x++)
                 {
-                    NoiseRegion noiseRegion = noiseRegions[x, z];
+                    NoiseRegion noiseRegion = noiseRegions[(ChunkXPos * SUBCHUNK_SIZE) + x, (ChunkZPos * SUBCHUNK_SIZE) + z];
 
                     for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--) // top-down
                     {
                         BlockState current = GetBlockState(x, y, z);
-                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? GetBlockState(x, y + 1, z) : parent.GetBlockUnsafe(x, (y + YPos * SUBCHUNK_SIZE) + 1, z);
+                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? GetBlockState(x, y + 1, z) : parent.GetBlockUnsafe((ChunkXPos * SUBCHUNK_SIZE) + x, (y + ChunkYPos * SUBCHUNK_SIZE) + 1, (ChunkZPos * SUBCHUNK_SIZE) + z);
 
-                        bool currentEligible = current.BlockID != BlockIDs.AIR_BLOCK && current.BlockID != noiseRegion.biome.WaterBlock && current.BlockID != noiseRegion.biome.WaterSurfaceBlock;
-                        bool aboveEligible = above.BlockID == BlockIDs.AIR_BLOCK || above.BlockID == noiseRegion.biome.WaterBlock || above.BlockID == noiseRegion.biome.WaterSurfaceBlock;
+                        bool currentEligible = current != Block.AIR && current != noiseRegion.biome.WaterBlock && current != noiseRegion.biome.WaterSurfaceBlock;
+                        bool aboveEligible = above == Block.AIR || above == noiseRegion.biome.WaterBlock || above == noiseRegion.biome.WaterSurfaceBlock;
 
                         //only consider blocks with air above (i.e., surface or overhang)
                         if (currentEligible && aboveEligible)
@@ -622,10 +671,8 @@ namespace OurCraft.World
                                 int targetY = y - d;
 
                                 //customize depth levels for the biomes
-                                if (d == 0)
-                                    SetBlock(x, targetY, z, new(WorldGenerator.GetSurfaceBlock(noiseRegion.biome, targetY + YPos * SUBCHUNK_SIZE)));
-                                else if (d <= 2)
-                                    SetBlock(x, targetY, z, new(WorldGenerator.GetSubSurfaceBlock(noiseRegion.biome, targetY + YPos * SUBCHUNK_SIZE)));                               
+                                if (d == 0) SetBlock(x, targetY, z, WorldGenerator.GetSurfaceBlock(noiseRegion.biome, targetY + ChunkYPos * SUBCHUNK_SIZE));
+                                else if (d <= 2) SetBlock(x, targetY, z, WorldGenerator.GetSubSurfaceBlock(noiseRegion.biome, targetY + ChunkYPos * SUBCHUNK_SIZE));                               
                             }
                         }
                     }
@@ -633,7 +680,7 @@ namespace OurCraft.World
             }
         }
 
-        //slap on trees, rocks, grass all on top of top layer of blocks
+        //this code is atrocious
         public void PlaceSurfaceFeatures(NoiseRegion[,] noiseRegions)
         {
             int seed = NoiseRouter.seed;
@@ -641,29 +688,31 @@ namespace OurCraft.World
             {
                 for (int x = 0; x < SUBCHUNK_SIZE; x++)
                 {
-                    NoiseRegion noiseRegion = noiseRegions[x, z];
+                    NoiseRegion noiseRegion = noiseRegions[(ChunkXPos * SUBCHUNK_SIZE) + x, (ChunkZPos * SUBCHUNK_SIZE) + z];
 
                     for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--) // top-down
                     {
                         BlockState current = GetBlockState(x, y, z);
-                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? GetBlockState(x, y + 1, z) : parent.GetBlockUnsafe(x, (y + YPos * SUBCHUNK_SIZE) + 1, z);
+                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? GetBlockState(x, y + 1, z) : parent.GetBlockUnsafe((ChunkXPos * SUBCHUNK_SIZE) + x, (ChunkYPos * SUBCHUNK_SIZE) + y + 1, (ChunkZPos * SUBCHUNK_SIZE) + z);
 
-                        bool currentEligible = current.BlockID == WorldGenerator.GetSurfaceBlock(noiseRegion.biome, y + YPos * SUBCHUNK_SIZE);
-                        bool aboveEligible = above.BlockID == BlockIDs.AIR_BLOCK;
+                        bool currentEligible = current == WorldGenerator.GetSurfaceBlock(noiseRegion.biome, y + (ChunkYPos * SUBCHUNK_SIZE));
+                        bool aboveEligible = above == Block.AIR;
 
                         //only consider blocks with air above (i.e., surface or overhang)
                         if (currentEligible && aboveEligible)
                         {
                             foreach (BiomeSurfaceFeature feature in noiseRegion.biome.SurfaceFeatures)
                             {
-                                Vector3i globalCoords = new(x + parent.Pos.X * SUBCHUNK_SIZE, (y + YPos * SUBCHUNK_SIZE), z + parent.Pos.Z * SUBCHUNK_SIZE);
+                                Vector3i globalCoords = new((ChunkXPos * SUBCHUNK_SIZE) + x+ (CHUNK_WIDTH * parent.ChunkPos.X),
+                                (y + ChunkYPos * SUBCHUNK_SIZE),
+                                (ChunkZPos * SUBCHUNK_SIZE) + z + (CHUNK_WIDTH * parent.ChunkPos.Z));
 
                                 //generate random number with deterministic coordinate hash function (super weird but thread safe)
                                 int rand = NoiseRouter.GetStructureRandomness(globalCoords.X, globalCoords.Y, globalCoords.Z, seed, feature.chance);
 
-                                if (rand == 1 && feature.feature.CanPlaceFeature(new Vector3i(x, (y + YPos * SUBCHUNK_SIZE) + 1, z), parent))
+                                if (rand == 1 && feature.feature.CanPlaceFeature(new Vector3i((ChunkXPos * SUBCHUNK_SIZE) + x, y + (ChunkYPos * SUBCHUNK_SIZE) + 1, (ChunkZPos * SUBCHUNK_SIZE) + z), parent))
                                 {
-                                    feature.feature.PlaceFeature(new Vector3i(x, (y + YPos * SUBCHUNK_SIZE) + 1, z), parent);
+                                    feature.feature.PlaceFeature(new Vector3i((ChunkXPos * SUBCHUNK_SIZE) + x, (y + ChunkYPos * SUBCHUNK_SIZE) + 1, (ChunkZPos * SUBCHUNK_SIZE) + z), parent);
                                     break;
                                 }                                  
                             }                            
@@ -674,58 +723,75 @@ namespace OurCraft.World
         }
 
         //tries to create the mesh data
-        public void CreateChunkMesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        public void CreateMeshData(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
-            if (isAllAir) return; //dont create mesh if chunk is completely air          
+            if (IsAllAir()) return; //dont create mesh if chunk is completely air
+
             for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--)
+            {
                 for (int x = SUBCHUNK_SIZE - 1; x >= 0; x--)
+                {
                     for (int z = SUBCHUNK_SIZE - 1; z >= 0; z--)
                     {
-                        AddMeshDataToChunk(new Vector3(x, y, z), new Vector3(x, YPos * SUBCHUNK_SIZE + y, z), leftC, rightC, frontC, backC, c1, c2, c3, c4);
+                        AddMeshDataToChunk(new Vector3i(x, y, z), new Vector3((ChunkXPos * SUBCHUNK_SIZE) + x, (ChunkYPos * SUBCHUNK_SIZE) + y, (ChunkZPos * SUBCHUNK_SIZE) + z),
+                        leftC, rightC, frontC, backC, c1, c2, c3, c4);
                     }
-            SolidGeo.vertices.TrimExcess();
-            TransparentGeo.vertices.TrimExcess();
+                }
+            }
         }
 
-        //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks
-        //also samples lighting values for blocks exposed to light
-        public void AddMeshDataToChunk(Vector3 pos, Vector3 meshPos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
-        {            
-            Block block = BlockData.GetBlock(GetBlockState((int)pos.X, (int)pos.Y, (int)pos.Z).BlockID);
-            if (block.blockShape is EmptyBlockShape) return;
-
-            BlockState state = GetBlockState((int)pos.X, (int)pos.Y, (int)pos.Z);
+        //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks also samples lighting values for blocks exposed to light
+        public void AddMeshDataToChunk(Vector3i pos, Vector3 meshPos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        {
+            BlockState state = GetBlockState(pos.X, pos.Y, pos.Z);
+            if (state == Block.AIR) return;
+            Block block = BlockData.GetBlock(state.BlockID);
 
             //get neighbor blocks
-            BlockState top = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 1, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            BlockState bottom = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, -1, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            BlockState front = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, 1, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            BlockState back = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, -1, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            BlockState left = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, -1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            BlockState right = GetNeighborBlockSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 1, 0, 0, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            NeighborBlocks nb = GetNeighborsSafe(pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            nb.thisState = state;
 
             //if surrounding blocks are all full solid cubes, and the current block is also full solid, then skip meshing entirely
-            if (top.GetBlock.blockShape.IsFullOpaqueBlock && bottom.GetBlock.blockShape.IsFullOpaqueBlock
-            && front.GetBlock.blockShape.IsFullOpaqueBlock && back.GetBlock.blockShape.IsFullOpaqueBlock &&
-            left.GetBlock.blockShape.IsFullOpaqueBlock && right.GetBlock.blockShape.IsFullOpaqueBlock
-            && block.blockShape.IsFullOpaqueBlock)
-                return;
-
-            ushort thisLight = parent.GetLight((int)meshPos.X, (int)meshPos.Y, (int)meshPos.Z);
-
+            if (nb.top.BlockShape.IsFullOpaqueBlock && nb.bottom.BlockShape.IsFullOpaqueBlock
+            && nb.front.BlockShape.IsFullOpaqueBlock && nb.back.BlockShape.IsFullOpaqueBlock &&
+            nb.left.BlockShape.IsFullOpaqueBlock && nb.right.BlockShape.IsFullOpaqueBlock
+            && block.blockShape.IsFullOpaqueBlock) return;
+            
             LightingData lightData = GetLightData(pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
             ChunkMeshData meshRef = block.blockShape.IsTranslucent ? TransparentGeo : SolidGeo;
-            block.blockShape.AddBlockMesh(meshPos, bottom, top, front, back, right, left, meshRef, state, lightData, thisLight);
+            block.blockShape.AddBlockMesh(meshPos, nb, meshRef, lightData);           
+        }
+
+        //get all neighbor blocks in a safe fashion
+        private NeighborBlocks GetNeighborsSafe(Vector3i pos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
+        Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        {
+            NeighborBlocks nb = new();
+            int x = pos.X;
+            int y = pos.Y;
+            int z = pos.Z;
+
+            //helper to get neighbor block safely
+            BlockState N(int ox, int oy, int oz) => GetNeighborBlockSafe(x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+
+            //top face + top corners
+            nb.top = N(0, +1, 0);
+            nb.bottom = N(0, -1, 0);
+            nb.front = N(0, 0, +1);
+            nb.back = N(0, 0, -1);
+            nb.right = N(1, 0, 0);
+            nb.left = N(-1, 0, 0);
+            return nb;
         }
 
         //returns the values necessary for computing the light values for meshing
-        private LightingData GetLightData(Vector3 pos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
+        private LightingData GetLightData(Vector3i pos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
         Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
             LightingData ld = new();
-            int x = (int)pos.X;
-            int y = (int)pos.Y;
-            int z = (int)pos.Z;
+            int x = pos.X;
+            int y = pos.Y;
+            int z = pos.Z;
 
             //helper to get neighbor block safely
             ushort L(int ox, int oy, int oz) => GetLightSafe(x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
@@ -744,9 +810,9 @@ namespace OurCraft.World
 
         //rebuilds the subchunk mesh data when modifying a block
         public void Remesh(Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
-        {          
+        {
             ClearMesh();
-            CreateChunkMesh(leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            CreateMeshData(leftC, rightC, frontC, backC, c1, c2, c3, c4);
         }
 
         //clears the mesh data
@@ -769,7 +835,6 @@ namespace OurCraft.World
         {
             int index = Flatten(x, y, z);
             int paletteIndex = palette.GetOrAddIndex(state);
-            if (state.BlockID != BlockIDs.AIR_BLOCK) isAllAir = false; //update if not all air anymore
             
             //update light sources if light block is reset
             BlockState oldState = GetBlockState(x, y, z);
@@ -788,25 +853,40 @@ namespace OurCraft.World
             blockIndices.Set(index, paletteIndex);
         }
 
+        //gets if the subchunk is all air or not
+        public bool IsAllAir()
+        {
+            if (palette.Count > 1) return false;
+
+            if(palette.entryMap.TryGetValue(Block.AIR, out int value))
+            {
+                return true;
+            }
+            return false;
+        }
+
         //gets the lighting value of a block safely
         public ushort GetLightSafe(int x, int y, int z, int offsetX, int offsetY, int offsetZ,
         Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
-            int nx = x + offsetX;
-            int ny = YPos * SUBCHUNK_SIZE + y + offsetY; //global Y
-            int nz = z + offsetZ;
+            const ushort defaultLight = ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((15 & 0xF) << 12));
+            const int cs = CHUNK_WIDTH - 1;
 
+            int nx = (ChunkXPos * SUBCHUNK_SIZE) + x + offsetX;
+            int ny = (ChunkYPos * SUBCHUNK_SIZE) + y + offsetY; //global Y
+            int nz = (ChunkZPos * SUBCHUNK_SIZE) + z + offsetZ;
+           
             //out of world bounds (vertical)
-            if (ny < 0 || ny >= 384)
-                return ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((15 & 0xF) << 12));
+            if (ny < 0 || ny >= Chunk.CHUNK_HEIGHT) return defaultLight;
+            if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH) return parent.GetLight(nx, ny, nz);
 
             //start with this chunk as default
             Chunk? targetChunk = parent;
 
             bool nxLeft = nx < 0;
-            bool nxRight = nx >= SUBCHUNK_SIZE;
+            bool nxRight = nx >= CHUNK_WIDTH;
             bool nzBack = nz < 0;
-            bool nzFront = nz >= SUBCHUNK_SIZE;
+            bool nzFront = nz >= CHUNK_WIDTH;
 
             //if diagonal: prefer corner chunks
             if (nxLeft && nzBack)
@@ -835,13 +915,11 @@ namespace OurCraft.World
                 else if (nzFront) targetChunk = frontC;
             }
 
-            if (targetChunk == null || !targetChunk.HasVoxelData())
-                return ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((15 & 0xF) << 12));
+            if (targetChunk == null || !targetChunk.HasVoxelData()) return defaultLight;
 
-            //convert to local coordinates inside target chunk/subchunk
-            //this handles -1 -> SUBCHUNK_SIZE-1 mapping etc.
-            int localX = ((nx % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
-            int localZ = ((nz % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
+            //convert to local coordinates inside target chunk
+            int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
+            int localZ = ((nz & cs) + CHUNK_WIDTH) & cs;
 
             return targetChunk.GetLight(localX, ny, localZ);
         }
@@ -850,38 +928,29 @@ namespace OurCraft.World
         public BlockState GetNeighborBlockSafe(int x, int y, int z, int offsetX, int offsetY, int offsetZ,
         Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
-            int nx = x + offsetX;
-            int ny = YPos * SUBCHUNK_SIZE + y + offsetY; //global Y
-            int nz = z + offsetZ;
+            const int cs = CHUNK_WIDTH - 1;
+
+            int nx = (ChunkXPos * SUBCHUNK_SIZE) + x + offsetX;
+            int ny = (ChunkYPos * SUBCHUNK_SIZE) + y + offsetY; //global Y
+            int nz = (ChunkZPos * SUBCHUNK_SIZE) + z + offsetZ;
 
             //out of world bounds (vertical)
-            if (ny < 0 || ny >= 384) return new BlockState(BlockIDs.AIR_BLOCK);
-
+            if (ny < 0 || ny >= Chunk.CHUNK_HEIGHT) return Block.AIR;
+            if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH) return parent.GetBlockUnsafe(nx, ny, nz);
+            
             //start with this chunk as default
             Chunk? targetChunk = parent;
 
             bool nxLeft = nx < 0;
-            bool nxRight = nx >= SUBCHUNK_SIZE;
+            bool nxRight = nx >= CHUNK_WIDTH;
             bool nzBack = nz < 0;
-            bool nzFront = nz >= SUBCHUNK_SIZE;
+            bool nzFront = nz >= CHUNK_WIDTH;
 
             //if diagonal: prefer corner chunks
-            if (nxLeft && nzBack)
-            {
-                targetChunk = c1; //back-left
-            }
-            else if (nxRight && nzBack)
-            {
-                targetChunk = c2; //back-right
-            }
-            else if (nxLeft && nzFront)
-            {
-                targetChunk = c3; //front-right
-            }
-            else if (nxRight && nzFront)
-            {
-                targetChunk = c4; //front-left
-            }
+            if (nxLeft && nzBack) targetChunk = c1; //back-left           
+            else if (nxRight && nzBack) targetChunk = c2; //back-right           
+            else if (nxLeft && nzFront) targetChunk = c3; //front-right        
+            else if (nxRight && nzFront) targetChunk = c4; //front-left           
             else
             {
                 //non-diagonal: choose along X or Z
@@ -892,18 +961,15 @@ namespace OurCraft.World
                 else if (nzFront) targetChunk = frontC;
             }
 
-            if (targetChunk == null || !targetChunk.HasVoxelData())
-                return new BlockState(BlockIDs.AIR_BLOCK);
+            if (targetChunk == null || !targetChunk.HasVoxelData()) return Block.AIR;
 
-            //convert to local coordinates inside target chunk/subchunk
-            //this handles -1 -> SUBCHUNK_SIZE-1 mapping etc.
-            int localX = ((nx % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
-            int localZ = ((nz % SUBCHUNK_SIZE) + SUBCHUNK_SIZE) % SUBCHUNK_SIZE;
+            //convert to local coordinates inside target chunk
+            int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
+            int localZ = ((nz & cs) + CHUNK_WIDTH) & cs;
 
-            return targetChunk.GetBlockSafe(localX, ny, localZ);
+            return targetChunk.GetBlockUnsafe(localX, ny, localZ);
         }
 
-        //math helpers
         private static int Flatten(int x, int y, int z)
         {
             return x + SUBCHUNK_SIZE * (y + SUBCHUNK_SIZE * z);

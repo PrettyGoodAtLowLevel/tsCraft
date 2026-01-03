@@ -11,36 +11,47 @@ namespace OurCraft.Blocks.Block_Implementations
         //specifies the direction the log is oriented
         public static readonly EnumProperty<Axis> AXIS;
 
-        //initializes the bits for a Log block
+        //initializes the bits for a Log block implementation
         static BlockLog()
         {
             var layout = new PropertyLayoutBuilder();
             AXIS = layout.AddEnum<Axis>();
         }
 
+        //adds the properties to THIS instance of a block
         public BlockLog(string name, BlockShape shape, ushort id) :
         base(name, shape, id)
-        { }
-
-
-        //just add regular block to chunk
-        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, Chunkmanager world)
         {
-            if (hitNormal.Y != 0)
-                world.SetBlock(globalPos + hitNormal, new BlockState((byte)id).WithProperty(AXIS, Axis.Y));
-
-            else if (hitNormal.X != 0)
-                world.SetBlock(globalPos + hitNormal, new BlockState((byte)id).WithProperty(AXIS, Axis.X));
-
-            else if (hitNormal.Z != 0)
-                world.SetBlock(globalPos + hitNormal, new BlockState((byte)id).WithProperty(AXIS, Axis.Z));
+            Properties.Add(AXIS);
         }
 
+        //just add regular block to chunk, switch axis based on hit normal
+        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, Chunkmanager world)
+        {
+            Axis axis = Axis.Y;
+            if (Math.Abs(hitNormal.Y) > 0.5f) axis = Axis.Y;
+            else if (Math.Abs(hitNormal.X) > 0.5f) axis = Axis.X;
+            else if (Math.Abs(hitNormal.Z) > 0.5f) axis = Axis.Z;
+
+            var stateToPlace = DefaultState.With(AXIS, axis); 
+            world.SetBlock(globalPos + hitNormal, stateToPlace);
+        }
+
+        //interprets the axis of the log block
+        public override void DebugState(BlockState thisBlock)
+        {
+            base.DebugState(thisBlock);
+            Axis axis = thisBlock.GetProperty(AXIS);
+            Console.WriteLine(", Axis: " + axis.ToString());
+        }
+
+        //log is a solid block, most likely
         public override bool IsLightPassable(BlockState state)
         {
             return false;
         }
 
+        //log is not a light source
         public override bool IsLightSource(BlockState state)
         {
             return false;

@@ -6,6 +6,7 @@ using OurCraft.Graphics.Voxel_Lighting;
 
 namespace OurCraft.Blocks.Meshing
 {
+    //interpets the slab type and adds the correct model based on that
     public class SlabBlockModelShape : BlockShape
     {
         public SlabBlockModelShape()
@@ -17,21 +18,18 @@ namespace OurCraft.Blocks.Meshing
         public CachedBlockModel cachedModelBottom = new();
 
         //add slab type mesh
-        public override void AddBlockMesh(Vector3 pos, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, ChunkMeshData mesh, BlockState thisState, LightingData lightData, ushort thisLight)
+        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)
         {
-            SlabType type = SlabBlock.SLAB_TYPE.Decode(thisState.MetaData);
+            SlabType type = nb.thisState.GetProperty(SlabBlock.SLAB_TYPE);
 
             switch (type)
             {
                 case SlabType.Double:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
-                    break;
+                    BlockMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, nb, mesh, lightData); break;
                 case SlabType.Top:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
-                    break;
+                    BlockMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, nb, mesh, lightData); break;
                 default:
-                    BlockModelMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, bottom, top, front, back, right, left, thisState, mesh, lightData);
-                    break;
+                    BlockMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, nb, mesh, lightData); break;
             }
         }
 
@@ -42,12 +40,9 @@ namespace OurCraft.Blocks.Meshing
 
             switch (type)
             {
-                case SlabType.Double:
-                    return cachedModelDouble.FaceCull[(byte)faceSide];
-                case SlabType.Top:
-                    return cachedModelTop.FaceCull[(byte)faceSide];
-                default:
-                    return cachedModelBottom.FaceCull[(byte)faceSide];
+                case SlabType.Double: return cachedModelDouble.FaceCull[(byte)faceSide];
+                case SlabType.Top: return cachedModelTop.FaceCull[(byte)faceSide];
+                default: return cachedModelBottom.FaceCull[(byte)faceSide];
             }        
         }
     }

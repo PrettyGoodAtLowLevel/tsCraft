@@ -9,59 +9,133 @@ namespace OurCraft.Graphics.Voxel_Lighting
     //does all of the block light calculations for us
     public static class BlockLightingEngine
     {
-        const int CHUNK_SIZE = SubChunk.SUBCHUNK_SIZE; //32
+        const int CHUNK_SIZE = Chunk.CHUNK_WIDTH; //32
+        const int SUBCHUNK_SIZE = SubChunk.SUBCHUNK_SIZE;
         const int MAX_HEIGHT = Chunk.CHUNK_HEIGHT;
 
+        const int MAX_LIGHT = 15;
+        const int MIN_LIGHT = 0;
+        const int LOW_LIGHT = 1;
+
         //seeds all the block lights in a chunk
-        public static void SeedBlockLights(Chunk chunk, ConcurrentQueue<LightNode> blockLights)
+        public static void SeedBlockLights(Chunkmanager world, Chunk chunk, ConcurrentQueue<LightNode> blockLights)
         {
-            foreach (var subChunk in chunk.subChunks)
+            ChunkCoord pos = chunk.ChunkPos;
+            SeedCenterChunk(chunk, blockLights);
+
+            SeedNeighborX(world.GetChunk(new ChunkCoord(pos.X + 1, pos.Z)), blockLights, posX:true);
+            SeedNeighborX(world.GetChunk(new ChunkCoord(pos.X - 1, pos.Z)), blockLights, posX:false);
+            SeedNeighborZ(world.GetChunk(new ChunkCoord(pos.X, pos.Z + 1)), blockLights, posZ:true);
+            SeedNeighborZ(world.GetChunk(new ChunkCoord(pos.X, pos.Z - 1)), blockLights, posZ:false);
+
+            SeedCornerChunk(world.GetChunk(new ChunkCoord(pos.X + 1, pos.Z + 1)), blockLights, posX:true, posZ:true);
+            SeedCornerChunk(world.GetChunk(new ChunkCoord(pos.X + 1, pos.Z - 1)), blockLights, posX:true, posZ:false);
+            SeedCornerChunk(world.GetChunk(new ChunkCoord(pos.X - 1, pos.Z + 1)), blockLights, posX:false, posZ:true);
+            SeedCornerChunk(world.GetChunk(new ChunkCoord(pos.X - 1, pos.Z - 1)), blockLights, posX:false, posZ:false);
+        }
+
+        //finds all of the light sources in the chunk and seeds them
+        public static void SeedCenterChunk(Chunk chunk, ConcurrentQueue<LightNode> blockLights)
+        {
+            for (int x = 0; x < Chunk.WIDTH_IN_SUBCHUNKS; x++)
             {
-                foreach (var lightSource in subChunk.lightSources)
+                for (int y = 0; y < Chunk.HEIGHT_IN_SUBCHUNKS; y++)
                 {
-                    ushort x = 0, y = 0, z = 0;
-                    VoxelMath.UnpackPos32(lightSource, ref x, ref y, ref z);
-                    BlockState state = subChunk.GetBlockState(x, y, z);
-                    Vector3i lightValue = state.GetBlock.GetLightSourceLevel(state);
+                    for (int z = 0; z < Chunk.WIDTH_IN_SUBCHUNKS; z++)
+                    {
+                        SubChunk subChunk = chunk.subChunks[x, y, z];
+                        foreach (var lightSource in subChunk.lightSources)
+                        {
+                            ushort lx = 0, ly = 0, lz = 0;
+                            VoxelMath.UnpackPos32(lightSource, ref lx, ref ly, ref lz);
+                            BlockState state = subChunk.GetBlockState(lx, ly, lz);
+                            Vector3i lightValue = state.LightLevel;
+                            
+                            int globalX = (subChunk.ChunkXPos * SUBCHUNK_SIZE) + lx + (CHUNK_SIZE * chunk.ChunkPos.X);
+                            int globalY = ly + (SUBCHUNK_SIZE * subChunk.ChunkYPos);
+                            int globalZ = (subChunk.ChunkZPos * SUBCHUNK_SIZE) + lz + (CHUNK_SIZE * chunk.ChunkPos.Z);
 
-                    int globalX = x + (CHUNK_SIZE * chunk.Pos.X);
-                    int globalY = y + (CHUNK_SIZE * subChunk.YPos);
-                    int globalZ = z + (CHUNK_SIZE * chunk.Pos.Z);
-
-                    chunk.SetBlockLight(x, globalY, z, lightValue);
-                    blockLights.Enqueue(new LightNode(globalX, globalY, globalZ, lightValue));
+                            chunk.SetBlockLight((subChunk.ChunkXPos * SUBCHUNK_SIZE) + lx, globalY, (subChunk.ChunkZPos * SUBCHUNK_SIZE) + lz, lightValue);
+                            blockLights.Enqueue(new LightNode(globalX, globalY, globalZ, lightValue));
+                        }
+                    }
                 }
             }
         }
 
-        //seeds any deffered light work that other chunks may have put into this chunk
-        public static void SeedDefferedLights(Chunk chunk, ConcurrentQueue<LightNode> blockLights, ConcurrentQueue<LightNode> defferedLights)
+        //finds any unpropogated lights in the corner of chunks
+        public static void SeedCornerChunk(Chunk? chunk, ConcurrentQueue<LightNode> blockLights, bool posX, bool posZ)
         {
-            while (defferedLights.TryDequeue(out LightNode light))
+            if (chunk == null || !chunk.HasVoxelData() || chunk.Deleted())
+                return;
+
+            int x = posX ? 0 : CHUNK_SIZE - 1;
+            int z = posZ ? 0 : CHUNK_SIZE - 1;
+
+            //go over one xz column and find the unpropagated lights, then seed them
+            for(int globalY = MAX_HEIGHT - 1; globalY >= 0; globalY--)
             {
-                //get local chunk position for getting light
-                int wx = light.x, wy = light.y, wz = light.z;
-                int lx = VoxelMath.Mod(wx, CHUNK_SIZE);
-                int lz = VoxelMath.Mod(wz, CHUNK_SIZE);
+                ushort packed = chunk.GetLight(x, globalY, z);
+                Vector3i existing = VoxelMath.UnpackLight16Block(packed);
 
-                BlockState state = chunk.GetBlockSafe(lx, wy, lz);
-                if (state.GetBlock.IsLightPassable(state) == false) continue;
-
-                //unpack light
-                ushort existingPacked = chunk.GetLight(lx, wy, lz);
-                Vector3i existing = VoxelMath.UnpackLight16Block(existingPacked);
-                Vector3i newLight = light.light;
-
-                //use brighter of the two
-                if (existing.X >= newLight.X && existing.Y >= newLight.Y && existing.Z >= newLight.Z)
+                if (existing.X <= LOW_LIGHT && existing.Y <= LOW_LIGHT && existing.Z <= LOW_LIGHT)
                     continue;
 
-                Vector3i finalLight = new Vector3i(Math.Max(existing.X, newLight.X),
-                Math.Max(existing.Y, newLight.Y), Math.Max(existing.Z, newLight.Z));
+                int globalX = (chunk.ChunkPos.X * CHUNK_SIZE) + x;
+                int globalZ = (chunk.ChunkPos.Z * CHUNK_SIZE) + z;
+                blockLights.Enqueue(new LightNode(globalX, globalY, globalZ, existing));
+            }
+        }
 
-                //modify the chunk & enqueue world coordinates for BFS on newly set light
-                chunk.SetBlockLight(lx, wy, lz, finalLight);
-                blockLights.Enqueue(new LightNode(wx, wy, wz, finalLight));
+        //scans the bordering lights on the x neighbors of a chunk
+        public static void SeedNeighborX(Chunk? chunk, ConcurrentQueue<LightNode> blockLights, bool posX)
+        {
+            if (chunk == null || !chunk.HasVoxelData() || chunk.Deleted())
+                return;
+
+            int x = posX ? 0 : CHUNK_SIZE - 1;
+
+            //go over one x slice of the chunk and seed unpropagated light
+            for (int globalY = MAX_HEIGHT - 1; globalY >= 0; globalY--)
+            {
+                for(int z = 0; z < CHUNK_SIZE - 1; z++)
+                {
+                    ushort packed = chunk.GetLight(x, globalY, z);
+                    Vector3i existing = VoxelMath.UnpackLight16Block(packed);
+
+                    if (existing.X <= LOW_LIGHT && existing.Y <= LOW_LIGHT && existing.Z <= LOW_LIGHT)
+                        continue;
+
+                    int globalX = (chunk.ChunkPos.X * CHUNK_SIZE) + x;
+                    int globalZ = (chunk.ChunkPos.Z * CHUNK_SIZE) + z;
+                    blockLights.Enqueue(new LightNode(globalX, globalY, globalZ, existing));
+                }
+            }
+        }
+
+        //scans border lights on z neighbors of a chunk
+        public static void SeedNeighborZ(Chunk? chunk, ConcurrentQueue<LightNode> blockLights, bool posZ)
+        {
+            if (chunk == null || !chunk.HasVoxelData() || chunk.Deleted())
+                return;
+
+            int z = posZ ? 0 : CHUNK_SIZE - 1;
+
+            //go over one z slice of the chunk and seed unpropagated light
+            for (int globalY = MAX_HEIGHT - 1; globalY >= 0; globalY--)
+            {
+                for (int x = 0; x < CHUNK_SIZE - 1; x++)
+                {
+                    ushort packed = chunk.GetLight(x, globalY, z);
+                    Vector3i existing = VoxelMath.UnpackLight16Block(packed);
+
+                    if (existing.X <= LOW_LIGHT && existing.Y <= LOW_LIGHT && existing.Z <= LOW_LIGHT)
+                        continue;
+
+                    int globalX = (chunk.ChunkPos.X * CHUNK_SIZE) + x;
+                    int globalZ = (chunk.ChunkPos.Z * CHUNK_SIZE) + z;
+                    blockLights.Enqueue(new LightNode(globalX, globalY, globalZ, existing));
+                }
             }
         }
 
@@ -93,34 +167,26 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     if (wy < 0 || wy >= MAX_HEIGHT) continue;
 
                     //determine chunk position coordinates
-                    int cx = VoxelMath.FloorDiv(wx, CHUNK_SIZE);
-                    int cz = VoxelMath.FloorDiv(wz, CHUNK_SIZE);
+                    int cx = VoxelMath.FloorDivPow2(wx, CHUNK_SIZE);
+                    int cz = VoxelMath.FloorDivPow2(wz, CHUNK_SIZE);
 
                     //get current chunk
                     Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
                     if (chunk == null || !chunk.HasVoxelData() || chunk.Deleted())
-                    {
-                        ChunkCoord coord = new(cx, cz);
-                        VoxelLightingEngine.DeferBlockLight(coord, wx, wy, wz, light);
-                        continue;
-                    }
+                        continue; //dont propagate if chunk doesnt have block data                
 
                     //convert to chunk-local coordinates
-                    int lx = VoxelMath.Mod(wx, CHUNK_SIZE);
-                    int lz = VoxelMath.Mod(wz, CHUNK_SIZE);
+                    int lx = VoxelMath.ModPow2(wx, CHUNK_SIZE);
+                    int lz = VoxelMath.ModPow2(wz, CHUNK_SIZE);
 
-                    //check if light can pass through block
                     BlockState state = chunk.GetBlockSafe(lx, wy, lz);
-                    if (!state.GetBlock.IsLightPassable(state))
-                        continue;
+                    if (!state.LightPassable) continue; //dont propagate through solid blocks
 
                     //decrease light
-                    Vector3i newLight = new Vector3i(Math.Max(0, light.X - 1),
-                    Math.Max(0, light.Y - 1), Math.Max(0, light.Z - 1));
-
-                    //check if new light can change anything
-                    if (newLight.X <= 0 && newLight.Y <= 0 && newLight.Z <= 0)
-                        continue;
+                    Vector3i newLight = new Vector3i(Math.Max(MIN_LIGHT, light.X - 1),
+                    Math.Max(MIN_LIGHT, light.Y - 1), Math.Max(MIN_LIGHT, light.Z - 1));
+                    if (newLight.X <= MIN_LIGHT && newLight.Y <= MIN_LIGHT && newLight.Z <= MIN_LIGHT)
+                        continue; //dont propagate if new light is too weak
 
                     //current light at new block
                     ushort existingPacked = chunk.GetLight(lx, wy, lz);
@@ -147,8 +213,8 @@ namespace OurCraft.Graphics.Voxel_Lighting
         {
             Span<(int dx, int dy, int dz)> dirs =
             [
-                ( 1, 0, 0), (-1, 0, 0), ( 0, 1, 0),
-                ( 0,-1, 0), ( 0, 0, 1), ( 0, 0,-1)
+                ( 1, 0, 0), (-1, 0, 0), ( 0, 1, 0),//right left up
+                ( 0,-1, 0), ( 0, 0, 1), ( 0, 0,-1) //down front back
             ];
 
             while (removeQueue.TryDequeue(out var node))
@@ -161,21 +227,24 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     int wy = node.y + dy;
                     int wz = node.z + dz;
 
+                    //get chunk coords, dont propagate if chunk doesnt have block data
                     if (wy < 0 || wy >= MAX_HEIGHT) continue;
-                    int cx = VoxelMath.FloorDiv(wx, CHUNK_SIZE);
-                    int cz = VoxelMath.FloorDiv(wz, CHUNK_SIZE);
+                    int cx = VoxelMath.FloorDivPow2(wx, CHUNK_SIZE);
+                    int cz = VoxelMath.FloorDivPow2(wz, CHUNK_SIZE);
                     Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
                     if (chunk == null || !chunk.HasVoxelData() || chunk.Deleted()) continue;
 
-                    int lx = VoxelMath.Mod(wx, CHUNK_SIZE);
-                    int lz = VoxelMath.Mod(wz, CHUNK_SIZE);
+                    //get chunk local coords
+                    int lx = VoxelMath.ModPow2(wx, CHUNK_SIZE);
+                    int lz = VoxelMath.ModPow2(wz, CHUNK_SIZE);
 
+                    //get current light of chunk
                     ushort packed = chunk.GetLight(lx, wy, lz);
                     Vector3i existing = VoxelMath.UnpackLight16Block(packed);
-                    if (existing == Vector3i.Zero) continue;
+                    if (existing == Vector3i.Zero) continue; //dont propagate darkness if already dark
 
-                    //per-channel darkness
-                    Vector3i survivors = existing;              //what remains after removal
+                    //per rgb channel darkness propagation
+                    Vector3i survivors = existing; //what remains after removal
                     Vector3i nextRemoval = Vector3i.Zero; //what to propagate outward
                     bool anyRemoved = false;
                     bool anySurvive = false;
@@ -183,30 +252,30 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     if (existing.X < light.X)
                     {
                         anyRemoved = true;
-                        nextRemoval.X = Math.Max(0, existing.X);
-                        survivors.X = 0;
+                        nextRemoval.X = Math.Max(MIN_LIGHT, existing.X);
+                        survivors.X = MIN_LIGHT;
                     }
-                    else if (existing.X > 0) anySurvive = true;
+                    else if (existing.X > MIN_LIGHT) anySurvive = true;
 
 
                     if (existing.Y < light.Y)
                     {
                         anyRemoved = true;
-                        nextRemoval.Y = Math.Max(0, existing.Y);
-                        survivors.Y = 0;
+                        nextRemoval.Y = Math.Max(MIN_LIGHT, existing.Y);
+                        survivors.Y = MIN_LIGHT;
                     }
-                    else if (existing.Y > 0) anySurvive = true;
+                    else if (existing.Y > MIN_LIGHT) anySurvive = true;
 
 
                     if (existing.Z < light.Z)
                     {
                         anyRemoved = true;
-                        nextRemoval.Z = Math.Max(0, existing.Z);
-                        survivors.Z = 0;
+                        nextRemoval.Z = Math.Max(MIN_LIGHT, existing.Z);
+                        survivors.Z = MIN_LIGHT;
                     }
-                    else if (existing.Z > 0) anySurvive = true;
+                    else if (existing.Z > MIN_LIGHT) anySurvive = true;
 
-                    //if nothing was removed, this neighbor is independent -> re-add its full existing light.
+                    //if nothing was removed, this neighbor is independent and re-add its full existing light.
                     if (!anyRemoved)
                     {
                         reAddQueue.Enqueue(new LightNode(wx, wy, wz, existing));
@@ -218,12 +287,10 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     world.MarkPosDirty(new Vector3i(wx, wy, wz), chunk);
 
                     //if any channel survived, re-add that partial light to restore propagation paths.
-                    if (anySurvive)
-                        reAddQueue.Enqueue(new LightNode(wx, wy, wz, survivors));
+                    if (anySurvive) reAddQueue.Enqueue(new LightNode(wx, wy, wz, survivors));
 
                     //propagate the per-channel removal outward
-                    if (nextRemoval != Vector3i.Zero)
-                        removeQueue.Enqueue(new RemoveLightNode(wx, wy, wz, nextRemoval));
+                    if (nextRemoval != Vector3i.Zero) removeQueue.Enqueue(new RemoveLightNode(wx, wy, wz, nextRemoval));
                 }
             }
         }

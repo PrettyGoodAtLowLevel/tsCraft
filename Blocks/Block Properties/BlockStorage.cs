@@ -6,7 +6,7 @@ namespace OurCraft.Blocks.Block_Properties
     {
         //actual data
         private readonly List<BlockState> entries = [];
-        private readonly Dictionary<BlockState, int> entryMap = [];
+        public readonly Dictionary<BlockState, int> entryMap = [];
 
         //helpers for adding to data
         public int GetOrAddIndex(BlockState state)
@@ -17,7 +17,7 @@ namespace OurCraft.Blocks.Block_Properties
                 entries.Add(state);
                 entryMap[state] = index;
             }
-            return index;
+            return index; 
         }
 
         //getters

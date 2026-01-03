@@ -7,12 +7,12 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
 {
     public class FallenLog : SurfaceFeature
     {
-        public ushort BlockID { get; set; } = BlockRegistry.GetBlock("Oak Log");
+        public BlockState LogBlock { get; set; }
 
         public FallenLog()
         {
             Name = "Fallen Log";
-            PlaceOn = BlockRegistry.GetBlock("Grass Block");
+            PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block");
         }
 
         //the placing itself is dynamic to the chunk
@@ -24,8 +24,8 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
         //place a random facing log procedurally across the world
         public override void PlaceFeature(Vector3i startPos, Chunk chunk)
         {
-            int axis = NoiseRouter.GetVariation(startPos.X + chunk.Pos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.Pos.Z * SubChunk.SUBCHUNK_SIZE, 12, NoiseRouter.seed, 4);
-            int count = 3 + NoiseRouter.GetVariation(startPos.X + chunk.Pos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.Pos.Z * SubChunk.SUBCHUNK_SIZE, 5, NoiseRouter.seed, 3);         
+            int axis = NoiseRouter.GetVariation(startPos.X + chunk.ChunkPos.X * Chunk.CHUNK_WIDTH, startPos.Y, startPos.Z + chunk.ChunkPos.Z * Chunk.CHUNK_WIDTH, 12, NoiseRouter.seed, 4);
+            int count = 3 + NoiseRouter.GetVariation(startPos.X + chunk.ChunkPos.X * Chunk.CHUNK_WIDTH, startPos.Y, startPos.Z + chunk.ChunkPos.Z * Chunk.CHUNK_WIDTH, 5, NoiseRouter.seed, 3);         
             switch(axis)
             {
                 case 0:
@@ -65,11 +65,12 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 var below = chunk.GetBlockUnsafe(wx, wy - 1, wz);
 
                 //stop placing if space is not valid
-                if (current.BlockID != BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.WATER_BLOCK)
+                if (current != Block.AIR || below == Block.AIR)
                     break;
 
                 //place the log
-                chunk.SetBlockUnsafe(wx, wy, wz, new BlockState(BlockID).WithProperty(BlockLog.AXIS, Axis.X));
+                BlockState state = LogBlock.With(BlockLog.AXIS, Axis.X);
+                chunk.SetBlockUnsafe(wx, wy, wz, state);
             }
         }
 
@@ -92,11 +93,12 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 var below = chunk.GetBlockUnsafe(wx, wy - 1, wz);
 
                 //stop placing if space is not valid
-                if (current.BlockID != BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.WATER_BLOCK)
+                if (current != Block.AIR || below == Block.AIR)
                     break;
 
-                //place the log
-                chunk.SetBlockUnsafe(wx, wy, wz, new BlockState(BlockID).WithProperty(BlockLog.AXIS, Axis.Z));
+                //place log
+                BlockState state = LogBlock.With(BlockLog.AXIS, Axis.Z);
+                chunk.SetBlockUnsafe(wx, wy, wz, state);
             }
         }
 
@@ -119,11 +121,12 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 var below = chunk.GetBlockUnsafe(wx, wy - 1, wz);
 
                 //stop placing if space is not valid
-                if (current.BlockID != BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.WATER_BLOCK)
+                if (current != Block.AIR || below == Block.AIR)
                     break;
 
-                //place the log
-                chunk.SetBlockUnsafe(wx, wy, wz, new BlockState(BlockID).WithProperty(BlockLog.AXIS, Axis.X));
+                //place log
+                BlockState state = LogBlock.With(BlockLog.AXIS, Axis.X);
+                chunk.SetBlockUnsafe(wx, wy, wz, state);
             }
         }
 
@@ -146,11 +149,12 @@ namespace OurCraft.World.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplem
                 var below = chunk.GetBlockUnsafe(wx, wy - 1, wz);
 
                 //stop placing if space is not valid
-                if (current.BlockID != BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.AIR_BLOCK || below.BlockID == BlockIDs.WATER_BLOCK)
+                if (current != Block.AIR || below == Block.AIR)
                     break;
 
-                //place the log
-                chunk.SetBlockUnsafe(wx, wy, wz, new BlockState(BlockID).WithProperty(BlockLog.AXIS, Axis.Z));
+                //place log
+                BlockState state = LogBlock.With(BlockLog.AXIS, Axis.Z);
+                chunk.SetBlockUnsafe(wx, wy, wz, state);
             }
         }
     }

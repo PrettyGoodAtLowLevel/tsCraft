@@ -22,7 +22,7 @@ namespace OurCraft
 
         //byte location = 0
         public short x; //since only 0-31 coords, short works fine
-        public float y; //but since 0-383 coords, float would be better, short still works but less presicion
+        public float y; //since 0-383 coords, float would be better
         public short z;
 
         //byte location = 8
@@ -41,20 +41,12 @@ namespace OurCraft
         }
 
         //converts float values from 0-chunksize to shorts, which are then converted again in the shader
-        static short EncodeToShort(float value, float chunkSize = (float)SubChunk.SUBCHUNK_SIZE)
+        static short EncodeToShort(float value, float chunkSize = Chunk.CHUNK_WIDTH)
         {
             //normalize [0, chunkSize) -> [0, 1)
             float normalized = value / chunkSize;
             //scale to short range
             return (short)(normalized * short.MaxValue);
-        }
-
-        public static float DecodeFromShort(short encoded, float chunkSize = (float)SubChunk.SUBCHUNK_SIZE)
-        {
-            //convert short back to normalized [0, 1) range
-            float normalized = encoded / (float)short.MaxValue;
-            //scale back to [0, chunkSize) range
-            return normalized * chunkSize;
         }
     }
 
@@ -62,27 +54,22 @@ namespace OurCraft
     public class VBO
     {
         public int ID { get; private set; }
-        public int Capacity { get; private set; }
 
         public VBO() { ID = 0; }
 
         //uploads vertex data
-        public void CreateEmpty(int sizeInBytes, BufferUsageHint usage = BufferUsageHint.DynamicDraw)
+        public void Create()
         {
             ID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeInBytes, IntPtr.Zero, usage);
-            Capacity = sizeInBytes;
         }
 
-        public void SubData<T>(int offsetInBytes, T[] data) where T : struct
+        public void BufferData(BlockVertex[] data)
         {
-            int sizeInBytes = Marshal.SizeOf<T>() * data.Length;
-            if (offsetInBytes + sizeInBytes > Capacity)
-                throw new InvalidOperationException("Data upload exceeds VBO capacity!");
+            int sizeInBytes = Marshal.SizeOf<BlockVertex>() * data.Length;
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
-            GL.BufferSubData(BufferTarget.ArrayBuffer, (IntPtr)offsetInBytes, sizeInBytes, data);
+            GL.BufferData(BufferTarget.ArrayBuffer, sizeInBytes, data, BufferUsageHint.StaticDraw);
         }
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
