@@ -3,224 +3,91 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.utility;
 using OurCraft.World;
-using OurCraft.World.Terrain_Generation;
-using OurCraft.World.Terrain_Generation.SurfaceFeatures;
-using static OurCraft.Physics.VoxelPhysics;
+using OurCraft.Terrain_Generation;
+using OurCraft.Terrain_Generation.SurfaceFeatures;
+using OurCraft.Entities;
 
 namespace OurCraft
 {
+    //base game class, holds all the game data
     public class Game : GameWindow
     {
-        static readonly int screenWidth = 1920;
-        static readonly int screenHeight = 1080;
+        const int SCREEN_WIDTH = 1920;
+        const int SCREEN_HEIGHT = 1080;
 
-        #pragma warning disable 
-        public Game() : base(GameWindowSettings.Default, new NativeWindowSettings()
-        {
-            ClientSize = new Vector2i(screenWidth, screenHeight),
-            Title = "OURcraft",
-            Flags = ContextFlags.ForwardCompatible,
-            WindowBorder = WindowBorder.Resizable
-        }){  }
-        #pragma warning enable
-
-        Chunkmanager world;
-        ThreadPoolSystem worldGenThreads = new ThreadPoolSystem(8); //threads for initial chunk generation
-        ThreadPoolSystem lightingThread = new ThreadPoolSystem(1); //worker thread for lighting
-
-        Camera cam = new Camera(screenWidth, screenHeight, new Vector3(0.5f, 145, 0.5f), 7.5f, 25);           
-        Renderer renderer;
-        ushort currentBlock;
+        readonly ThreadPoolSystem worldGenThreads;
+        readonly ThreadPoolSystem lightingThread;
+        readonly ChunkManager world;        
+        readonly Renderer renderer;
         double timer = 0;
-        double rawTime = 0;
-   
-        //first load
-        protected override void OnLoad()
-        {           
-            base.OnLoad();
-            CursorState = CursorState.Grabbed;
 
-            //initialize all the blocks and world gen settings
+        //creates threads, block data, entity data, then chunk manager + renderer
+        public Game() : base(GameWindowSettings.Default, new NativeWindowSettings(){ClientSize = new Vector2i(SCREEN_WIDTH, SCREEN_HEIGHT)})
+        {
+            worldGenThreads = new(threadCount:8);
+            lightingThread = new(threadCount:1);
+
             BlockData.InitBlocks();
             WorldGenerator.SetGlobalBlocks();
             SurfaceFeatureRegistry.InitializeFeatures();
             BiomeData.Init();
+            EntityManager.Init();
 
-            //create chunk manager + renderer and generate the world
-            world = new Chunkmanager(Program.renderDistance, ref cam, ref worldGenThreads, ref lightingThread);
-            renderer = new Renderer(ref world, ref cam, screenWidth, screenHeight);
-            world.Generate();
-            currentBlock = BlockRegistry.GetBlockID("Grass Block");
+            world = new ChunkManager(RenderDistances.SIX_CHUNKS, ref worldGenThreads, ref lightingThread);          
+            renderer = new Renderer(ref world, SCREEN_WIDTH, SCREEN_HEIGHT);          
         }
 
-        //when drawing things
+        //first load, create resources here
+        protected override void OnLoad()
+        {           
+            base.OnLoad();
+            CursorState = CursorState.Grabbed;    
+            world.Generate();
+        }
+
+        //rendering one frame, called after update, render things here
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             base.OnRenderFrame(args);
-
-            //render your stuff here
-            rawTime += args.Time;
-            float shaderTime = (float)(rawTime % 1000.0);
-            renderer.RenderSceneFrame(shaderTime, (float)args.Time);    
-            
+            renderer.RenderSceneFrame();               
             SwapBuffers();
         }
 
-        //update
+        //update, things like physics gameplay
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
-            cam.HandleInput(KeyboardState, MouseState, this, (float)args.Time);
 
-            //handle gameplay
-            HandleBlockInteractions();
-            ScrollBlocks();
-            Zoom();
-            DebugInteractions();
-            ToggleDayNight();
+            EntityManager.Update(world, args.Time, KeyboardState, MouseState);
+            world.Update((float)args.Time);
 
-            //update world and log fps
-            world.Update((float)args.Time, (float)rawTime);
             timer += args.Time;
+            if (timer >= 1) UpdateTitle(args);        
 
-            if (timer >= 1)
-            {
-                UpdateTitle(args);
-            }
+            if (KeyboardState.IsKeyPressed(Keys.Escape)) Close();
         }
 
-        //when game is done running
+        //when closing the screen or done playing, manage resources here
         protected override void OnUnload()
         {
             base.OnUnload();
             worldGenThreads.Dispose();
-            world.Delete();
         }
 
-        //when window changes size
+        //any logic when rezising the screen
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
             renderer.ResizeScene(Size.X, Size.Y);
         }
 
-
-        //game function logic, eventually will be moved to seperate files when working on actual gameplay
-        void TryCurrentBlockIncrease()
-        {
-            if (currentBlock < BlockData.MAXBLOCKID) currentBlock++;
-            Console.Clear();
-            Console.WriteLine("currentBlock: " + BlockData.GetBlock(currentBlock).GetBlockName());
-        }
-
-        void TryCurrentBlockDecrease()
-        {
-            if (currentBlock > 1) currentBlock--;
-            Console.Clear();
-            Console.WriteLine("currentBlock: " + BlockData.GetBlock(currentBlock).GetBlockName());
-        }     
-        
-        void HandleBlockInteractions()
-        {
-            bool hitBlock = RaycastVoxel(cam.Position, cam.Orientation, 4.0f, (x, y, z) => world.GetBlockState(new Vector3(x, y, z)) != Block.AIR, out VoxelRaycastHit hit);
-
-            //gameplay
-            if (MouseState.IsButtonPressed(MouseButton.Left))
-            {
-                if (hitBlock)
-                {
-                    world.SetBlock(hit.blockPos, Block.AIR);
-                }
-            }
-            if (MouseState.IsButtonPressed(MouseButton.Right))
-            {
-                if (hitBlock)
-                {
-                    //get blocks
-                    BlockState bottom, top, front, back, left, right;
-
-                    bottom = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(0, -1, 0));
-                    top = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(0, 1, 0));
-                    front = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(0, 0, 1));
-                    back = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(0, 0, -1));
-                    right = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(1, 0, 0));
-                    left = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(-1, 0, 0));
-
-                    //try to add block
-                    BlockData.GetBlock(currentBlock).PlaceBlockState(hit.blockPos, hit.faceNormal,
-                    bottom, top, front, back, right, left,
-                    world.GetBlockState(hit.blockPos), world);
-                }
-            }
-            //debug block and light value
-            if (MouseState.IsButtonPressed(MouseButton.Middle))
-            {
-                if (hitBlock)
-                {
-                    Console.Clear();
-                    Vector3i hitBlockPos = hit.blockPos + hit.faceNormal;
-                    ushort light = world.GetLight(hitBlockPos);
-                    Vector3i blockLight = VoxelMath.UnpackLight16Block(light);
-                    byte skyLight = VoxelMath.UnpackLight16Sky(light);
-                    Console.WriteLine("Sampling light at pos: (" + hitBlockPos.X + ", " + hitBlockPos.Y + ", " + hitBlockPos.Z + ")");
-                    Console.WriteLine("Light R: " + blockLight.X + " Light G: " + blockLight.Y + " Light B: " + blockLight.Z);
-                    Console.WriteLine("SkyLight: " + skyLight);
-                    Console.WriteLine("\nDebugging BlockState at: (" + hit.blockPos.X + ", " + hit.blockPos.Y + ", " + hit.blockPos.Z + ")");
-                    BlockState state = world.GetBlockState(hit.blockPos);
-                    state.DebugState();
-                }
-            }
-        }
-
-        void ScrollBlocks()
-        {
-            //switch blocks
-            if (MouseState.ScrollDelta.Y < 0) TryCurrentBlockDecrease();
-            if (MouseState.ScrollDelta.Y > 0) TryCurrentBlockIncrease();
-        }
-
-        void Zoom()
-        {
-            if (KeyboardState.IsKeyDown(Keys.Z)) renderer.fov = 20;
-            else renderer.fov = 90;
-        }
-
-        void DebugInteractions()
-        {
-            //debugging
-            if (KeyboardState.IsKeyPressed(Keys.G))
-            {
-                Console.Clear();
-                ChunkCoord coord = world.GetPlayerChunk();
-                Chunk? chunk = world.GetChunk(coord);
-                if (chunk != null)
-                {
-                    Console.WriteLine(chunk.GetState());
-                }
-                world.Debug();
-            }
-
-            if (KeyboardState.IsKeyPressed(Keys.R))
-            {
-                Console.Clear();
-                NoiseRouter.DebugPrint((int)cam.Position.X, (int)cam.Position.Y);
-            }
-        }
-
-        void ToggleDayNight()
-        {
-            if (KeyboardState.IsKeyPressed(Keys.D1)) renderer.ToggleDay();
-            else if (KeyboardState.IsKeyPressed(Keys.D2)) renderer.ToggleNight();
-        }
-
+        //logs the fps to the screen
         void UpdateTitle(FrameEventArgs args)
         {
-            long totalMem = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64;
-            Title = "TsCraft, fps: " + (int)(1 / args.Time) + ", camera position (" + (int)cam.Position.X + ", " + ((int)cam.Position.Y) + ", " + (int)cam.Position.Z + ")";
+            Title = "OURCraft, fps: " + (int)(1 / args.Time);
             timer = 0;
         }
     }

@@ -17,7 +17,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         const int LOW_LIGHT = 1;
 
         //seeds the top layer of sky lights in a chunk
-        public static void SeedSkyLights(Chunkmanager world, Chunk chunk, ConcurrentQueue<SkyLightNode> skyLights)
+        public static void SeedSkyLights(ChunkManager world, Chunk chunk, ConcurrentQueue<SkyLightNode> skyLights)
         {
             ChunkCoord pos = chunk.ChunkPos;
             SeedCenterChunk(chunk, skyLights);
@@ -129,7 +129,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //flood fill bfs for all sky lights in chunks
-        public static void PropagateSkyLights(Chunkmanager world, ConcurrentQueue<SkyLightNode> skyLights, bool dirty = false)
+        public static void PropagateSkyLights(ChunkManager world, ConcurrentQueue<SkyLightNode> skyLights, bool dirty = false)
         {
             //directions
             Span<(int dx, int dy, int dz)> dirs =
@@ -199,7 +199,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //propagates shade with skylights and requeues skylights that werent effected by darkness
-        public static void PropagateSkyLightRemoval(Chunkmanager world, ConcurrentQueue<RemoveSkyNode> removeQueue, ConcurrentQueue<SkyLightNode> reAddQueue)
+        public static void PropagateSkyLightRemoval(ChunkManager world, ConcurrentQueue<RemoveSkyNode> removeQueue, ConcurrentQueue<SkyLightNode> reAddQueue)
         {
             Span<(int dx, int dy, int dz)> dirs =
             [

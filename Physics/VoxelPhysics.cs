@@ -2,27 +2,27 @@
 
 namespace OurCraft.Physics
 {
+    //provides helpers for collision detection, raycasting, etc
     public class VoxelPhysics
     {
+        //information about a block hit of a raycast
         public struct VoxelRaycastHit
         {
-            public Vector3i blockPos; //grid position of the hit block
-            public Vector3i faceNormal; //the face that was hit (e.g., (1,0,0) for +X)
-            public double distance; //distance from ray origin to hit
+            public Vector3i blockPos;
+            public Vector3i faceNormal;
+            public double distance;
         }
 
         //uses dda algorithm to check if we are hitting a block or not
-        //Func<int, int, int, bool> = A callback to check if a block is solid 
-        public static bool RaycastVoxel(Vector3d origin, Vector3 direction, float maxDistance, Func<int, int, int, bool> isSolidBlock, out VoxelRaycastHit hit)
+        public static bool RaycastVoxel(Vector3d origin, Vector3 dir, float maxDistance, Func<int, int, int, bool> isSolidBlock, out VoxelRaycastHit hit)
         {
             hit = default;
-
+            
             int x = (int)Math.Floor(origin.X);
             int y = (int)Math.Floor(origin.Y);
             int z = (int)Math.Floor(origin.Z);
 
-            direction = Vector3.Normalize(direction);
-
+            Vector3 direction = Vector3.Normalize(dir);
             int stepX = Math.Sign(direction.X);
             int stepY = Math.Sign(direction.Y);
             int stepZ = Math.Sign(direction.Z);
@@ -40,7 +40,6 @@ namespace OurCraft.Physics
             double tMaxZ = (direction.Z == 0) ? double.MaxValue : (nextVoxelBoundaryZ - origin.Z) / direction.Z;
 
             double distanceTraveled = 0f;
-
             while (distanceTraveled <= maxDistance)
             {
                 if (isSolidBlock(x, y, z))

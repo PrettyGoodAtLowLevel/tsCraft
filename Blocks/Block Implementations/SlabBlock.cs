@@ -26,7 +26,7 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //determines how we place a slab in the world based on the block we hit
-        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, Chunkmanager world)
+        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
         {
             SlabType thisBlockState = thisBlock.GetProperty(SLAB_TYPE);
             SlabType stateToPlace = SlabType.Bottom;

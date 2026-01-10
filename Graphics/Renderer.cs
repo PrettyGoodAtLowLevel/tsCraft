@@ -1,7 +1,10 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OurCraft.Entities;
+using OurCraft.Entities.Components;
 using OurCraft.openGL_objects;
 using OurCraft.World;
+using OurCraft.World.Helpers;
 
 namespace OurCraft.Graphics
 {
@@ -10,10 +13,10 @@ namespace OurCraft.Graphics
     public class Renderer
     {        
         //chunk drawing
-        private readonly Chunkmanager chunks;
-        private readonly Shader shader = new Shader();
-        private readonly Camera sceneCamera;
-        public float fov = 90;
+        private readonly ChunkManager chunks;
+        private readonly Shader chunkShader = new Shader();
+        private readonly Shader debugShader = new Shader();
+        private readonly CameraRender? sceneCamera;
 
         //post processing
         private readonly FBO postFBO; 
@@ -22,13 +25,13 @@ namespace OurCraft.Graphics
         private int screenWidth, screenHeight;
 
         //atmosphere
-        public Vector3 skyColor = Vector3.Zero;
+        private Vector3 skyColor = Vector3.Zero;
 
-        public Renderer(ref Chunkmanager chunks, ref Camera cam, int width, int height)
+        public Renderer(ref ChunkManager chunks,  int width, int height)
         {
             //assign values create shaders
             this.chunks = chunks;
-            sceneCamera = cam;
+            sceneCamera = CameraRenderSystem.Current;
             screenWidth = width;
             screenHeight = height;
 
@@ -43,12 +46,16 @@ namespace OurCraft.Graphics
         }
 
         //draws a frame in a current world
-        public void RenderSceneFrame(float time, float deltaTime)
+        public void RenderSceneFrame()
         {
+            if (sceneCamera == null) return;
+
             //render all chunks to postFBO
             postFBO.Bind();
             ClearScene();
-            DrawRawChunks(time);
+            UpdateCamera(sceneCamera);
+            DrawDebugBoxes(sceneCamera);
+            DrawRawChunks(sceneCamera);   
             postFBO.Unbind(screenWidth, screenHeight);
 
             //apply post processing effects
@@ -59,16 +66,26 @@ namespace OurCraft.Graphics
             postProcessingQuad.Draw();           
         }
 
-        //draws chunks without any post processing
-        private void DrawRawChunks(float time)
+        //get all render boxes and draw them
+        private void DrawDebugBoxes(CameraRender sceneCamera)
         {
-            //setup
-            UpdateCamera();
-            ClearScene();
+            var boxes = DebugRenderSystem.AllRenderBoxes;
+            debugShader.Activate();
+            foreach (var box in boxes)
+            {
+                box.mesh.Draw(debugShader, box.Transform, sceneCamera.Transform.position);
+            }
+        }
+
+        //draws chunks without any post processing
+        private void DrawRawChunks(CameraRender sceneCamera)
+        {
+            //setup           
             ChunkMesh.globalBlockTexture.Bind();
 
             //get visible chunks
-            var visibleChunks = GetVisibleChunks();
+            chunkShader.Activate();
+            var visibleChunks = GetChunks(sceneCamera);
 
             //solids
             GL.Enable(EnableCap.DepthTest);
@@ -77,7 +94,7 @@ namespace OurCraft.Graphics
 
             foreach (var chunk in visibleChunks)
             {
-                chunk.Draw(shader, sceneCamera);
+                ChunkRenderer.DrawSolid(chunk, chunkShader, sceneCamera);
             }
 
             //translucent pass
@@ -89,7 +106,7 @@ namespace OurCraft.Graphics
 
             foreach (var chunk in visibleChunks)
             {
-                chunk.DrawTransparent(shader, sceneCamera);
+                ChunkRenderer.DrawTransparent(chunk, chunkShader, sceneCamera);
             }
 
             GL.DepthMask(true);
@@ -111,29 +128,37 @@ namespace OurCraft.Graphics
 
             postShader.Activate();
             postShader.SetVector2("uResolution", new Vector2(width, height));
+
+            if (sceneCamera != null)
+            {
+                sceneCamera.width = width;
+                sceneCamera.height = height;
+            }
         }
 
         //update camera matrix for shader
-        private void UpdateCamera()
+        private void UpdateCamera(CameraRender sceneCamera)
         {
-            sceneCamera.UpdateMatrix(fov, 0.01f, 3000.0f);
-            sceneCamera.SendToShader(shader, "camMatrix");
+            sceneCamera.UpdateMatrix();
+            sceneCamera.SendToShader(chunkShader, "camMatrix");
+            sceneCamera.SendToShader(debugShader, "camMatrix");
         }
 
         //make shaders work properly
         private void InitShaders()
         {
             //create all shaders
-            shader.Create("default.vert", "default.frag");
+            chunkShader.Create("default.vert", "default.frag");
+            debugShader.Create("DebugDrawing/Debug.vert", "DebugDrawing/Debug.frag");
             postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
             skyColor = new Vector3(0.5f, 0.6f, 0.7f);
 
             //-----set up block shaders-----
-            shader.Activate();
-            shader.SetVector3("skyColor", skyColor);
-            shader.SetFloat("fogStart", chunks.RenderDistance * Chunk.CHUNK_WIDTH - 20);
-            shader.SetFloat("fogEnd", chunks.RenderDistance * Chunk.CHUNK_WIDTH);
-            shader.SetFloat("fogDensity", 0.5f);
+            chunkShader.Activate();
+            chunkShader.SetVector3("skyColor", skyColor);
+            chunkShader.SetFloat("fogStart", chunks.RenderDistance * Chunk.CHUNK_WIDTH - 20);
+            chunkShader.SetFloat("fogEnd", chunks.RenderDistance * Chunk.CHUNK_WIDTH);
+            chunkShader.SetFloat("fogDensity", 0.5f);
 
             //-----post processing----
             //tweak for weird screen effects
@@ -149,23 +174,6 @@ namespace OurCraft.Graphics
             
         }
 
-        //makes the sky dark
-        public void ToggleNight()
-        {
-            skyColor = new Vector3(0.001f, 0.001f, 0.001f);
-            shader.Activate();
-            shader.SetVector3("skyColor", skyColor);
-
-        }
-
-        //makes the sky bright
-        public void ToggleDay()
-        {
-            skyColor = new Vector3(0.5f, 0.6f, 0.7f);
-            shader.Activate();
-            shader.SetVector3("skyColor", skyColor);
-        }
-
         //configure openGL properly
         private static void ConfigureOpenGL(int width, int height)
         {
@@ -177,9 +185,9 @@ namespace OurCraft.Graphics
         }
 
         //gets all the visible chunks
-        private List<Chunk> GetVisibleChunks()
+        private List<Chunk> GetChunks(CameraRender sceneCamera)
         {
-            Vector3 camPos = (Vector3)sceneCamera.Position;
+            Vector3 camPos = (Vector3)sceneCamera.Transform.position;
 
             return chunks.ChunkMap.Values.Where(c =>
             {
@@ -189,7 +197,7 @@ namespace OurCraft.Graphics
                 Vector3 min = (Vector3)c.ChunkMin - camPos;
                 Vector3 max = (Vector3)c.ChunkMax - camPos;
 
-                return Chunk.IsBoxInFrustum(sceneCamera.GetFrustum(), min, max);
+                return FrustumCulling.IsBoxInFrustum(sceneCamera.GetFrustum(), min, max);
             }).ToList();
         }
     }

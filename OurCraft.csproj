@@ -18,12 +18,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="utility\FastNoiseLite.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Game Heirarchy\" />
+    <Reference Include="FastNoiseLiteRef">
+      <HintPath>..\FastNoiseLiteRef\bin\Debug\FastNoiseLiteRef.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

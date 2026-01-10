@@ -1,28 +1,18 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Graphics;
 using OurCraft.Graphics.Voxel_Lighting;
 using OurCraft.utility;
 using OurCraft.Blocks.Block_Properties;
 using System.Collections.Concurrent;
+using OurCraft.World.Helpers;
+using OurCraft.Physics;
+using OurCraft.Entities;
 
 namespace OurCraft.World
 {
-    //contains all the types of render distances in the game that are possible
-    public enum RenderDistances
-    {
-        TWO_CHUNKS, THREE_CHUNKS,
-        FOUR_CHUNKS, FIVE_CHUNKS,
-        SIX_CHUNKS, SEVEN_CHUNKS,
-        EIGHT_CHUNKS, NINE_CHUNKS,
-        TEN_CHUNKS, ELEVEN_CHUNKS,
-        TWELVE_CHUNKS, THIRTEEN_CHUNKS,
-        FOURTEEN_CHUNKS, FIFTEEN_CHUNKS,
-        SIXTEEN_CHUNKS,
-    }
-
-    //manages chunk generation
-    public class Chunkmanager
+    //manages chunk generation, block getting, and block modifiying
+    //uses multithreading queues to manage which chunks to generate
+    public class ChunkManager
     {
         //tracking chunks
         public ConcurrentDictionary<ChunkCoord, Chunk> ChunkMap { get; private set; } = new();
@@ -38,7 +28,7 @@ namespace OurCraft.World
         readonly ConcurrentQueue<ChunkCoord> chunkMeshQueue = new();
         readonly ConcurrentQueue<Chunk> chunkUploadQueue = new();
         readonly ConcurrentQueue<ChunkCoord> deletionQueue = new();
-        readonly ConcurrentQueue<Chunk> modifiedQueue = new();//player modifications
+        readonly ConcurrentQueue<Chunk> modifiedQueue = new(); //player modifications
         readonly ConcurrentQueue<ChunkCoord> remeshQueue = new();
 
         //rendering
@@ -48,24 +38,25 @@ namespace OurCraft.World
 
         //player refrences
         ChunkCoord lastPlayerChunk;
-        readonly Camera player;
+        readonly Transform playerTracking = new();
         
         //threading
         private readonly ThreadPoolSystem threadPool;
         private readonly ThreadPoolSystem lightThread;
 
-        //basic constructor
-        public Chunkmanager(RenderDistances renderDistance, ref Camera player, ref ThreadPoolSystem tp, ref ThreadPoolSystem lighting)
+        public ChunkManager(RenderDistances renderDistance, ref ThreadPoolSystem tp, ref ThreadPoolSystem lighting)
         { 
-            this.player = player;
             threadPool = tp;
             lightThread = lighting;
+
+            Entity? playerEnt = EntityManager.GetEntity(EntityManager.PlayerEntityName);
+            if (playerEnt != null) playerTracking = playerEnt.Transform;
+            
             int worldSize = renderDistance.GetHashCode() + 2;
             RenderDistance = worldSize;               
             lastPlayerChunk = new ChunkCoord(0, 0);        
         }
 
-        //logs information about chunk generation stats
         public void Debug()
         {
             Console.WriteLine("total tracked chunks: " + ChunkMap.Count);
@@ -76,7 +67,6 @@ namespace OurCraft.World
             Console.WriteLine("deletion queued chunks: " + deletionQueuedChunks.Count);           
         }
 
-        //enqueues chunks around the player
         public void Generate()
         {
             ChunkCoord playerChunk = GetPlayerChunk();
@@ -110,7 +100,6 @@ namespace OurCraft.World
             }
         }
 
-        //delete far away chunks
         private void UnloadFarChunks()
         {
             ChunkCoord playerChunk = GetPlayerChunk();
@@ -133,43 +122,37 @@ namespace OurCraft.World
             if (chunkGenQueue.TryDequeue(out ChunkCoord coord))
             {
                 genQueuedChunks.TryRemove(coord, out byte thing);
-                //check if chunk exists
+
                 Chunk? chunk = GetChunk(coord);
                 if (chunk == null) return;
 
-                //create block data on seperate thread 
                 threadPool.Submit(() =>
                 {
-                    chunk.CreateVoxelMap();
+                    ChunkGenerator.GenerateBlocks(chunk);
                     LightEnqueue(chunk.ChunkPos);
                 });
             }
         }
 
-        //tries to add a chunk to mesh queue if it has neighbors
+        //lights chunks on a seperate thread
         private void ProcessLightQueue()
         {
             if (lightingQueue.IsEmpty) return;
 
             ChunkCoord playerChunk = GetPlayerChunk();
 
-            //try to dequeue mesh and get value
             if (lightingQueue.TryDequeue(out ChunkCoord coord))
-            {
-                //get chunk             
-                Chunk? chunk = GetChunk(coord);
-                
-                //back out if null
+            {           
+                Chunk? chunk = GetChunk(coord);               
                 if (chunk == null || chunk.Deleted())
                 {
                     lightingQueuedChunks.TryRemove(coord, out byte thing);
                     return;
                 }
 
-                //check if chunk can be worked on or not
                 if (ChunkWorkable(coord))
                 {
-                    //light chunk, enqueue for meshing, update neighbors
+                    //light chunk, enqueue current for meshing, update neighbors
                     lightThread.Submit(() =>
                     {
                         VoxelLightingEngine.LightChunk(chunk, this);
@@ -181,10 +164,10 @@ namespace OurCraft.World
                         right = GetChunk(new ChunkCoord(coord.X + 1, coord.Z));
                         front = GetChunk(new ChunkCoord(coord.X, coord.Z + 1));
                         back = GetChunk(new ChunkCoord(coord.X, coord.Z - 1));
-                        c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1)); //back-left
-                        c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1)); //back-right
-                        c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1)); //front-left
-                        c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1)); //front-right
+                        c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1));
+                        c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1));
+                        c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1));
+                        c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));
                         Chunk?[] chunks = [left, right, front, back, c1, c2, c3, c4];
 
                         foreach (var chunkd in chunks)
@@ -202,7 +185,7 @@ namespace OurCraft.World
             }
         }
 
-        //generates meshes of chunks with all neighbors on seperate thread
+        //generates mesh for chunks on seperate threads
         private void ProcessMeshQueue()
         {
             if (chunkMeshQueue.IsEmpty) return;
@@ -210,8 +193,7 @@ namespace OurCraft.World
             ChunkCoord playerChunk = GetPlayerChunk();
 
             if (chunkMeshQueue.TryDequeue(out ChunkCoord coord))
-            {
-                //check if chunk exists              
+            {            
                 Chunk? chunk = GetChunk(coord);
                 if (chunk == null || chunk.Deleted())
                 {
@@ -227,15 +209,14 @@ namespace OurCraft.World
                     right = GetChunk(new ChunkCoord(coord.X + 1, coord.Z));
                     front = GetChunk(new ChunkCoord(coord.X, coord.Z + 1));
                     back = GetChunk(new ChunkCoord(coord.X, coord.Z - 1));
-                    c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1)); //back-left
-                    c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1)); //back-right
-                    c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1)); //front-left
-                    c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1)); //front-right
+                    c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1));
+                    c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1));
+                    c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1));
+                    c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));
 
-                    //create mesh on a seperate thread
                     threadPool.Submit(() =>
                     {
-                        chunk.CreateChunkMesh(left, right, front, back, c1, c2, c3, c4);
+                        ChunkBuilder.CreateChunkMesh(chunk, left, right, front, back, c1, c2, c3, c4);
                         UploadEnqueue(chunk);
                         meshQueuedChunks.TryRemove(coord, out byte thing);
                     });
@@ -279,7 +260,7 @@ namespace OurCraft.World
                 uploadedChunks.TryRemove(chunk, out byte thing);
                 if (chunk != null && chunk.HasVoxelData() && chunkUploadTimer > MaxChunkBuildPerFrame)
                 {
-                    chunk.SendMeshToOpenGL();                 
+                    ChunkRenderer.GLUploadChunk(chunk);                
                     chunkUploadTimer = 0;
                 }
                 else if (chunk != null && chunk.HasVoxelData())
@@ -294,27 +275,23 @@ namespace OurCraft.World
         {
             while (!deletionQueue.IsEmpty)
             {
-                //try to pop from deletion queue
                 if (deletionQueue.TryDequeue(out ChunkCoord coord))
                 {
                     Chunk? chunk = GetChunk(coord);
                     //if chunk is null, then its already deleted and we can skip
-                    if (chunk != null)
+                    if (chunk == null) continue;
+
+                    if (ChunkMap.Remove(coord, out chunk))
                     {
-                        //check if we can remove chunk
-                        if (ChunkMap.Remove(coord, out chunk))
-                        {
-                            //remove from queues, and delete vram data
-                            deletionQueuedChunks.Remove(coord, out byte thing);
-                            lightingQueuedChunks.Remove(coord, out thing);
-                            meshQueuedChunks.Remove(coord, out thing);
-                            chunk.Delete();
-                        }
-                        //retry if unsuccessful
-                        else
-                        {
-                            DeletionEnqueue(coord);
-                        }
+                        //remove from queues, and delete vram data
+                        deletionQueuedChunks.Remove(coord, out byte thing);
+                        lightingQueuedChunks.Remove(coord, out thing);
+                        meshQueuedChunks.Remove(coord, out thing);
+                        chunk.Delete();
+                    }
+                    else
+                    {
+                        DeletionEnqueue(coord);
                     }
                 }
             }         
@@ -339,7 +316,7 @@ namespace OurCraft.World
         }
 
         //load and unload chunks, and do multithreading stuff
-        public void Update(float time, float globalTime)
+        public void Update(float time)
         {        
             ChunkCoord currentPlayerChunk = GetPlayerChunk();
             //moved between chunks
@@ -361,14 +338,6 @@ namespace OurCraft.World
             ProcessDeletedChunks();
 
             chunkUploadTimer += time;
-        }
-
-        //clears chunk map
-        public void Delete()
-        {
-            foreach(var pair in ChunkMap)
-                pair.Value.Delete();
-            ChunkMap.Clear();
         }
 
         //safely allows a chunk to be queued for voxel generation
@@ -453,9 +422,8 @@ namespace OurCraft.World
         //gets the chunk the player is in
         public ChunkCoord GetPlayerChunk()
         {
-            //get int player position
-            int pX = (int)Math.Floor(player.Position.X);
-            int pZ = (int)Math.Floor(player.Position.Z);
+            int pX = (int)Math.Floor(playerTracking.position.X);
+            int pZ = (int)Math.Floor(playerTracking.position.Z);
 
             //get chunk position from world position
             int chunkX = pX / Chunk.CHUNK_WIDTH;
@@ -477,7 +445,6 @@ namespace OurCraft.World
         //checks if a chunk can light or mesh
         public bool ChunkWorkable(ChunkCoord coord)
         {
-            //get this chunk and adjacent chunks
             Chunk? thisChunk = GetChunk(coord);
 
             if (thisChunk == null) return false;
@@ -487,9 +454,9 @@ namespace OurCraft.World
         }
 
         //checks if a chunk can be remeshed by the remesh queue, not by the player
-        static bool CanBeRemeshed(Chunk c)
+        static bool CanBeRemeshed(Chunk chunk)
         {
-            return c.GetState() == ChunkState.Meshed || c.GetState() == ChunkState.Built;
+            return chunk.GetState() == ChunkState.Meshed || chunk.GetState() == ChunkState.Built;
         }
 
         //get block state
@@ -543,15 +510,13 @@ namespace OurCraft.World
             int lz = ModPow2((int)MathF.Floor(pos.Z), Chunk.CHUNK_WIDTH);
             if (chunk == null || chunk.GetState() != ChunkState.Built) return;
 
-            //remove light if old block is light source
+            //update light
             BlockState prev = chunk.GetBlockSafe(lx, ly, lz);
             chunk.SetBlock(lx, ly, lz, state);
             
-            if (prev.IsLightSource)
-                VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);
+            if (prev.IsLightSource) VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);
 
-            if (!state.LightPassable)
-                VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);
+            if (!state.LightPassable) VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);
                   
             if (state.SkyLightAttenuation != VoxelLightingEngine.MIN_LIGHT)
                 VoxelLightingEngine.RemoveSkyLight(this, chunk, (Vector3i)pos);
@@ -559,8 +524,7 @@ namespace OurCraft.World
             else if (!prev.LightPassable || prev.SkyLightAttenuation != VoxelLightingEngine.MAX_LIGHT)
                 VoxelLightingEngine.RemoveLightBlocker(this, (Vector3i)pos);
 
-            if (state.IsLightSource)
-                VoxelLightingEngine.AddBlockLight(this, chunk, state, (Vector3i)pos);
+            if (state.IsLightSource) VoxelLightingEngine.AddBlockLight(this, chunk, state, (Vector3i)pos);
 
             //chunks need to be updated
             MarkPosDirty((Vector3i)pos, chunk);
@@ -632,10 +596,10 @@ namespace OurCraft.World
             front = GetChunk(new ChunkCoord(chunkX, chunkZ + 1));
             back = GetChunk(new ChunkCoord(chunkX, chunkZ - 1));
 
-            c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1)); //back-left
-            c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1)); //back-right
-            c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1)); //front-left
-            c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1)); //front-right
+            c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1));
+            c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1));
+            c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1));
+            c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));
 
             if (left == null || right == null || front == null || back == null) return;
             if (c1 == null || c2 == null || c3 == null || c4 == null) return;
@@ -643,13 +607,12 @@ namespace OurCraft.World
             if (!chunk.Modifiyable() || !left.Modifiyable() || !right.Modifiyable() || !front.Modifiyable() || !back.Modifiyable()) return;   
             if (!c1.Modifiyable() || !c2.Modifiyable() || !c3.Modifiyable() || !c4.Modifiyable()) return;
 
-            chunk.Remesh(left, right, front, back, c1, c2, c3, c4);
+            ChunkBuilder.RemeshChunk(chunk, left, right, front, back, c1, c2, c3, c4);
         }
 
         //quick mod function only with powers of 2
         public static int ModPow2(int a, int b)
         {
-            //fast modulus with powers of 2 bit shifting
             return ((a & (b-1)) + b) & (b-1);
         }
     }

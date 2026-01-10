@@ -1,7 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OurCraft.Physics;
-using OurCraft.World;
+using OurCraft.Entities.Components;
 using System.Runtime.InteropServices;
 
 namespace OurCraft.Graphics
@@ -130,15 +129,13 @@ namespace OurCraft.Graphics
             return vertexCount > 0;
         }
 
-        //draw with shader
-        public void Draw(Shader shader, Vector3d chunkWorldPos, Camera sceneCamera)
+        //draw with shader, shader must be active once drawing
+        public void Draw(Shader shader, Vector3d chunkWorldPos, Vector3d camPos)
         {
             if (!HasMesh()) return;
-            shader.Activate();
 
             //set uniform model matrix for vshader
-            Vector3d camWorldPos = sceneCamera.Position;
-            Vector3 relPos = (Vector3)(chunkWorldPos - camWorldPos);
+            Vector3 relPos = (Vector3)(chunkWorldPos - camPos);
             Matrix4 model = Matrix4.CreateTranslation(relPos);
             shader.SetMatrix4("model", ref model);
 

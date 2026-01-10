@@ -18,7 +18,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         const int LOW_LIGHT = 1;
 
         //seeds all the block lights in a chunk
-        public static void SeedBlockLights(Chunkmanager world, Chunk chunk, ConcurrentQueue<LightNode> blockLights)
+        public static void SeedBlockLights(ChunkManager world, Chunk chunk, ConcurrentQueue<LightNode> blockLights)
         {
             ChunkCoord pos = chunk.ChunkPos;
             SeedCenterChunk(chunk, blockLights);
@@ -43,7 +43,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                 {
                     for (int z = 0; z < Chunk.WIDTH_IN_SUBCHUNKS; z++)
                     {
-                        SubChunk subChunk = chunk.subChunks[x, y, z];
+                        SubChunk subChunk = chunk.SubChunks[x, y, z];
                         foreach (var lightSource in subChunk.lightSources)
                         {
                             ushort lx = 0, ly = 0, lz = 0;
@@ -140,7 +140,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //flood fill bfs for all block lights in chunks
-        public static void PropagateBlockLights(Chunkmanager world, ConcurrentQueue<LightNode> blockLights, bool dirty = false)
+        public static void PropagateBlockLights(ChunkManager world, ConcurrentQueue<LightNode> blockLights, bool dirty = false)
         {
             //directions
             Span<(int dx, int dy, int dz)> dirs =
@@ -209,7 +209,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //propagates darkness and requeues lights that werent effected by darkness
-        public static void PropagateBlockLightRemoval(Chunkmanager world, ConcurrentQueue<RemoveLightNode> removeQueue, ConcurrentQueue<LightNode> reAddQueue)
+        public static void PropagateBlockLightRemoval(ChunkManager world, ConcurrentQueue<RemoveLightNode> removeQueue, ConcurrentQueue<LightNode> reAddQueue)
         {
             Span<(int dx, int dy, int dz)> dirs =
             [

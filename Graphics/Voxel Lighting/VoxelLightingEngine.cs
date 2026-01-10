@@ -17,7 +17,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         public const int MIN_LIGHT = 0;
 
         //seeds the flood fill lighting from a chunk and computes it
-        public static void LightChunk(Chunk chunk, Chunkmanager world)
+        public static void LightChunk(Chunk chunk, ChunkManager world)
         {
             ConcurrentQueue<LightNode> blockLights = new ConcurrentQueue<LightNode>();
             ConcurrentQueue<SkyLightNode> skyLights = new ConcurrentQueue<SkyLightNode>();
@@ -32,7 +32,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //adds a block light into the world after inital load
-        public static void AddBlockLight(Chunkmanager world, Chunk chunk, BlockState state, Vector3i globalPos)
+        public static void AddBlockLight(ChunkManager world, Chunk chunk, BlockState state, Vector3i globalPos)
         {
             //get current light
             Vector3i lightLevel = state.LightLevel;
@@ -50,7 +50,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //removes a block light from the world
-        public static void RemoveBlockLight(Chunkmanager world, Chunk chunk, Vector3i globalPos)
+        public static void RemoveBlockLight(ChunkManager world, Chunk chunk, Vector3i globalPos)
         {           
             int lx = VoxelMath.ModPow2(globalPos.X, CHUNK_SIZE);
             int lz = VoxelMath.ModPow2(globalPos.Z, CHUNK_SIZE);
@@ -74,7 +74,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //updates areas that are now under the sky
-        public static void RemoveSkyLight(Chunkmanager world, Chunk chunk, Vector3i globalPos)
+        public static void RemoveSkyLight(ChunkManager world, Chunk chunk, Vector3i globalPos)
         {           
             int lx = VoxelMath.ModPow2(globalPos.X, CHUNK_SIZE);
             int lz = VoxelMath.ModPow2(globalPos.Z, CHUNK_SIZE);
@@ -99,7 +99,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
 
         //allows for light values to repropagate through old solid block
-        public static void RemoveLightBlocker(Chunkmanager world, Vector3i globalPos)
+        public static void RemoveLightBlocker(ChunkManager world, Vector3i globalPos)
         {            
             ConcurrentQueue<LightNode> lights = new ConcurrentQueue<LightNode>();
             ConcurrentQueue<SkyLightNode> skyLights = new ConcurrentQueue<SkyLightNode>();

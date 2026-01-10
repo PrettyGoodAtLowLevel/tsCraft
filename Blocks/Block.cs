@@ -64,10 +64,10 @@ namespace OurCraft.Blocks
         }
 
         // determines each block's way of changing the chunk block state data when placed
-        public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, Chunkmanager world) { } 
+        public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) { } 
 
         //determines each block's way of updating
-        public virtual void UpdateBlockState(Vector3 globalPos, BlockState thisBlock, Chunkmanager world) { }
+        public virtual void UpdateBlockState(Vector3 globalPos, BlockState thisBlock, ChunkManager world) { }
 
         //allows to view current properties of a blockstate
         public virtual void DebugState(BlockState state)
