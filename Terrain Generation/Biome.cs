@@ -94,7 +94,7 @@ namespace OurCraft.Terrain_Generation
         //loads a json config in c# off a file from json file
         public static BiomeJson LoadBiomeConfig(string path)
         {
-            string filePath = "C:/Users/alial/OneDrive/Desktop/OurCraft/Resources/Data/WorldGen/Biomes/"+path;
+            string filePath = "C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/Biomes/"+path;
             string json = File.ReadAllText(filePath);
             return JsonSerializer.Deserialize<BiomeJson>(json)!;
         }

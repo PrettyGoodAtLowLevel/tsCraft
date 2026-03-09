@@ -10,14 +10,14 @@ namespace OurCraft.Blocks.Meshing
     //interpets the log blockstate and adds the correct model based on that
     public class BlockLogModelShape : BlockShape
     {
+        public CachedBlockModel cachedModelX = new();
+        public CachedBlockModel cachedModelY = new();
+        public CachedBlockModel cachedModelZ = new();
+
         public BlockLogModelShape()
         {
             IsFullOpaqueBlock = false;
         }
-
-        public CachedBlockModel cachedModelX = new();
-        public CachedBlockModel cachedModelY = new();
-        public CachedBlockModel cachedModelZ = new();
 
         //add log type mesh
         public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)

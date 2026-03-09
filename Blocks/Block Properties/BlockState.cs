@@ -21,7 +21,7 @@ namespace OurCraft.Blocks.Block_Properties
         }
 
         //getters, and block functions
-        public Block GetBlock => BlockData.GetBlock(BlockID);
+        public Block GetBlock => BlockRegistry.GetBlock(BlockID);
         public BlockShape BlockShape => GetBlock.blockShape;
         public string Name => GetBlock.GetBlockName();
         public bool IsLightSource => GetBlock.IsLightSource(this);
@@ -93,7 +93,8 @@ namespace OurCraft.Blocks.Block_Properties
             int count = Enum.GetValues(typeof(T)).Length; 
             int bitCount = Math.Max(1, (int)Math.Ceiling(Math.Log(count, 2)));
             var prop = new EnumProperty<T>(currentOffset, bitCount); 
-            currentOffset += bitCount; return prop; 
+            currentOffset += bitCount; 
+            return prop; 
         } 
 
         public BoolProperty AddBool()
@@ -137,7 +138,6 @@ namespace OurCraft.Blocks.Block_Properties
             var block = state.GetBlock; 
             var container = block.StateContainer;
 
-            if (container == null)  throw new InvalidOperationException("BlockStateContainer not initialized for block " + block.GetBlockName());
             //return cached state from MetaLookup
             if (newMeta < container.MetaLookup.Length) return container.MetaLookup[newMeta]; 
 

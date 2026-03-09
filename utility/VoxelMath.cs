@@ -71,7 +71,7 @@ namespace OurCraft.utility
         {
             return new Vector3i((light >> 0) & 0xF, (light >> 4) & 0xF, (light >> 8) & 0xF);
         }
-
+         
         //get skylight from packed light
         public static byte UnpackLight16Sky(ushort light)
         {
@@ -79,7 +79,8 @@ namespace OurCraft.utility
         }
     }
 
-    //represents a collection of spline points
+    //collection of points used for remapping x values to y values
+    //does not need to be a linear function
     public readonly struct SplineGraph
     {
         readonly List<SplinePoint> points = [];
@@ -89,31 +90,26 @@ namespace OurCraft.utility
             this.points = points;
         }
 
-        public float Evaluate(float noiseValue, bool smooth = false)
+        public float Evaluate(float x, bool smooth = false)
         {
-            if (points == null || points.Count == 0)
-                return 0f;
+            if (points == null || points.Count == 0) return 0f;
 
-            //clamp noiseValue within spline domain
-            if (noiseValue <= points[0].noiseValue)
-                return points[0].height;
+            //clamp x within spline domain
+            if (x <= points[0].x) return points[0].y;
+            if (x >= points[^1].x) return points[^1].y;
 
-            if (noiseValue >= points[^1].noiseValue)
-                return points[^1].height;
-
-            //find the interval where noiseValue lies
+            //find the interval where x lies
             for (int i = 0; i < points.Count - 1; i++)
             {
-                float x0 = points[i].noiseValue;
-                float y0 = points[i].height;
-                float x1 = points[i + 1].noiseValue;
-                float y1 = points[i + 1].height;
+                float x0 = points[i].x;
+                float y0 = points[i].y;
+                float x1 = points[i + 1].x;
+                float y1 = points[i + 1].y;
 
-                if (noiseValue >= x0 && noiseValue <= x1)
+                if (x >= x0 && x <= x1)
                 {
-                    float t = (noiseValue - x0) / (x1 - x0);
-                    if (smooth)
-                        t = VoxelMath.SmoothStep(t);
+                    float t = (x - x0) / (x1 - x0);
+                    if (smooth) t = VoxelMath.SmoothStep(t);
                     return VoxelMath.Lerp(y0, y1, t);
                 }
             }
@@ -126,13 +122,13 @@ namespace OurCraft.utility
     //represents points on a 2d graph
     public readonly struct SplinePoint
     {
-        public readonly float noiseValue;
-        public readonly float height;
+        public readonly float x;
+        public readonly float y;
 
-        public SplinePoint(float noiseValue, float height)
+        public SplinePoint(float x, float y)
         {
-            this.noiseValue = noiseValue;
-            this.height = height;
+            this.x = x;
+            this.y = y;
         }
     }
 }

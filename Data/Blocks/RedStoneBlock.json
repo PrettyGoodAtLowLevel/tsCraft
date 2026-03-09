@@ -1,0 +1,7 @@
+{
+  "Name": "Redstone Block",
+  "ModelPath": "Building/RedstoneBlock.json",
+  "LightR": 15,
+  "LightG": 0,
+  "LightB": 0
+}

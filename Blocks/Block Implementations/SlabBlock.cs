@@ -1,5 +1,4 @@
-﻿using OurCraft.Graphics;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 
@@ -19,8 +18,7 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //default constructor, assigns the slab type cominations to THIS instance
-        public SlabBlock(string name, BlockShape shape, ushort id) :
-        base(name, shape, id)
+        public SlabBlock(string name, BlockShape shape): base(name, shape)
         { 
             Properties.Add(SLAB_TYPE);
         }

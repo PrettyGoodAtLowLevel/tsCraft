@@ -1,117 +1,65 @@
 ﻿using OurCraft.utility;
+using System.Text.Json;
 
 namespace OurCraft.Terrain_Generation
 {
-    //contains all the spline points for terrain generation
-    //these splines allow us to manipulate values on a custom graph
-    //these are useful since not every noise conributes to something linearly
-    //things like rivers could only sample middle values of noise to create carves in the terrain
-    //some noises could be mainly stagnant untill reaching the high values, which it skyrockets
-    //you see the point
+    //contains all the spline data information for world gen
     public static class TerrainSplines
     {
         //determines land vs ocean
-        public static readonly SplineGraph regionSpline = new
-        ([
-            new SplinePoint(-1.0f, 95.0f),   
-            new SplinePoint(-0.4f, 95.0f),
-            new SplinePoint(-0.235f, 120f),
-            new SplinePoint(-0.15f, 130f),
-            new SplinePoint(1.0f, 130f),
-        ]);
+        public static readonly SplineGraph regionSpline = SplineJson.LoadSpline("RegionSpline.json");
 
         //determine hills, low zones, and highlands
-        public static readonly SplineGraph erosionSpline = new
-        ([
-            new SplinePoint(-1.0f, 40),
-            new SplinePoint(-0.75f, 35),
-            new SplinePoint(-0.35f, 0f),
-            new SplinePoint(0.15f, 0f),
-            new SplinePoint(0.5f, 20),
-            new SplinePoint(1.0f, 30),
-        ]);
+        public static readonly SplineGraph erosionSpline = SplineJson.LoadSpline("ErosionSpline.json");
 
         //determine where rivers are placed in the world
-        public static readonly SplineGraph riverSpline = new
-        ([
-            new SplinePoint(-1.0f, 0.0f),
-            new SplinePoint(-0.15f, 0.0f),
-            new SplinePoint(-0.05f, -5f),
-            new SplinePoint(0.05f, -10f),
-            new SplinePoint(0.2f, 0.0f),
-            new SplinePoint(1.0f, 0.0f),
-        ]);
+        public static readonly SplineGraph riverSpline = SplineJson.LoadSpline("RiverSpline.json");
 
         //determine how amplified the terrain gets
-        public static readonly SplineGraph weirdnessSpline = new
-        ([
-            new SplinePoint(-1.0f, 50.0f),
-            new SplinePoint(-0.75f, 50.0f),
-            new SplinePoint(-0.5f, 6.5f),
-            new SplinePoint(0.5f, 6.5f),
-            new SplinePoint(0.75f, 50.0f),
-            new SplinePoint(1.0f, 50.0f),
-        ]);
+        public static readonly SplineGraph weirdnessSpline = SplineJson.LoadSpline("WeirdnessSpline.json");
 
         //extra amplifier for really weird fantasy terrain
-        public static readonly SplineGraph fractureSpline = new
-        ([
-            new SplinePoint(-1.0f, 0.0f),
-            new SplinePoint(-0.75f, 0.0f),
-            new SplinePoint(0.65f, 0.0f),
-            new SplinePoint(1.0f, 225.0f),
-        ]);
+        public static readonly SplineGraph fractureSpline = SplineJson.LoadSpline("FractureSpline.json");
 
         //makes sure rivers dont look too harsh ontop of mountains
-        public static readonly SplineGraph riverFactorSpline = new
-        ([
-            new SplinePoint(-1.0f, 0.0f),
-            new SplinePoint(-0.55f, 0.25f),
-            new SplinePoint(-0.35f, 1.0f),
-            new SplinePoint(0.15f, 1.0f),
-            new SplinePoint(0.3f, 0.25f),
-            new SplinePoint(1.0f, 0.0f),
-        ]);
+        public static readonly SplineGraph riverFactorSpline = SplineJson.LoadSpline("RiverFactorSpline.json");
 
         //clamps noise values to temperature levels
-        public static readonly SplineGraph temperatureSpline = new
-        ([
-            new SplinePoint(-1.0f, 0f),
-            new SplinePoint(-0.6f, 0f),
-            new SplinePoint(-0.6f, 1f),
-            new SplinePoint(-0.2f, 1f),
-            new SplinePoint(-0.2f, 2f),
-            new SplinePoint(0.2f, 2f),
-            new SplinePoint(0.2f, 3f),
-            new SplinePoint(0.6f, 3f),
-            new SplinePoint(0.6f, 4f),
-            new SplinePoint(1.0f, 4f),
-        ]);
+        public static readonly SplineGraph temperatureSpline = SplineJson.LoadSpline("TemperatureSpline.json");
 
         //clamps noise values to humidity levels
-        public static readonly SplineGraph humiditySpline = new
-        ([
-            new SplinePoint(-1.0f, 0f),
-            new SplinePoint(-0.6f, 0f),
-            new SplinePoint(-0.6f, 1f),
-            new SplinePoint(-0.2f, 1f),
-            new SplinePoint(-0.2f, 2f),
-            new SplinePoint(0.2f, 2f),
-            new SplinePoint(0.2f, 3f),
-            new SplinePoint(0.6f, 3f),
-            new SplinePoint(0.6f, 4f),
-            new SplinePoint(1.0f, 4f),
-        ]);
+        public static readonly SplineGraph humiditySpline = SplineJson.LoadSpline("HumiditySpline.json");
 
         //clamps noise values to vegetation levels
-        public static readonly SplineGraph vegetationSpline = new
-        ([
-            new SplinePoint(-1.0f, 0f),
-            new SplinePoint(-0.33f, 0f),
-            new SplinePoint(-0.33f, 1f),
-            new SplinePoint(0.33f, 1f),
-            new SplinePoint(0.33f, 2f),
-            new SplinePoint(1.0f, 2f),
-        ]);
+        public static readonly SplineGraph vegetationSpline = SplineJson.LoadSpline("VegetationSpline.json");
     }
+
+    //json representation of spline
+    public class SplineJson
+    {
+        public List<SplinePointJson> Points { get; set; } = [];
+
+        public static SplineGraph LoadSpline(string fileName)
+        {
+            //Load JSON
+            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/Splines/{fileName}";
+            string json = File.ReadAllText(path);
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            SplineJson config = JsonSerializer.Deserialize<SplineJson>(json, options)!;
+
+            //convert to actual spline
+            List<SplinePoint> points = [];
+            foreach(var point in config.Points) points.Add(new SplinePoint(point.X, point.Y));
+            
+            SplineGraph spline = new SplineGraph(points);
+            return spline;
+        }
+    }
+
+    public class SplinePointJson
+    { 
+        public float X { get; set; }
+        public float Y { get; set; }
+    }   
 }

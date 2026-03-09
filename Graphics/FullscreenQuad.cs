@@ -13,13 +13,6 @@ namespace OurCraft.Graphics
             InitFullscreenQuad();
         }
 
-        //bind vao and draw quad
-        public void Draw()
-        {
-            GL.BindVertexArray(quadVAO);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
-        }
-
         //create basic full quad in screen space coordinates
         private void InitFullscreenQuad()
         {
@@ -44,6 +37,13 @@ namespace OurCraft.Graphics
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
             GL.EnableVertexAttribArray(1);
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 2 * sizeof(float));
+        }
+
+        //bind vao and draw quad
+        public void Draw()
+        {
+            GL.BindVertexArray(quadVAO);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
         }
     }
 }

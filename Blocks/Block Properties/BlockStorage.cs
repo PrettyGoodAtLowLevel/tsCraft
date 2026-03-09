@@ -28,9 +28,9 @@ namespace OurCraft.Blocks.Block_Properties
     //allows to dynamically change the amount of data needed to represent block states
     public interface IBlockIndexStorage
     {
-        int Get(int index);
-        void Set(int index, int paletteIndex);
         int Length { get; }
+        int Get(int index);
+        void Set(int index, int paletteIndex);       
     }
 
     //when chunk only has > 255 different block states

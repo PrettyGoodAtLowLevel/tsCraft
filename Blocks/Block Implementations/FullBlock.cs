@@ -8,8 +8,7 @@ namespace OurCraft.Blocks.Block_Implementations
     public class FullBlock : Block
     {
         //csctr
-        public FullBlock(string name, BlockShape shape, ushort id) :
-        base(name, shape, id)
+        public FullBlock(string name, BlockShape shape): base(name, shape)
         { }
 
         //nothing special just add the block on the face the player is looking at

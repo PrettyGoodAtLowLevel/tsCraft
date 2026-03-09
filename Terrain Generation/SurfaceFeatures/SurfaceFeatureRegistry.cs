@@ -21,7 +21,6 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
         public static FallenLog OakLog { get; private set; } = new();
         public static FallenLog SpruceLog { get; private set; } = new();
         public static FallenLog JungleLog { get; private set; } = new();
-        public static Cactus Cactus { get; private set; } = new();
         public static Cactus IceCactus { get; private set; } = new();
 
         //trees
@@ -120,14 +119,6 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
                 PlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
                 AltPlaceOn = BlockRegistry.GetDefaultBlockState("Snowy Grass Block"),
                 LogBlock = BlockRegistry.GetDefaultBlockState("Jungle Log"),
-            };
-
-            Cactus = new()
-            {
-                Name = "Cactus",
-                PlaceOn = BlockRegistry.GetDefaultBlockState("Sand"),
-                AltPlaceOn = BlockRegistry.GetDefaultBlockState("Grass Block"),
-                CactusBlock = BlockRegistry.GetDefaultBlockState("Cactus Block")
             };
 
             IceCactus = new()
@@ -288,7 +279,6 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
                 { "OakLog", OakLog },
                 { "SpruceLog", SpruceLog },
                 { "JungleLog", JungleLog },
-                { "Cactus", Cactus },
                 { "IceCactus", IceCactus },
 
                 //trees

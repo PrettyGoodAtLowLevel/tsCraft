@@ -18,6 +18,16 @@ namespace OurCraft
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ID);
         }
 
+        //free up vram
+        public void Delete()
+        {
+            if (ID != 0)
+            {
+                GL.DeleteBuffer(ID);
+                ID = 0;
+            }
+        }
+
         public void BufferData(uint[] data)
         {
             int sizeInBytes = Marshal.SizeOf<uint>() * data.Length;
@@ -36,16 +46,6 @@ namespace OurCraft
         public void Unbind()
         {
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-        }
-
-        //free up vram
-        public void Delete()
-        {
-            if (ID != 0)
-            {
-                GL.DeleteBuffer(ID);
-                ID = 0;
-            }
         }
     }
 }

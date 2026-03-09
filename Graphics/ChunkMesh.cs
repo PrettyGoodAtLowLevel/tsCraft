@@ -40,6 +40,16 @@ namespace OurCraft.Graphics
             indexCount = 0;
         }
 
+        //clear gl objects
+        public void Delete()
+        {
+            indexCount = 0;
+            vertexCount = 0;
+            vao.Delete();
+            vbo.Delete();
+            ebo.Delete();
+        }
+
         //since this is a chunk/blocks, only load block textures 
         public static void LoadChunkTextures()
         {
@@ -112,16 +122,6 @@ namespace OurCraft.Graphics
             indices.Capacity = 0;
             vertexCount = (uint)vertCount;
         }     
-
-        //clear gl objects
-        public void Delete()
-        {
-            indexCount = 0;
-            vertexCount = 0;
-            vao.Delete();
-            vbo.Delete();
-            ebo.Delete();
-        }
 
         //get if has mesh
         public bool HasMesh()

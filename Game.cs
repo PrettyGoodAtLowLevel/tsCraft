@@ -25,18 +25,18 @@ namespace OurCraft
         double timer = 0;
 
         //creates threads, block data, entity data, then chunk manager + renderer
-        public Game() : base(GameWindowSettings.Default, new NativeWindowSettings(){ClientSize = new Vector2i(SCREEN_WIDTH, SCREEN_HEIGHT)})
+        public Game(): base(GameWindowSettings.Default, new NativeWindowSettings(){ClientSize = new Vector2i(SCREEN_WIDTH, SCREEN_HEIGHT)})
         {
             worldGenThreads = new(threadCount:8);
             lightingThread = new(threadCount:1);
 
-            BlockData.InitBlocks();
+            BlockRegistry.InitBlocks();
             WorldGenerator.SetGlobalBlocks();
             SurfaceFeatureRegistry.InitializeFeatures();
             BiomeData.Init();
             EntityManager.Init();
 
-            world = new ChunkManager(RenderDistances.SIX_CHUNKS, ref worldGenThreads, ref lightingThread);          
+            world = new ChunkManager(renderDistance:6, ref worldGenThreads, ref lightingThread);          
             renderer = new Renderer(ref world, SCREEN_WIDTH, SCREEN_HEIGHT);          
         }
 
@@ -75,6 +75,7 @@ namespace OurCraft
         {
             base.OnUnload();
             worldGenThreads.Dispose();
+            lightingThread.Dispose();
         }
 
         //any logic when rezising the screen

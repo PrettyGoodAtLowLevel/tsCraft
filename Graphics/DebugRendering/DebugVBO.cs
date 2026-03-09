@@ -36,6 +36,13 @@ namespace OurCraft.Graphics.DebugRendering
             GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
         }
 
+        public void Delete()
+        {
+            if (ID == 0) return;
+            GL.DeleteBuffer(ID);
+            ID = 0;
+        }
+
         public void BufferData(DebugVertex[] data)
         {
             int sizeInBytes = Marshal.SizeOf<DebugVertex>() * data.Length;
@@ -45,13 +52,7 @@ namespace OurCraft.Graphics.DebugRendering
         }
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
-        public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
-        public void Delete()
-        {
-            if (ID == 0) return;
-            GL.DeleteBuffer(ID);
-            ID = 0;          
-        }
+        public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);   
     }
 }

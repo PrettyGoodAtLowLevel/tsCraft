@@ -64,6 +64,15 @@ namespace OurCraft.Graphics
             GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
         }
 
+        public void Delete()
+        {
+            if (ID != 0)
+            {
+                GL.DeleteBuffer(ID);
+                ID = 0;
+            }
+        }
+
         public void BufferData(BlockVertex[] data)
         {
             int sizeInBytes = Marshal.SizeOf<BlockVertex>() * data.Length;
@@ -74,14 +83,5 @@ namespace OurCraft.Graphics
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
         public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-
-        public void Delete()
-        {
-            if (ID != 0)
-            {
-                GL.DeleteBuffer(ID);
-                ID = 0;
-            }
-        }
     }
 }

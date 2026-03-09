@@ -1,14 +1,11 @@
-﻿using OpenTK.Mathematics;
-using OurCraft.Graphics;
-using OurCraft.Blocks.Block_Properties;
+﻿using OurCraft.Blocks.Block_Properties;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
     //fully transparent glass block, no blending
     public class GlassBlock : FullBlock
     {
-        public GlassBlock(string name, BlockShape shape, ushort id) :
-        base(name, shape, id)
+        public GlassBlock(string name, BlockShape shape): base(name, shape)
         { }
 
         //light can pass through glass

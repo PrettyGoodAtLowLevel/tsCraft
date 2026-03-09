@@ -7,11 +7,12 @@ namespace OurCraft.Blocks.Meshing
 {
     public class FullBlockModelShape : BlockShape
     {
+        public CachedBlockModel cachedModel = new();
+
         public FullBlockModelShape()
         {
             IsFullOpaqueBlock = true;
-        }
-        public CachedBlockModel cachedModel = new();
+        }      
 
         //just build a full cube block, nothing crazy
         public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)

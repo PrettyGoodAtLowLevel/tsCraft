@@ -34,10 +34,7 @@ namespace OurCraft.Blocks
 
     //represents a shape of a block so that the meshing code is more abstract and clean
     public abstract class BlockShape
-    {
-        public BlockShape()
-        { }
-
+    {      
         public bool IsFullOpaqueBlock { get; set; } = false;
         public bool IsTranslucent { get; set; } = false;
 

@@ -5,9 +5,10 @@ namespace OurCraft.Blocks.Block_Implementations
 {
     public class FullLightBlock : FullBlock
     {
+        public Vector3i lightValue;
+
         //assigns the light value to the block
-        public FullLightBlock(string name, BlockShape shape, ushort id, Vector3i light) :
-        base(name, shape, id)
+        public FullLightBlock(string name, BlockShape shape, Vector3i light): base(name, shape)
         { 
             if (light.X > 15) light.X = 15;
             if (light.Y > 15)light.Y = 15;
@@ -17,8 +18,7 @@ namespace OurCraft.Blocks.Block_Implementations
             if (light.Z < 0) light.Z = 0;
             lightValue = light;
         }
-        public Vector3i lightValue;
-
+        
         //is light
         public override Vector3i GetLightSourceLevel(BlockState state)
         {

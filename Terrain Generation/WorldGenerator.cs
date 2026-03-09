@@ -34,11 +34,6 @@ namespace OurCraft.Terrain_Generation
             float weirdness = NoiseRouter.GetWeirdnessNoise(x, z);
             float fracture = NoiseRouter.GetFractureNoise(x, z);
 
-            //get the biome map noises
-            float rawTemperature = NoiseRouter.GetTemperatureNoise(x, z);
-            float rawHumididity = NoiseRouter.GetHumidityNoise(x, z);
-            float rawVegetation = NoiseRouter.GetVegetationNoise(x, z);
-
             //evaluate splines for terrain shape
             float conOffset = TerrainSplines.regionSpline.Evaluate(continentalness);
             float eroOffset = TerrainSplines.erosionSpline.Evaluate(erosion);
@@ -47,22 +42,17 @@ namespace OurCraft.Terrain_Generation
             float amplification =
             TerrainSplines.weirdnessSpline.Evaluate(weirdness) + TerrainSplines.fractureSpline.Evaluate(fracture);
 
-            //clamp raw biome noise to proper indexes
-            int finalTemp = (int)TerrainSplines.temperatureSpline.Evaluate(rawTemperature);
-            int finalHumid = (int)TerrainSplines.humiditySpline.Evaluate(rawHumididity);
-            int finalVeg = (int)TerrainSplines.vegetationSpline.Evaluate(rawVegetation);
-
             int maxDepth = GetMaxDepth(amplification);
             //combine noise outputs
             float offset = conOffset + eroOffset + (rivOffset * rivFactor);      
-            return new NoiseRegion(offset, amplification, GetBiome(finalTemp, finalHumid, finalVeg), maxDepth);
+            return new NoiseRegion(offset, amplification, GetBiome(), maxDepth);
         }
 
         //indexes into the biome table with the current temp, humidity, and vegetation
-        public static Biome GetBiome(int temp, int humid, int veg)
+        public static Biome GetBiome()
         {
-            return BiomeData.FindBiome(temp, humid, veg);
-        }
+            return BiomeData.FindBiome();
+        } 
 
         //creates the detailed shape of terrain by adding 3d detail to the raw heightmap
         public static float GetDensity(int x, int y, int z, NoiseRegion control)

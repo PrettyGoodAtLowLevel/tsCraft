@@ -1,0 +1,7 @@
+{
+  "Name": "Jungle Log",
+
+  "ModelX": "Logs/JungleLogX.json",
+  "ModelY": "Logs/JungleLogY.json",
+  "ModelZ": "Logs/JungleLogZ.json"
+}

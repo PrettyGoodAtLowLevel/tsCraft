@@ -53,17 +53,4 @@ namespace OurCraft.World
         Built,
         Deleted
     }
-
-    //contains all the types of render distances in the game that are possible
-    public enum RenderDistances
-    {
-        TWO_CHUNKS, THREE_CHUNKS,
-        FOUR_CHUNKS, FIVE_CHUNKS,
-        SIX_CHUNKS, SEVEN_CHUNKS,
-        EIGHT_CHUNKS, NINE_CHUNKS,
-        TEN_CHUNKS, ELEVEN_CHUNKS,
-        TWELVE_CHUNKS, THIRTEEN_CHUNKS,
-        FOURTEEN_CHUNKS, FIFTEEN_CHUNKS,
-        SIXTEEN_CHUNKS,
-    }
 }

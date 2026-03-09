@@ -1,0 +1,7 @@
+{
+  "Name": "Birch Slab",
+
+  "ModelTop": "Slabs/BirchSlabTop.json",
+  "ModelBottom": "Slabs/BirchSlabBottom.json",
+  "ModelDouble": "Planks/BirchPlanks.json"
+}

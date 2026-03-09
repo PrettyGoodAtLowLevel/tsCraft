@@ -14,13 +14,13 @@ namespace OurCraft.Graphics
     {        
         //chunk drawing
         private readonly ChunkManager chunks;
-        private readonly Shader chunkShader = new Shader();
-        private readonly Shader debugShader = new Shader();
+        private readonly Shader chunkShader = new();
+        private readonly Shader debugShader = new();
         private readonly CameraRender? sceneCamera;
 
         //post processing
         private readonly FBO postFBO; 
-        private readonly Shader postShader = new Shader(); 
+        private readonly Shader postShader = new(); 
         private readonly FullscreenQuad postProcessingQuad;
         private int screenWidth, screenHeight;
 
@@ -43,6 +43,46 @@ namespace OurCraft.Graphics
             //load textures get fog working, set shaders   
             ChunkMesh.LoadChunkTextures();
             InitShaders();
+        }
+
+        //make shaders work properly
+        private void InitShaders()
+        {
+            //create all shaders
+            chunkShader.Create("default.vert", "default.frag");
+            debugShader.Create("DebugDrawing/Debug.vert", "DebugDrawing/Debug.frag");
+            postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
+            skyColor = new Vector3(0.5f, 0.6f, 0.7f);
+
+            //-----set up block shaders-----
+            chunkShader.Activate();
+            chunkShader.SetVector3("skyColor", skyColor);
+            chunkShader.SetFloat("fogStart", chunks.RenderDistance * Chunk.CHUNK_WIDTH - 20);
+            chunkShader.SetFloat("fogEnd", chunks.RenderDistance * Chunk.CHUNK_WIDTH);
+            chunkShader.SetFloat("fogDensity", 0.5f);
+
+            //-----post processing----
+            //tweak for weird screen effects
+            postShader.Activate();
+            postShader.SetInt("sceneTex", 0);
+            postShader.SetFloat("caStrength", 0.0f);
+            postShader.SetFloat("vignetteStrength", 0.0f);
+            postShader.SetFloat("saturation", 1.0f);
+            postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.0f));
+            postShader.SetFloat("tintIntensity", 0.0f);
+            postShader.SetVector2("uResolution", new Vector2(screenWidth, screenHeight));
+            postShader.SetFloat("aaStrength", 0.0f);
+
+        }
+
+        //configure openGL properly
+        private static void ConfigureOpenGL(int width, int height)
+        {
+            GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(TriangleFace.Back);
+            GL.Enable(EnableCap.FramebufferSrgb);
+            GL.Viewport(0, 0, width, height);
         }
 
         //draws a frame in a current world
@@ -142,46 +182,6 @@ namespace OurCraft.Graphics
             sceneCamera.UpdateMatrix();
             sceneCamera.SendToShader(chunkShader, "camMatrix");
             sceneCamera.SendToShader(debugShader, "camMatrix");
-        }
-
-        //make shaders work properly
-        private void InitShaders()
-        {
-            //create all shaders
-            chunkShader.Create("default.vert", "default.frag");
-            debugShader.Create("DebugDrawing/Debug.vert", "DebugDrawing/Debug.frag");
-            postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
-            skyColor = new Vector3(0.5f, 0.6f, 0.7f);
-
-            //-----set up block shaders-----
-            chunkShader.Activate();
-            chunkShader.SetVector3("skyColor", skyColor);
-            chunkShader.SetFloat("fogStart", chunks.RenderDistance * Chunk.CHUNK_WIDTH - 20);
-            chunkShader.SetFloat("fogEnd", chunks.RenderDistance * Chunk.CHUNK_WIDTH);
-            chunkShader.SetFloat("fogDensity", 0.5f);
-
-            //-----post processing----
-            //tweak for weird screen effects
-            postShader.Activate();
-            postShader.SetInt("sceneTex", 0);
-            postShader.SetFloat("caStrength", 0.0f);
-            postShader.SetFloat("vignetteStrength", 0.0f);
-            postShader.SetFloat("saturation", 1.0f);
-            postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.0f)); 
-            postShader.SetFloat("tintIntensity", 0.0f);
-            postShader.SetVector2("uResolution", new Vector2(screenWidth, screenHeight));
-            postShader.SetFloat("aaStrength", 0.0f);
-            
-        }
-
-        //configure openGL properly
-        private static void ConfigureOpenGL(int width, int height)
-        {
-            GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(TriangleFace.Back);
-            GL.Enable(EnableCap.FramebufferSrgb);
-            GL.Viewport(0, 0, width, height); 
         }
 
         //gets all the visible chunks

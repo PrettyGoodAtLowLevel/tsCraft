@@ -38,6 +38,29 @@
             }
         }
 
+        //join all threads back to the main thread
+        public void Stop()
+        {
+            stopFlag = true;
+            lock (queueLock)
+            {
+                //wake up all threads to exit
+                Monitor.PulseAll(queueLock);
+            }
+
+            foreach (var thread in workers)
+            {
+                if (thread.IsAlive)
+                    thread.Join();
+            }
+        }
+
+        //stop
+        public void Dispose()
+        {
+            Stop();
+        }
+
         //methods
         //worker loop for each thread
         private void WorkerLoop()
@@ -75,29 +98,6 @@
                 //wake up a thread for new task
                 Monitor.Pulse(queueLock); 
             }
-        }
-
-        //join all threads back to the main thread
-        public void Stop()
-        {
-            stopFlag = true;
-            lock (queueLock)
-            {
-                //wake up all threads to exit
-                Monitor.PulseAll(queueLock);
-            }
-
-            foreach (var thread in workers)
-            {
-                if (thread.IsAlive)
-                    thread.Join();
-            }
-        }
-
-        //stop
-        public void Dispose()
-        {
-            Stop();
         }
     }
 }

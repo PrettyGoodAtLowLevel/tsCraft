@@ -1,5 +1,4 @@
-﻿using OurCraft.Graphics;
-using OurCraft.World;
+﻿using OurCraft.World;
 using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 
@@ -8,8 +7,7 @@ namespace OurCraft.Blocks.Block_Implementations
     //x shaped blocks like flowers and tall grass
     public class CrossQuadBlock : Block
     {
-        public CrossQuadBlock(string name, BlockShape shape, ushort id) :
-        base(name, shape, id)
+        public CrossQuadBlock(string name, BlockShape shape): base(name, shape)
         {
             IsSolid = false;
         }

@@ -9,8 +9,8 @@ namespace OurCraft.Blocks
     public static class BlockMeshHelper
     {
         //const data
-        private const int textureSizeInBlocksX = 32; //512 / 16
-        private const int textureSizeInBlocksY = 16; //256 / 16
+        private const int TEX_SIZE_IN_BLOCKS_X = 32; //512 / 16
+        private const int TEX_SIZE_IN_BLOCKS_Y = 16; //256 / 16
 
         //face culling things
         public static CubeFaces Opposite(CubeFaces face)
@@ -72,25 +72,25 @@ namespace OurCraft.Blocks
         //bunch of texture uv math helpers down here
         public static float GetTextureX(int textureID)
         {
-            int x = textureID % textureSizeInBlocksX;
+            int x = textureID % TEX_SIZE_IN_BLOCKS_X;
             return x * NormalizedBlockTextureX();
         }
 
         public static float GetTextureY(int textureID)
         {
-            int y = textureID / textureSizeInBlocksX;
+            int y = textureID / TEX_SIZE_IN_BLOCKS_X;
             float texY = 1.0f - (y + 1) * NormalizedBlockTextureY();
             return texY;
         }
 
         public static float NormalizedBlockTextureX()
         {
-            return 1.0f / textureSizeInBlocksX;
+            return 1.0f / TEX_SIZE_IN_BLOCKS_X;
         }
 
         public static float NormalizedBlockTextureY()
         {
-            return 1.0f / textureSizeInBlocksY;
+            return 1.0f / TEX_SIZE_IN_BLOCKS_Y;
         }
     }
 

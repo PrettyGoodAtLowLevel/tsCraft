@@ -128,7 +128,7 @@ namespace OurCraft.World.Helpers
         {
             BlockState state = sub.GetBlockState(pos.X, pos.Y, pos.Z);
             if (state == Block.AIR) return;
-            Block block = BlockData.GetBlock(state.BlockID);
+            Block block = BlockRegistry.GetBlock(state.BlockID);
 
             //get neighbor blocks
             NeighborBlocks nb = GetNeighborsSafe(sub, pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);

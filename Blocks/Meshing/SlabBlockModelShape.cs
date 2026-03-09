@@ -8,14 +8,15 @@ namespace OurCraft.Blocks.Meshing
 {
     //interpets the slab type and adds the correct model based on that
     public class SlabBlockModelShape : BlockShape
-    {
+    {       
+        public CachedBlockModel cachedModelDouble = new();
+        public CachedBlockModel cachedModelTop = new();
+        public CachedBlockModel cachedModelBottom = new();
+
         public SlabBlockModelShape()
         {
             IsFullOpaqueBlock = false;
         }
-        public CachedBlockModel cachedModelDouble = new();
-        public CachedBlockModel cachedModelTop = new();
-        public CachedBlockModel cachedModelBottom = new();
 
         //add slab type mesh
         public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)

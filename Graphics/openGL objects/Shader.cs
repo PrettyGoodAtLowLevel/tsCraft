@@ -14,6 +14,13 @@ namespace OurCraft
         //initialize id
         public Shader() { ID = 0; }
 
+        //delete
+        ~Shader()
+        {
+            Console.WriteLine($"Deleted shader at location {ID}");
+            Delete();
+        }
+
         //tries to load in shader source code from sepcified file paths
         public void Create(string vertexFile, string fragmentFile)
         {
@@ -45,12 +52,6 @@ namespace OurCraft
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
         }
-        
-        //activate shader
-        public void Activate()
-        {
-            GL.UseProgram(ID);
-        }
 
         //free up vram at end of program
         public void Delete()
@@ -60,6 +61,12 @@ namespace OurCraft
                 GL.DeleteProgram(ID);
                 ID = 0;
             }
+        }
+
+        //activate shader
+        public void Activate()
+        {
+            GL.UseProgram(ID);
         }
 
         //changes a uniform bool value
@@ -125,13 +132,6 @@ namespace OurCraft
                 string infoLog = GL.GetProgramInfoLog(program);
                 Console.WriteLine($"ERROR::PROGRAM_LINKING_ERROR\n{infoLog}");
             }
-        }
-
-        //delete
-        ~Shader()
-        {
-            Console.WriteLine($"Deleted shader at location {ID}");
-            Delete();
         }
     }
 }

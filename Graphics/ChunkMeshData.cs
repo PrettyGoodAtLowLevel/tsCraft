@@ -8,6 +8,12 @@
             ClearMesh();
         }
 
+        //clear mesh and rebuild as empty
+        public void ClearMesh()
+        {
+            vertices.Clear();
+        }
+
         //mesh data
         public readonly List<BlockVertex> vertices = [];
 
@@ -15,12 +21,6 @@
         public void AddChunkMeshData(BlockVertex v)
         {
             vertices.Add(v);
-        }
-
-        //clear mesh and rebuild as empty
-        public void ClearMesh()
-        {
-            vertices.Clear();
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.Blocks.BlockShapeData;
+using OurCraft.Blocks.Meshing;
 
 namespace OurCraft.Blocks
 {
@@ -12,13 +12,13 @@ namespace OurCraft.Blocks
     }
 
     //this is the actual logic that we point to once we have a blockstate
-    //eventually blocks will be stored as json files and we will read from them when initializing all the blocks
     public abstract class Block
     {
         //internal block data
         protected string name = "";       
         protected ushort id = 0;
-        public BlockState DefaultState => StateContainer?.DefaultState ?? new BlockState(id, 0);
+
+        public BlockState DefaultState => StateContainer?.DefaultState ?? new BlockState(id, 0); //block with no meta
         public List<IBlockProperty> Properties = [];
         public BlockStateContainer StateContainer = new();
 
@@ -28,19 +28,16 @@ namespace OurCraft.Blocks
 
         //globals
         public static readonly BlockState AIR;
-        public static readonly BlockState INVALID;
 
         static Block()
         {
-            AIR = new BlockState(BlockIDs.AIR_BLOCK);
-            INVALID = new BlockState(BlockIDs.INVALID_BLOCK);
+            AIR = new BlockState(0);
         }
 
         //ctr
-        public Block(string name, BlockShape shape, ushort id)
+        public Block(string name, BlockShape shape)
         {
             this.name = name;
-            this.id = id;
             blockShape = shape;
         }
 
@@ -48,7 +45,7 @@ namespace OurCraft.Blocks
         {
             name = "Empty Block";
             id = ushort.MaxValue;
-            blockShape = BlockShapesRegistry.AirBlockShape;
+            blockShape = new EmptyBlockShape();
         }
 
         //set id of block
@@ -63,7 +60,7 @@ namespace OurCraft.Blocks
             return id;
         }
 
-        // determines each block's way of changing the chunk block state data when placed
+        //determines each block's way of changing the chunk block state data when placed
         public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) { } 
 
         //determines each block's way of updating
@@ -71,9 +68,7 @@ namespace OurCraft.Blocks
 
         //allows to view current properties of a blockstate
         public virtual void DebugState(BlockState state)
-        {
-            Console.Write("\n" + DefaultState.Name);
-        }
+        { Console.Write("\n" + DefaultState.Name); }
         
         //properties
         public virtual bool IsLightSource(BlockState state) => false; 

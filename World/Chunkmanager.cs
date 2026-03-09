@@ -44,7 +44,7 @@ namespace OurCraft.World
         private readonly ThreadPoolSystem threadPool;
         private readonly ThreadPoolSystem lightThread;
 
-        public ChunkManager(RenderDistances renderDistance, ref ThreadPoolSystem tp, ref ThreadPoolSystem lighting)
+        public ChunkManager(int renderDistance, ref ThreadPoolSystem tp, ref ThreadPoolSystem lighting)
         { 
             threadPool = tp;
             lightThread = lighting;
@@ -52,8 +52,7 @@ namespace OurCraft.World
             Entity? playerEnt = EntityManager.GetEntity(EntityManager.PlayerEntityName);
             if (playerEnt != null) playerTracking = playerEnt.Transform;
             
-            int worldSize = renderDistance.GetHashCode() + 2;
-            RenderDistance = worldSize;               
+            RenderDistance = renderDistance;               
             lastPlayerChunk = new ChunkCoord(0, 0);        
         }
 
@@ -467,7 +466,7 @@ namespace OurCraft.World
             int chunkZ = (int)MathF.Floor(pos.Z / Chunk.CHUNK_WIDTH);
             Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
 
-            if (chunk == null) return Block.INVALID;
+            if (chunk == null) return Block.AIR;
 
             //get local coords
             int lx = ModPow2((int)MathF.Floor(pos.X), Chunk.CHUNK_WIDTH);
@@ -585,9 +584,11 @@ namespace OurCraft.World
             Chunk? left, right, back, front, c1, c2, c3, c4;
             ChunkCoord coord;
 
-            if (chunk != null) coord = chunk.ChunkPos;
+            if (chunk != null) coord = chunk.ChunkPos;          
             else return;
+            if (!chunk.Modifiyable()) return;
             if (chunk.changes.Count == 0) return;
+            
             int chunkX = coord.X;
             int chunkZ = coord.Z;
 
@@ -599,13 +600,7 @@ namespace OurCraft.World
             c1 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1));
             c2 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1));
             c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1));
-            c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));
-
-            if (left == null || right == null || front == null || back == null) return;
-            if (c1 == null || c2 == null || c3 == null || c4 == null) return;
-
-            if (!chunk.Modifiyable() || !left.Modifiyable() || !right.Modifiyable() || !front.Modifiyable() || !back.Modifiyable()) return;   
-            if (!c1.Modifiyable() || !c2.Modifiyable() || !c3.Modifiyable() || !c4.Modifiyable()) return;
+            c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));           
 
             ChunkBuilder.RemeshChunk(chunk, left, right, front, back, c1, c2, c3, c4);
         }

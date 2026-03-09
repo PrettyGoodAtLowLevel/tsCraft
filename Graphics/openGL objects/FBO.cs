@@ -56,6 +56,14 @@ namespace OurCraft.openGL_objects
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         }
 
+        //delete frame buffer when out of scope
+        public void Delete()
+        {
+            GL.DeleteFramebuffer(ID);
+            GL.DeleteTexture(ColorTexture);
+            if (DepthRBO != 0) GL.DeleteRenderbuffer(DepthRBO);
+        }
+
         //set as active framebuffer object
         public void Bind()
         {
@@ -68,14 +76,6 @@ namespace OurCraft.openGL_objects
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Viewport(0, 0, screenWidth, screenHeight);
-        }
-
-        //delete frame buffer when out of scope
-        public void Delete()
-        {
-            GL.DeleteFramebuffer(ID);
-            GL.DeleteTexture(ColorTexture);
-            if (DepthRBO != 0) GL.DeleteRenderbuffer(DepthRBO);
         }
     }
 }

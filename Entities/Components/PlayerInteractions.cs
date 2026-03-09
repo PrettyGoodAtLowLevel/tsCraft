@@ -64,7 +64,7 @@ namespace OurCraft.Entities.Components
                     left = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(-1, 0, 0));
 
                     //try to add block
-                    BlockData.GetBlock(currentBlockID).PlaceBlockState(hit.blockPos, hit.faceNormal,
+                    BlockRegistry.GetBlock(currentBlockID).PlaceBlockState(hit.blockPos, hit.faceNormal,
                     bottom, top, front, back, right, left,
                     world.GetBlockState(hit.blockPos), world);
                 }
@@ -97,16 +97,16 @@ namespace OurCraft.Entities.Components
 
         void TryCurrentBlockIncrease()
         {
-            if (currentBlockID < BlockData.MAXBLOCKID) currentBlockID++;
+            if (currentBlockID < BlockRegistry.MaxBlockID) currentBlockID++;
             Console.Clear();
-            Console.WriteLine("currentBlock: " + BlockData.GetBlock(currentBlockID).GetBlockName());
+            Console.WriteLine("currentBlock: " + BlockRegistry.GetBlock(currentBlockID).GetBlockName());
         }
 
         void TryCurrentBlockDecrease()
         {
             if (currentBlockID > 1) currentBlockID--;
             Console.Clear();
-            Console.WriteLine("currentBlock: " + BlockData.GetBlock(currentBlockID).GetBlockName());
+            Console.WriteLine("currentBlock: " + BlockRegistry.GetBlock(currentBlockID).GetBlockName());
         }
 
         void DebugInteractions(ChunkManager world, KeyboardState ks)

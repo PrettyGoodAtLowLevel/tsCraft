@@ -9,9 +9,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplementati
     public class Plant : SurfaceFeature
     {
         public BlockState PlantBlock { get; set; }
-        public Plant()
-        {
-        }
+        public Plant() { }
 
         //just check if the bottom block is eligible
         public override bool CanPlaceFeature(Vector3i startPos, Chunk chunk)

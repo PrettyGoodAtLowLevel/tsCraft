@@ -193,7 +193,7 @@ namespace OurCraft.Terrain_Generation
             float ft = TerrainSplines.temperatureSpline.Evaluate(temp);
             float fh = TerrainSplines.humiditySpline.Evaluate(humid);
             float fv = TerrainSplines.vegetationSpline.Evaluate(veg);
-            Biome biome = WorldGenerator.GetBiome((int)ft, (int)fh, (int)fv);
+            Biome biome = WorldGenerator.GetBiome();
 
             string formattedAmplification =
             (TerrainSplines.weirdnessSpline.Evaluate(w) + 
@@ -232,7 +232,7 @@ namespace OurCraft.Terrain_Generation
             if (e <= -0.35f)
                 return "Highland";
             else if  (e >= 0.2f)
-                return "Highland";
+                return "Meadowland";
             return "Lowland";
         }
 
@@ -281,7 +281,7 @@ namespace OurCraft.Terrain_Generation
 
         public static NoiseJson Load(string fileName, bool debug = false)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Resources/Data/WorldGen/Noises/{fileName}";
+            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/Noises/{fileName}";
             string json = File.ReadAllText(path);
 
             //allow case-insensitive JSON property matching

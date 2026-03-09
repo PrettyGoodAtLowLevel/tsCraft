@@ -1,14 +1,11 @@
-﻿using OpenTK.Mathematics;
-using OurCraft.Blocks.Block_Properties;
-using OurCraft.World;
+﻿using OurCraft.Blocks.Block_Properties;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
     //empty block
     public class AirBlock : Block
     {
-        public AirBlock(string name, BlockShape shape, ushort id) :
-        base(name, shape, id)
+        public AirBlock(string name, BlockShape shape): base(name, shape)
         {
             IsSolid = false;
         }

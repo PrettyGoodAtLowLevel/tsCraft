@@ -7,7 +7,7 @@ namespace OurCraft.Entities.Components
     //fps style player free cam
     public class CameraController : Component
     {
-        private readonly double Speed = 10f;
+        private readonly double Speed = 25f;
         private readonly double Sensitivity = 0.02f;       
         Vector2 lookVector;
 

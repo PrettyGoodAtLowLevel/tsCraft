@@ -52,6 +52,16 @@ namespace OurCraft
             return true;
         }
 
+        //free up vram
+        public void Delete()
+        {
+            if (ID != 0)
+            {
+                GL.DeleteTexture(ID);
+                ID = 0;
+            }
+        }
+
         //bind texture
         public void Bind(TextureUnit unit = TextureUnit.Texture0)
         {
@@ -71,16 +81,6 @@ namespace OurCraft
             shader.Activate();
             int location = GL.GetUniformLocation(shader.ID, uniformName);
             GL.Uniform1(location, unitIndex);
-        }
-
-        //free up vram
-        public void Delete()
-        {
-            if (ID != 0)
-            {
-                GL.DeleteTexture(ID);
-                ID = 0;
-            }
         }
     }
 }

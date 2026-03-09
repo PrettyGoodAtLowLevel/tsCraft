@@ -1,0 +1,7 @@
+{
+  "Name": "Emerald Block",
+  "ModelPath": "Building/EmeraldBlock.json",
+  "LightR": 0,
+  "LightG": 15,
+  "LightB": 0
+}
