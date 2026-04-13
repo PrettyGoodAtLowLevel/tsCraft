@@ -2,6 +2,7 @@
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.Utility;
 using OurCraft.World;
 
 namespace OurCraft.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplementations
@@ -53,7 +54,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplementati
         //place a tree
         public override void PlaceFeature(Vector3i startPos, Chunk chunk)
         {
-            int count = 5 + NoiseRouter.GetVariation(startPos.X + chunk.ChunkPos.X * Chunk.CHUNK_WIDTH, startPos.Y, startPos.Z + chunk.ChunkPos.Z * Chunk.CHUNK_WIDTH, 5, NoiseRouter.seed, 3);
+            int count = 5 + NoiseRouter.GetVariation(startPos.X + chunk.ChunkPos.X * WorldConstants.CHUNK_WIDTH, startPos.Y, startPos.Z + chunk.ChunkPos.Z * WorldConstants.CHUNK_WIDTH, 5, NoiseRouter.seed, 3);
 
             //place log
             int top = 0;

@@ -3,8 +3,10 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation;
-using OurCraft.utility;
+using OurCraft.Utility;
 using OurCraft.World;
+using System.Security.Cryptography;
+using OurCraft.Physics;
 using static OurCraft.Physics.VoxelPhysics;
 
 namespace OurCraft.Entities.Components
@@ -14,6 +16,7 @@ namespace OurCraft.Entities.Components
     {
         int currentBlockID = 0;
         readonly float reach = 4.0f;
+        bool slowTime = false;
 
         internal override void Register()
         {
@@ -109,9 +112,62 @@ namespace OurCraft.Entities.Components
             Console.WriteLine("currentBlock: " + BlockRegistry.GetBlock(currentBlockID).GetBlockName());
         }
 
+        //debug, will remove this later
         void DebugInteractions(ChunkManager world, KeyboardState ks)
         {
-            //debugging
+            DebugChunkState(world, ks);
+
+            if (ks.IsKeyPressed(Keys.R))
+            {
+                Console.Clear();
+                NoiseRouter.DebugPrint((int)Transform.position.X, (int)Transform.position.Z);
+            }
+
+            if (ks.IsKeyPressed(Keys.T)) Console.WriteLine(EntityManager.EntityCount);
+
+            //debug, will remove this later
+            SpawnRigidBody(ks);
+            ManageTime(ks);
+        }
+        
+        void SpawnRigidBody(KeyboardState ks)
+        {
+            
+            if (ks.IsKeyPressed(Keys.Y))
+            {
+                int rand = RandomNumberGenerator.GetInt32(1000);
+                Entity ent = EntityManager.AddEntity("phys " + rand);
+                ent.Transform.position = Transform.position;
+
+                DebugRenderBox box = ent.AddComponent<DebugRenderBox>();
+                box.max = new Vector3(0.4f, 0.9f, 0.4f);
+                box.min = new Vector3(-0.4f, -0.9f, -0.4f);
+                box.SetUpRenderBox(Transform.Forward.Normalized());
+
+                RigidBody rb = ent.AddComponent<RigidBody>();
+                rb.bounds = new Vector3d(0.8, 1.8, 0.8);
+                rb.dragX = 0.0;
+                rb.dragY = 0.0;
+                rb.dragZ = 0.0;
+                rb.groundDragX = 0.0;
+                rb.groundDragZ = 0.0;
+                rb.AddImpulse(Transform.Forward * 25);
+                if (rand % 2 == 0) rb.useGravity = false;
+            }           
+        }
+
+        void ManageTime(KeyboardState ks)
+        {
+            if (ks.IsKeyPressed(Keys.X))
+            {
+                slowTime = !slowTime;
+                if (slowTime) EntityManager.TimeScale = 0.25;
+                else EntityManager.TimeScale = 1.0;
+            }
+        }
+
+        static void DebugChunkState(ChunkManager world, KeyboardState ks)
+        {
             if (ks.IsKeyPressed(Keys.G))
             {
                 Console.Clear();
@@ -122,12 +178,6 @@ namespace OurCraft.Entities.Components
                     Console.WriteLine(chunk.GetState());
                 }
                 world.Debug();
-            }
-
-            if (ks.IsKeyPressed(Keys.R))
-            {
-                Console.Clear();
-                NoiseRouter.DebugPrint((int)Transform.position.X, (int)Transform.position.Z);
             }
         }
     }

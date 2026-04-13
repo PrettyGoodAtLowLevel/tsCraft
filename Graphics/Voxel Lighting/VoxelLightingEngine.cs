@@ -2,19 +2,19 @@
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.World;
 using System.Collections.Concurrent;
-using OurCraft.utility;
+using OurCraft.Utility;
 
 namespace OurCraft.Graphics.Voxel_Lighting
 {
     //has helper methods to calculate block and sky lighting for the world
     public static class VoxelLightingEngine
     {
-        const int CHUNK_SIZE = Chunk.CHUNK_WIDTH; //32
-        const int MAX_HEIGHT = Chunk.CHUNK_HEIGHT;
+        const int CHUNK_SIZE = WorldConstants.CHUNK_WIDTH;
+        const int MAX_HEIGHT = WorldConstants.CHUNK_HEIGHT;
 
         //const vars
-        public const int MAX_LIGHT = 15;
-        public const int MIN_LIGHT = 0;
+        public const int MAX_LIGHT = LightConstants.MAX_LIGHT;
+        public const int MIN_LIGHT = LightConstants.MIN_LIGHT;
 
         //seeds the flood fill lighting from a chunk and computes it
         public static void LightChunk(Chunk chunk, ChunkManager world)

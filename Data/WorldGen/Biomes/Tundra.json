@@ -27,23 +27,23 @@
   "SurfaceFeatures": [
     {
       "Name": "SpruceLog",
-      "Chance": 12000
+      "Chance": 10000
     },
     {
       "Name": "SpruceBush",
-      "Chance": 6500
+      "Chance": 4000
     },
     {
       "Name": "SpruceLeaves",
-      "Chance": 5000
+      "Chance": 2000
     },
     {
       "Name": "SpruceOakTree",
-      "Chance": 1000
+      "Chance": 700
     },
     {
       "Name": "SpruceTree",
-      "Chance": 900
+      "Chance": 450
     },
     {
       "Name": "Grass",

@@ -2,6 +2,7 @@
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
+using OurCraft.Utility;
 
 namespace OurCraft.World
 {
@@ -10,10 +11,10 @@ namespace OurCraft.World
     //the batched mesh allows for low draw calls and split subchunks allow for smaller remesh jobs & block storage
     public class Chunk
     {
-        public const int HEIGHT_IN_SUBCHUNKS = 24;
-        public const int WIDTH_IN_SUBCHUNKS = 2;
-        public const int CHUNK_HEIGHT = SubChunk.SUBCHUNK_SIZE * HEIGHT_IN_SUBCHUNKS;
-        public const int CHUNK_WIDTH = SubChunk.SUBCHUNK_SIZE * WIDTH_IN_SUBCHUNKS;
+        public const int HEIGHT_IN_SUBCHUNKS = WorldConstants.CHUNK_HEIGHT_IN_SUBCHUNKS;
+        public const int WIDTH_IN_SUBCHUNKS = WorldConstants.CHUNK_WIDTH_IN_SUBCHUNKS;
+        public const int CHUNK_HEIGHT = WorldConstants.CHUNK_HEIGHT;
+        public const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
 
         //rendering
         public readonly ChunkMesh batchedMesh;

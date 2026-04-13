@@ -24,6 +24,9 @@ namespace OurCraft.Entities
         //On Update is called once per frame
         public virtual void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms) { }
 
+        //On FixedUpdate is called once per physics tick
+        public virtual void OnFixedUpdate(ChunkManager world) { }
+
         //On Destroy is called once the component is removed (usually at the same time as unregister)
         public virtual void OnDestroy() { }
     }

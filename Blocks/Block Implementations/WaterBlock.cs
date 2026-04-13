@@ -1,4 +1,5 @@
 ﻿using OurCraft.Blocks.Block_Properties;
+using OurCraft.Utility;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -16,16 +17,20 @@ namespace OurCraft.Blocks.Block_Implementations
             return true;
         }
 
-        //water isnt a light source
-        public override bool IsLightSource(BlockState state)
+        //skylight mostly passes through water, but deep oceans are dark
+        public override int GetSkyLightAttenuation(BlockState state)
+        {
+            return LightConstants.LOW_ATTENUATION;
+        }
+
+        public override bool IsPhysicsSolid(BlockState state)
         {
             return false;
         }
 
-        //skylight mostly passes through water, but deep oceans are dark
-        public override int GetSkyLightAttenuation(BlockState state)
+        public override bool IsFluid(BlockState state)
         {
-            return 1;
+            return true;
         }
     }
 }

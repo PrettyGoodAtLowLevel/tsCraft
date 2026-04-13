@@ -1,6 +1,8 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.World;
+using OurCraft.Physics;
+using OurCraft.Utility;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -21,6 +23,7 @@ namespace OurCraft.Blocks.Block_Implementations
         public SlabBlock(string name, BlockShape shape): base(name, shape)
         { 
             Properties.Add(SLAB_TYPE);
+            PropertyLookup.Add(SLAB_TYPE, 0);
         }
 
         //determines how we place a slab in the world based on the block we hit
@@ -53,8 +56,8 @@ namespace OurCraft.Blocks.Block_Implementations
         {
             SlabType thisState = state.GetProperty(SLAB_TYPE);
 
-            if (thisState == SlabType.Double) return 15;
-            return 0;
+            if (thisState == SlabType.Double) return LightConstants.MAX_ATTENUATION;
+            return LightConstants.NO_ATTENUATION;
         }
 
         //finds the slab state
@@ -65,10 +68,31 @@ namespace OurCraft.Blocks.Block_Implementations
             Console.WriteLine(", Slab Type: " + slabType.ToString());
         }
 
-        //slab isnt a light source
-        public override bool IsLightSource(BlockState state)
+        public override AABB GetAABB(Vector3d worldPos, BlockState state)
+        {           
+            SlabType thisState = state.GetProperty(SLAB_TYPE);
+
+            if (thisState == SlabType.Double)
+                return new AABB { min = worldPos, max = worldPos + Vector3d.One };
+
+            if (thisState == SlabType.Bottom)
+                return new AABB { min = worldPos, max = worldPos + new Vector3d(1.0, 0.5, 1.0) };
+            
+            return new AABB
+            {
+                min = worldPos + new Vector3d(0.0, 0.5, 0.0),
+                max = worldPos + new Vector3d(1.0, 1.0, 1.0)
+            };
+        }
+
+        public override bool DetectsCollision(BlockState state)
         {
-            return false;
+            return true;
+        }
+
+        public override bool IsPhysicsSolid(BlockState state)
+        {
+            return true;
         }
     }
 }

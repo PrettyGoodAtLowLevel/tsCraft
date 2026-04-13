@@ -36,6 +36,14 @@ namespace OurCraft.Entities
             }
         }
 
+        public static void FixedUpdate(ChunkManager world)
+        {
+            foreach (T component in Components)
+            {
+                component.OnFixedUpdate(world);
+            }
+        }
+
         public static void Clear()
         {
             foreach (var component in Components)

@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="utility\FastNoiseLite.cs" />
+    <Compile Remove="Utility\FastNoiseLite.cs" />
   </ItemGroup>
 
   <ItemGroup>

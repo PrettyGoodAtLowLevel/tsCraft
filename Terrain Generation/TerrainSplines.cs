@@ -1,4 +1,4 @@
-﻿using OurCraft.utility;
+﻿using OurCraft.Utility;
 using System.Text.Json;
 
 namespace OurCraft.Terrain_Generation

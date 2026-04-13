@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using OurCraft.Entities;
 using OurCraft.Entities.Components;
 using OurCraft.openGL_objects;
+using OurCraft.Utility;
 using OurCraft.World;
 using OurCraft.World.Helpers;
 
@@ -14,18 +15,19 @@ namespace OurCraft.Graphics
     {        
         //chunk drawing
         private readonly ChunkManager chunks;
-        private readonly Shader chunkShader = new();
-        private readonly Shader debugShader = new();
+        private static readonly Shader chunkShader = new();
+        private static readonly Shader debugShader = new();
         private readonly CameraRender? sceneCamera;
 
         //post processing
         private readonly FBO postFBO; 
-        private readonly Shader postShader = new(); 
+        private static readonly Shader postShader = new(); 
         private readonly FullscreenQuad postProcessingQuad;
         private int screenWidth, screenHeight;
 
         //atmosphere
-        private Vector3 skyColor = Vector3.Zero;
+        public static Vector3 skyColor = Vector3.Zero;
+        private static float fogIntensity = 20.0f;
 
         public Renderer(ref ChunkManager chunks,  int width, int height)
         {
@@ -57,22 +59,21 @@ namespace OurCraft.Graphics
             //-----set up block shaders-----
             chunkShader.Activate();
             chunkShader.SetVector3("skyColor", skyColor);
-            chunkShader.SetFloat("fogStart", chunks.RenderDistance * Chunk.CHUNK_WIDTH - 20);
-            chunkShader.SetFloat("fogEnd", chunks.RenderDistance * Chunk.CHUNK_WIDTH);
+            chunkShader.SetFloat("fogStart", chunks.RenderDistance * WorldConstants.CHUNK_WIDTH - fogIntensity);
+            chunkShader.SetFloat("fogEnd", chunks.RenderDistance * WorldConstants.CHUNK_WIDTH);
             chunkShader.SetFloat("fogDensity", 0.5f);
 
             //-----post processing----
             //tweak for weird screen effects
             postShader.Activate();
             postShader.SetInt("sceneTex", 0);
-            postShader.SetFloat("caStrength", 0.0f);
-            postShader.SetFloat("vignetteStrength", 0.0f);
-            postShader.SetFloat("saturation", 1.0f);
+            postShader.SetFloat("caStrength", 0.015f);
+            postShader.SetFloat("vignetteStrength", 0.5f);
+            postShader.SetFloat("saturation", 1.1f);
             postShader.SetVector3("tintColor", new Vector3(0.0f, 0.0f, 0.0f));
             postShader.SetFloat("tintIntensity", 0.0f);
             postShader.SetVector2("uResolution", new Vector2(screenWidth, screenHeight));
             postShader.SetFloat("aaStrength", 0.0f);
-
         }
 
         //configure openGL properly
@@ -107,7 +108,7 @@ namespace OurCraft.Graphics
         }
 
         //get all render boxes and draw them
-        private void DrawDebugBoxes(CameraRender sceneCamera)
+        private static void DrawDebugBoxes(CameraRender sceneCamera)
         {
             var boxes = DebugRenderSystem.AllRenderBoxes;
             debugShader.Activate();
@@ -154,7 +155,7 @@ namespace OurCraft.Graphics
         }
 
         //clear color scene and reset depth buffer
-        private void ClearScene()
+        private static void ClearScene()
         {
             GL.ClearColor(skyColor.X, skyColor.Y, skyColor.Z, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -177,7 +178,7 @@ namespace OurCraft.Graphics
         }
 
         //update camera matrix for shader
-        private void UpdateCamera(CameraRender sceneCamera)
+        private static void UpdateCamera(CameraRender sceneCamera)
         {
             sceneCamera.UpdateMatrix();
             sceneCamera.SendToShader(chunkShader, "camMatrix");
@@ -199,6 +200,13 @@ namespace OurCraft.Graphics
 
                 return FrustumCulling.IsBoxInFrustum(sceneCamera.GetFrustum(), min, max);
             }).ToList();
+        }
+
+        //updates the sky color
+        public static void UpdateSkyShader()
+        {
+            chunkShader.Activate();
+            chunkShader.SetVector3("skyColor", skyColor);
         }
     }
 }

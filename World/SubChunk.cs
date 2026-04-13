@@ -1,7 +1,7 @@
 ﻿using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
-using OurCraft.utility;
+using OurCraft.Utility;
 
 namespace OurCraft.World
 {
@@ -9,8 +9,8 @@ namespace OurCraft.World
     //subchunks are utilized to split up meshing jobs and compress block state data
     public class SubChunk
     {
-        public const int SUBCHUNK_SIZE = 16;
-        public const int CHUNK_WIDTH = SUBCHUNK_SIZE * Chunk.WIDTH_IN_SUBCHUNKS;
+        public const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
+        public const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
 
         //world data
         public int ChunkXPos { get; private set; } = 0;

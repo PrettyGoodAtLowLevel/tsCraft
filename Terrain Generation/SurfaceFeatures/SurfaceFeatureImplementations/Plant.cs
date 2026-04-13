@@ -1,5 +1,4 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Blocks;
 using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 
@@ -21,17 +20,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures.SurfaceFeatureImplementati
         //simply replace starting block with plant block
         public override void PlaceFeature(Vector3i startPos, Chunk chunk)
         {
-            //int count = NoiseRouter.GetVariation(startPos.X + chunk.ChunkPos.X * SubChunk.SUBCHUNK_SIZE, startPos.Y, startPos.Z + chunk.ChunkPos.Z * SubChunk.SUBCHUNK_SIZE, 5, NoiseRouter.seed, 100);
-            //if (count > 100)
             chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, PlantBlock);
-            /*
-            else if (count > 70)
-                chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, BlockData.GetBlock(BlockIDs.REDSTONE_BLOCK).DefaultState);
-            else if (count > 30)
-                chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, BlockData.GetBlock(BlockIDs.LAPIZ_BLOCK).DefaultState);
-            else
-                chunk.SetBlockUnsafe(startPos.X, startPos.Y, startPos.Z, BlockData.GetBlock(BlockIDs.EMERALD_BLOCK).DefaultState);
-            */
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OurCraft.Entities.Components;
 using System.Runtime.InteropServices;
 
 namespace OurCraft.Graphics

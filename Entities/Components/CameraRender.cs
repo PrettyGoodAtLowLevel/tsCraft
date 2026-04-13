@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using OurCraft.Utility;
 using static OurCraft.Graphics.FrustumCulling;
 
 namespace OurCraft.Entities.Components
@@ -6,13 +7,14 @@ namespace OurCraft.Entities.Components
     //handles matrix transformations in the shader
     public class CameraRender : Component
     {
-        public int width = 1920;
-        public int height = 1080;
+        public int width = RenderingConstants.SCREEN_WIDTH;
+        public int height = RenderingConstants.SCREEN_HEIGHT;
+      
+        public int FOV = RenderingConstants.DEFAULT_FOV;
+        readonly float nearPlane = RenderingConstants.DEFAULT_NEAR_PLANE;
+        readonly float farPlane = RenderingConstants.DEFAULT_FAR_PLANE;
 
-        private Matrix4 cameraMatrix;     
-        public int FOV = 90;
-        readonly float nearPlane = 0.01f;
-        readonly float farPlane = 1500.0f;
+        private Matrix4 cameraMatrix;
 
         internal override void Register()
         {
@@ -33,7 +35,7 @@ namespace OurCraft.Entities.Components
         //updates the camera matrix with a view and perspective function
         public void UpdateMatrix()
         {
-            var view = Matrix4.LookAt(Vector3.Zero, Transform.Forward, Vector3.UnitY);
+            var view = Matrix4.LookAt(Vector3.Zero, Transform.Forward, Vector3.UnitY);           
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), (float)width / height, nearPlane, farPlane); 
             cameraMatrix = view * projection;
         }

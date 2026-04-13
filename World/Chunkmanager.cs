@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
 using OurCraft.Graphics.Voxel_Lighting;
-using OurCraft.utility;
+using OurCraft.Utility;
 using OurCraft.Blocks.Block_Properties;
 using System.Collections.Concurrent;
 using OurCraft.World.Helpers;
@@ -425,8 +425,8 @@ namespace OurCraft.World
             int pZ = (int)Math.Floor(playerTracking.position.Z);
 
             //get chunk position from world position
-            int chunkX = pX / Chunk.CHUNK_WIDTH;
-            int chunkZ = pZ / Chunk.CHUNK_WIDTH;
+            int chunkX = pX / WorldConstants.CHUNK_WIDTH;
+            int chunkZ = pZ / WorldConstants.CHUNK_WIDTH;
 
             //handle negatives properly
             if (pX < 0) chunkX -= 1;
@@ -462,16 +462,16 @@ namespace OurCraft.World
         public BlockState GetBlockState(Vector3 pos)
         {
             //world to chunk coord
-            int chunkX = (int)MathF.Floor(pos.X / Chunk.CHUNK_WIDTH);
-            int chunkZ = (int)MathF.Floor(pos.Z / Chunk.CHUNK_WIDTH);
+            int chunkX = (int)MathF.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)MathF.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
             Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
 
             if (chunk == null) return Block.AIR;
 
             //get local coords
-            int lx = ModPow2((int)MathF.Floor(pos.X), Chunk.CHUNK_WIDTH);
+            int lx = ModPow2((int)MathF.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
             int ly = (int)MathF.Floor(pos.Y);
-            int lz = ModPow2((int)MathF.Floor(pos.Z), Chunk.CHUNK_WIDTH);
+            int lz = ModPow2((int)MathF.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
 
             return chunk.GetBlockSafe(lx, ly, lz);
         }
@@ -480,16 +480,16 @@ namespace OurCraft.World
         public ushort GetLight(Vector3 pos)
         {
             //world to chunk coord
-            int chunkX = (int)MathF.Floor(pos.X / Chunk.CHUNK_WIDTH);
-            int chunkZ = (int)MathF.Floor(pos.Z / Chunk.CHUNK_WIDTH);
+            int chunkX = (int)MathF.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)MathF.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
             Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
 
             if (chunk == null) return 0;
 
             //get local coords
-            int lx = ModPow2((int)MathF.Floor(pos.X), Chunk.CHUNK_WIDTH);
+            int lx = ModPow2((int)MathF.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
             int ly = (int)MathF.Floor(pos.Y);
-            int lz = ModPow2((int)MathF.Floor(pos.Z), Chunk.CHUNK_WIDTH);
+            int lz = ModPow2((int)MathF.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
 
             return chunk.GetLight(lx, ly, lz);
         }
@@ -497,16 +497,16 @@ namespace OurCraft.World
         //try set block in a chunk
         public void SetBlock(Vector3 pos, BlockState state)
         {
-            if (pos.Y < 0 || pos.Y >= Chunk.CHUNK_HEIGHT) return;
+            if (pos.Y < 0 || pos.Y >= WorldConstants.CHUNK_HEIGHT) return;
             //world to chunk coord
-            int chunkX = (int)MathF.Floor(pos.X / Chunk.CHUNK_WIDTH);
-            int chunkZ = (int)MathF.Floor(pos.Z / Chunk.CHUNK_WIDTH);
+            int chunkX = (int)MathF.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)MathF.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
             Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
 
             //get local chunk positions
-            int lx = ModPow2((int)MathF.Floor(pos.X), Chunk.CHUNK_WIDTH);
+            int lx = ModPow2((int)MathF.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
             int ly = (int)MathF.Floor(pos.Y);
-            int lz = ModPow2((int)MathF.Floor(pos.Z), Chunk.CHUNK_WIDTH);
+            int lz = ModPow2((int)MathF.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
             if (chunk == null || chunk.GetState() != ChunkState.Built) return;
 
             //update light
@@ -541,7 +541,7 @@ namespace OurCraft.World
         //marks a block position as dirty and marks all chunks touching that block position as dirty
         public void MarkPosDirty(Vector3i pos, Chunk chunk)
         {
-            const int c = Chunk.CHUNK_WIDTH - 1;
+            const int c = WorldConstants.CHUNK_WIDTH - 1;
 
             int gx = (int)MathF.Floor(pos.X);
             int gy = (int)MathF.Floor(pos.Y);

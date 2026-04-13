@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.utility;
+using OurCraft.Utility;
 using OurCraft.World;
 using System.Collections.Concurrent;
 
@@ -9,11 +9,12 @@ namespace OurCraft.Graphics.Voxel_Lighting
     //does all of the skylight calculations for us
     public static class SkyLightingEngine
     {
-        const int CHUNK_SIZE = Chunk.CHUNK_WIDTH; //32
-        const int MAX_HEIGHT = Chunk.CHUNK_HEIGHT;
-        const int MAX_SKY = 15;
-        const int MIN_SKY = 0;
-        const int LOW_LIGHT = 1;
+        const int CHUNK_SIZE = WorldConstants.CHUNK_WIDTH;
+        const int MAX_HEIGHT = WorldConstants.CHUNK_HEIGHT;
+
+        //const vars
+        public const int MAX_SKY = LightConstants.MAX_SKY;
+        public const int MIN_SKY = LightConstants.MIN_SKY;
 
         //seeds the top layer of sky lights in a chunk
         public static void SeedSkyLights(ChunkManager world, Chunk chunk, ConcurrentQueue<SkyLightNode> skyLights)
@@ -39,15 +40,11 @@ namespace OurCraft.Graphics.Voxel_Lighting
             {
                 for (int z = 0; z < CHUNK_SIZE; z++)
                 {
-                    BlockState state = chunk.GetBlockSafe(x, chunk.MaxSolidY, z);
-                    bool transparent = state.LightPassable;
-                    if (!transparent) continue;
-
                     int globalX = x + (CHUNK_SIZE * chunk.ChunkPos.X);
                     int globalY = chunk.MaxSolidY;
                     int globalZ = z + (CHUNK_SIZE * chunk.ChunkPos.Z);
 
-                    int lightValue = MAX_SKY - state.SkyLightAttenuation;
+                    int lightValue = MAX_SKY;
                     lightValue = Math.Clamp(lightValue, MIN_SKY, MAX_SKY);
                     skyLights.Enqueue(new SkyLightNode(globalX, globalY, globalZ, (byte)lightValue));
                 }
@@ -69,7 +66,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                 ushort packed = chunk.GetLight(x, globalY, z);
                 byte existing = VoxelMath.UnpackLight16Sky(packed);
 
-                if (existing <= LOW_LIGHT) continue;
+                if (existing <= MIN_SKY) continue;
 
                 int globalX = (chunk.ChunkPos.X * CHUNK_SIZE) + x;
                 int globalZ = (chunk.ChunkPos.Z * CHUNK_SIZE) + z;
@@ -93,7 +90,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     ushort packed = chunk.GetLight(x, globalY, z);
                     byte existing = VoxelMath.UnpackLight16Sky(packed);
 
-                    if (existing <= LOW_LIGHT) continue;
+                    if (existing <= MIN_SKY) continue;
 
                     int globalX = (chunk.ChunkPos.X * CHUNK_SIZE) + x;
                     int globalZ = (chunk.ChunkPos.Z * CHUNK_SIZE) + z;
@@ -118,7 +115,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     ushort packed = chunk.GetLight(x, globalY, z);
                     byte existing = VoxelMath.UnpackLight16Sky(packed);
 
-                    if (existing <= LOW_LIGHT) continue;
+                    if (existing <= MIN_SKY) continue;
 
                     int globalX = (chunk.ChunkPos.X * CHUNK_SIZE) + x;
                     int globalZ = (chunk.ChunkPos.Z * CHUNK_SIZE) + z;

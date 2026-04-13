@@ -16,12 +16,6 @@ namespace OurCraft.Blocks.Block_Implementations
             return true;
         }
 
-        //air is not a light source
-        public override bool IsLightSource(BlockState state)
-        {
-            return false;
-        }
-
         //air lets skylight fully pass
         public override int GetSkyLightAttenuation(BlockState state)
         {

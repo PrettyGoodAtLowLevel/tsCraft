@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.World;
+using OurCraft.Physics;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -8,8 +9,7 @@ namespace OurCraft.Blocks.Block_Implementations
     public class FullBlock : Block
     {
         //csctr
-        public FullBlock(string name, BlockShape shape): base(name, shape)
-        { }
+        public FullBlock(string name, BlockShape shape): base(name, shape) { }
 
         //nothing special just add the block on the face the player is looking at
         public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
@@ -17,16 +17,23 @@ namespace OurCraft.Blocks.Block_Implementations
             world.SetBlock(globalPos + hitNormal, DefaultState);
         }
 
-        //light cant pass through a full cube that is fully opaque
-        public override bool IsLightPassable(BlockState state)
+        public override AABB GetAABB(Vector3d worldPos, BlockState state)
         {
-            return false;
+            return new AABB()
+            {
+                min = worldPos,
+                max = worldPos + Vector3d.One
+            };
         }
 
-        //not a light source
-        public override bool IsLightSource(BlockState state)
+        public override bool DetectsCollision(BlockState state)
         {
-            return false;
+            return true;
+        }
+
+        public override bool IsPhysicsSolid(BlockState state)
+        {
+            return true;
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.World;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -21,6 +21,7 @@ namespace OurCraft.Blocks.Block_Implementations
         public BlockLog(string name, BlockShape shape): base(name, shape)
         {
             Properties.Add(AXIS);
+            PropertyLookup.Add(AXIS, 0);
         }
 
         //just add regular block to chunk, switch axis based on hit normal
@@ -41,18 +42,6 @@ namespace OurCraft.Blocks.Block_Implementations
             base.DebugState(thisBlock);
             Axis axis = thisBlock.GetProperty(AXIS);
             Console.WriteLine(", Axis: " + axis.ToString());
-        }
-
-        //log is a solid block, most likely
-        public override bool IsLightPassable(BlockState state)
-        {
-            return false;
-        }
-
-        //log is not a light source
-        public override bool IsLightSource(BlockState state)
-        {
-            return false;
         }
     }
 }

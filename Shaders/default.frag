@@ -33,6 +33,7 @@ void main()
 {
     //sample texture
     vec4 texColor = texture(tex0, TexCoords);
+    //vec4 texColor = vec4(1.0);
     
     if(texColor.a < 0.01) discard; //skip fully transparent
 

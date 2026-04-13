@@ -3,17 +3,18 @@ using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation;
 using OurCraft.Terrain_Generation.SurfaceFeatures;
+using OurCraft.Utility;
 
 namespace OurCraft.World.Helpers
 {
     //helps generate block data of chunks and subchunks using the world generator
     public static class ChunkGenerator
     {
-        const int HEIGHT_IN_SUBCHUNKS = 24;
-        const int WIDTH_IN_SUBCHUNKS = 2;
-        const int CHUNK_HEIGHT = SUBCHUNK_SIZE * HEIGHT_IN_SUBCHUNKS;
-        const int CHUNK_WIDTH = SUBCHUNK_SIZE * WIDTH_IN_SUBCHUNKS;
-        const int SUBCHUNK_SIZE = 16;
+        const int HEIGHT_IN_SUBCHUNKS = WorldConstants.CHUNK_HEIGHT_IN_SUBCHUNKS;
+        const int WIDTH_IN_SUBCHUNKS = WorldConstants.CHUNK_WIDTH_IN_SUBCHUNKS;
+        const int CHUNK_HEIGHT = WorldConstants.CHUNK_HEIGHT;
+        const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
+        const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
 
         //fills in all subchunks with block state data
         public static void GenerateBlocks(Chunk chunk)
@@ -51,7 +52,7 @@ namespace OurCraft.World.Helpers
             }
 
             //do pre lighting stage lighting calculations
-            chunk.MaxSolidY = GetChunkMaxSolidY(chunk) + 1;
+            chunk.MaxSolidY = GetChunkMaxSolidY(chunk) + 2;
             InitLightMap(chunk, chunk.MaxSolidY);
 
             chunk.SetState(ChunkState.VoxelOnly);
@@ -209,22 +210,45 @@ namespace OurCraft.World.Helpers
         //scans chunk from top down to find the first y layer with blocks
         static int GetChunkMaxSolidY(Chunk chunk)
         {
-            const int max = CHUNK_HEIGHT - 1;
-
             for (int sy = HEIGHT_IN_SUBCHUNKS - 1; sy >= 0; sy--)
             {
+                bool layerHasBlocks = false;
+
+                //first check if layer contains any blocks
+                for (int sx = 0; sx < WIDTH_IN_SUBCHUNKS; sx++)
+                {
+                    for (int sz = 0; sz < WIDTH_IN_SUBCHUNKS; sz++)
+                    {
+                        if (!chunk.SubChunks[sx, sy, sz].IsAllAir())
+                        {
+                            layerHasBlocks = true;
+                            break;
+                        }
+                    }
+                    if (layerHasBlocks) break;
+                }
+
+                if (!layerHasBlocks) continue;
+
+                //scan the entire subchunk y-layer for the highest block
+                int maxY = -1;
+
                 for (int sx = 0; sx < WIDTH_IN_SUBCHUNKS; sx++)
                 {
                     for (int sz = 0; sz < WIDTH_IN_SUBCHUNKS; sz++)
                     {
                         SubChunk subChunk = chunk.SubChunks[sx, sy, sz];
                         if (subChunk.IsAllAir()) continue;
-                        return ScanSubChunkLayer(subChunk) + 1;
+
+                        int y = ScanSubChunkLayer(subChunk);
+                        if (y > maxY) maxY = y;
                     }
                 }
+
+                return maxY + 1;
             }
 
-            return max;
+            return CHUNK_HEIGHT - 1;
         }
 
         //helper for getting max solid y

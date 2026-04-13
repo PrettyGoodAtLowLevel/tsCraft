@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OurCraft.Utility;
 using OurCraft.World;
 using System.Runtime.InteropServices;
 
@@ -41,7 +42,7 @@ namespace OurCraft.Graphics
         }
 
         //converts float values from 0-chunksize to shorts, which are then converted again in the shader
-        static short EncodeToShort(float value, float chunkSize = Chunk.CHUNK_WIDTH)
+        static short EncodeToShort(float value, float chunkSize = WorldConstants.CHUNK_WIDTH)
         {
             //normalize [0, chunkSize) -> [0, 1)
             float normalized = value / chunkSize;

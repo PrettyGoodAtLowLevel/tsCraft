@@ -1,5 +1,6 @@
 ﻿using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.Utility;
 
 namespace OurCraft.Terrain_Generation
 {
@@ -7,9 +8,9 @@ namespace OurCraft.Terrain_Generation
     public static class WorldGenerator
     {
         //terrain height values
-        public const int SEA_LEVEL = 126;
-        public const int MIN_HEIGHT = 90;
-        public const int MAX_HEIGHT = 320;
+        public const int SEA_LEVEL = WorldGenConstants.DEFAULT_SEA_LEVEL;
+        public const int MIN_HEIGHT = WorldGenConstants.DEFAULT_MIN_HEIGHT;
+        public const int MAX_HEIGHT = WorldGenConstants.DEFAULT_MAX_HEIGHT;
 
         static BlockState worldBlock;
         static BlockState emptyBlock;

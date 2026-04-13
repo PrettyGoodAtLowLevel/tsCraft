@@ -1,4 +1,4 @@
-﻿namespace OurCraft.utility
+﻿namespace OurCraft.Utility
 {
     //allows to safely run functions on seperate threads
     public class ThreadPoolSystem : IDisposable

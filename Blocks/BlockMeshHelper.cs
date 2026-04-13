@@ -2,6 +2,7 @@
 using OurCraft.Graphics;
 using OurCraft.Graphics.Voxel_Lighting;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.Utility;
 
 namespace OurCraft.Blocks
 {
@@ -9,8 +10,8 @@ namespace OurCraft.Blocks
     public static class BlockMeshHelper
     {
         //const data
-        private const int TEX_SIZE_IN_BLOCKS_X = 32; //512 / 16
-        private const int TEX_SIZE_IN_BLOCKS_Y = 16; //256 / 16
+        private const int TEX_SIZE_IN_BLOCKS_X = RenderingConstants.BLOCK_TEXTURE_WIDTH; //512 / 16
+        private const int TEX_SIZE_IN_BLOCKS_Y = RenderingConstants.BLOCK_TEXTURE_HEIGHT; //256 / 16
 
         //face culling things
         public static CubeFaces Opposite(CubeFaces face)

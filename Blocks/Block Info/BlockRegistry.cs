@@ -26,46 +26,46 @@ namespace OurCraft.Blocks
         public static void InitBlocks()
         {
             BlockLoader.RegisterAirBlock("Air");
-            BlockLoader.RegisterFullBlock("GrassBlock.json");
-            BlockLoader.RegisterFullBlock("DirtBlock.json");
-            BlockLoader.RegisterFullBlock("StoneBlock.json");
-            BlockLoader.RegisterFullBlock("SandBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/GrassBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/DirtBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/StoneBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/SandBlock.json");
 
-            BlockLoader.RegisterFullBlock("SnowBlock.json");
-            BlockLoader.RegisterFullBlock("SnowyGrassBlock.json");           
-            BlockLoader.RegisterFullBlock("IceBlock.json");
-            BlockLoader.RegisterFullBlock("GravelBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/SnowBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/SnowyGrassBlock.json");           
+            BlockLoader.RegisterFullBlock("Natural/IceBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/GravelBlock.json");
 
-            BlockLoader.RegisterWaterBlock("WaterBlock.json");
-            BlockLoader.RegisterCrossBlock("Rose.json");
-            BlockLoader.RegisterCrossBlock("Grass.json");
-            BlockLoader.RegisterCrossBlock("DeadBush.json");
+            BlockLoader.RegisterWaterBlock("Natural/WaterBlock.json");
+            BlockLoader.RegisterCrossBlock("Natural/Rose.json");
+            BlockLoader.RegisterCrossBlock("Natural/Grass.json");
+            BlockLoader.RegisterCrossBlock("Natural/DeadBush.json");
 
-            BlockLoader.RegisterLeavesBlock("OakLeaves.json");
-            BlockLoader.RegisterLeavesBlock("SpruceLeaves.json");
-            BlockLoader.RegisterLeavesBlock("BirchLeaves.json");
-            BlockLoader.RegisterLeavesBlock("JungleLeaves.json");
+            BlockLoader.RegisterLeavesBlock("Natural/OakLeaves.json");
+            BlockLoader.RegisterLeavesBlock("Natural/SpruceLeaves.json");
+            BlockLoader.RegisterLeavesBlock("Natural/BirchLeaves.json");
+            BlockLoader.RegisterLeavesBlock("Natural/JungleLeaves.json");
 
-            BlockLoader.RegisterLogBlock("OakLog.json");
-            BlockLoader.RegisterLogBlock("SpruceLog.json");
-            BlockLoader.RegisterLogBlock("BirchLog.json");
-            BlockLoader.RegisterLogBlock("JungleLog.json");
+            BlockLoader.RegisterLogBlock("Logs/OakLog.json");
+            BlockLoader.RegisterLogBlock("Logs/SpruceLog.json");
+            BlockLoader.RegisterLogBlock("Logs/BirchLog.json");
+            BlockLoader.RegisterLogBlock("Logs/JungleLog.json");
 
-            BlockLoader.RegisterGlassBlock("GlassBlock.json");
-            BlockLoader.RegisterFullBlock("OakPlanks.json");
-            BlockLoader.RegisterFullBlock("SprucePlanks.json");
-            BlockLoader.RegisterFullBlock("BirchPlanks.json");
-            BlockLoader.RegisterFullBlock("JunglePlanks.json");
+            BlockLoader.RegisterGlassBlock("Building/GlassBlock.json");
+            BlockLoader.RegisterFullBlock("Planks/OakPlanks.json");
+            BlockLoader.RegisterFullBlock("Planks/SprucePlanks.json");
+            BlockLoader.RegisterFullBlock("Planks/BirchPlanks.json");
+            BlockLoader.RegisterFullBlock("Planks/JunglePlanks.json");
 
-            BlockLoader.RegisterSlabBlock("StoneSlab.json");
-            BlockLoader.RegisterSlabBlock("OakSlab.json");
-            BlockLoader.RegisterSlabBlock("SpruceSlab.json");
-            BlockLoader.RegisterSlabBlock("BirchSlab.json");
-            BlockLoader.RegisterSlabBlock("JungleSlab.json");
+            BlockLoader.RegisterSlabBlock("Natural/StoneSlab.json");
+            BlockLoader.RegisterSlabBlock("Planks/OakSlab.json");
+            BlockLoader.RegisterSlabBlock("Planks/SpruceSlab.json");
+            BlockLoader.RegisterSlabBlock("Planks/BirchSlab.json");
+            BlockLoader.RegisterSlabBlock("Planks/JungleSlab.json");
 
-            BlockLoader.RegisterFullLightBlock("RedStoneBlock.json");
-            BlockLoader.RegisterFullLightBlock("EmeraldBlock.json");
-            BlockLoader.RegisterFullLightBlock("LapizBlock.json");
+            BlockLoader.RegisterFullLightBlock("Building/RedStoneBlock.json");
+            BlockLoader.RegisterFullLightBlock("Building/EmeraldBlock.json");
+            BlockLoader.RegisterFullLightBlock("Building/LapizBlock.json");
         }
     }
 }

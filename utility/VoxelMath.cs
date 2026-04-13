@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 
-namespace OurCraft.utility
+namespace OurCraft.Utility
 {
     //contains custom helper math functions
     //mainly for terrain gen

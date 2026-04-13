@@ -3,17 +3,17 @@ using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.Graphics.Voxel_Lighting;
+using OurCraft.Utility;
 
 namespace OurCraft.World.Helpers
 {
     //helps build mesh data of chunk/subchunks
     public static class ChunkBuilder
     {
-        const int HEIGHT_IN_SUBCHUNKS = 24;
-        const int WIDTH_IN_SUBCHUNKS = 2;
-        const int CHUNK_HEIGHT = SUBCHUNK_SIZE * HEIGHT_IN_SUBCHUNKS;
-        const int CHUNK_WIDTH = SUBCHUNK_SIZE * WIDTH_IN_SUBCHUNKS;
-        const int SUBCHUNK_SIZE = 16;
+        const int HEIGHT_IN_SUBCHUNKS = WorldConstants.CHUNK_HEIGHT_IN_SUBCHUNKS;
+        const int WIDTH_IN_SUBCHUNKS = WorldConstants.CHUNK_WIDTH_IN_SUBCHUNKS;
+        const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
+        const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
 
         //creates the cpu side mesh of each subchunk in a chunk
         public static void CreateChunkMesh(Chunk chunk, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
@@ -167,7 +167,7 @@ namespace OurCraft.World.Helpers
             return nb;
         }
 
-        //returns the values necessary for computing the light values for meshing
+        //returns light values necessary for computing smooth lighting data when meshing
         static LightingData GetLightData(SubChunk sub, Vector3i pos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
         Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
@@ -178,14 +178,14 @@ namespace OurCraft.World.Helpers
 
             //helper to get neighbor block safely
             ushort L(int ox, int oy, int oz) => GetLightSafe(sub, x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-            ld.thisLight = L(0, 0, 0);
 
-            //top face + top corners
+            //face neighbors and current
+            ld.thisLight = L(0, 0, 0);
             ld.topLight = L(0, +1, 0);
             ld.bottomLight = L(0, -1, 0);
             ld.frontLight = L(0, 0, +1);
             ld.backLight = L(0, 0, -1);
-            ld.rightLight = L(1, 0, 0);
+            ld.rightLight = L(+1, 0, 0);
             ld.leftLight = L(-1, 0, 0);
 
             return ld;

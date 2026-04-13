@@ -159,5 +159,4 @@ namespace OurCraft.Blocks
         public Vector4 UV;       //normalized 0–1 UVs
         public bool Cullable;    //whether to test neighbor for culling
     }
-
 }

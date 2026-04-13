@@ -1,4 +1,5 @@
 ﻿using OpenTK.Mathematics;
+using OurCraft.Physics;
 
 namespace OurCraft.Blocks.Block_Properties
 {
@@ -10,7 +11,7 @@ namespace OurCraft.Blocks.Block_Properties
     //represents a block ids current state in a subchunk
     public readonly struct BlockState
     {
-        public readonly ushort BlockID; // the id in the global block array
+        public readonly ushort BlockID;  //the id in the global block array
         public readonly ushort MetaData; //up to 16 bits of custom data
 
         //default constructor
@@ -24,20 +25,21 @@ namespace OurCraft.Blocks.Block_Properties
         public Block GetBlock => BlockRegistry.GetBlock(BlockID);
         public BlockShape BlockShape => GetBlock.blockShape;
         public string Name => GetBlock.GetBlockName();
+
         public bool IsLightSource => GetBlock.IsLightSource(this);
         public bool LightPassable => GetBlock.IsLightPassable(this);
         public Vector3i LightLevel => GetBlock.GetLightSourceLevel(this);
         public int SkyLightAttenuation => GetBlock.GetSkyLightAttenuation(this);
-        public void DebugState()
-        {
-            GetBlock.DebugState(this);
-        }
+        
+        public bool DetectsCollision => GetBlock.DetectsCollision(this);
+        public bool IsPhysicsSolid => GetBlock.IsPhysicsSolid(this);
+        public bool IsFluid => GetBlock.IsFluid(this);
+        public AABB GetAABB(Vector3d worldPos) => GetBlock.GetAABB(worldPos, this);
+        public BlockPhysics GetBlockPhysics() => GetBlock.GetBlockPhysics(this);
 
-        //get meta data property
-        public T GetProperty<T>(IBlockProperty<T> property)
-        {
-            return property.Decode(MetaData);
-        }
+        public void DebugState() => GetBlock.DebugState(this);       
+        public T GetProperty<T>(IBlockProperty<T> property) => property.Decode(MetaData);
+        
 
         //hashing
         public override bool Equals(object? obj)
@@ -50,7 +52,6 @@ namespace OurCraft.Blocks.Block_Properties
             return HashCode.Combine(BlockID, MetaData);
         }
 
-        //simple checks if block states are the same
         public static bool operator ==(BlockState left, BlockState right)
         {
             return left.BlockID == right.BlockID && left.MetaData == right.MetaData;
@@ -63,14 +64,12 @@ namespace OurCraft.Blocks.Block_Properties
     }
 
     //interface for decoding and encoding block property values into ushort metadata
-    // ---------- non-generic property marker ----------
     public interface IBlockProperty 
     { 
-        // Number of bits this property consumes
+        //number of bits this property consumes in blockstate metadata
         int BitCount { get; } 
-        // Decode the property value from raw metadata (returns boxed value)
+
         object Decode(ushort data); 
-        // Encode a boxed value into metadata given existing metadata
         ushort Encode(ushort oldData, object value); 
     }
 
@@ -82,12 +81,11 @@ namespace OurCraft.Blocks.Block_Properties
     }
 
     //allows to stack properties ontop of eachother without worrying about order and bit count
-    // ----------property layout builder and property implementations----------
     public class PropertyLayoutBuilder 
     { 
         private int currentOffset = 0;
         public int BitsUsed => currentOffset;
-        //add an enum property and return the EnumProperty with assigned offset
+
         public EnumProperty<T> AddEnum<T>() where T : Enum
         { 
             int count = Enum.GetValues(typeof(T)).Length; 
@@ -103,6 +101,7 @@ namespace OurCraft.Blocks.Block_Properties
             currentOffset += 1;
             return prop;
         } 
+
         public ByteProperty AddByte()
         {
             var prop = new ByteProperty(currentOffset); 
@@ -132,25 +131,26 @@ namespace OurCraft.Blocks.Block_Properties
         //fluent wrapper that uses the block's container to return a cached state
         public static BlockState With<T>(this BlockState state, IBlockProperty<T> property, T value)
         {
-            //compute new metadata using the property's Encode
-            ushort newMeta = property.Encode(state.MetaData, value); 
-            //get the block instance and its container
-            var block = state.GetBlock; 
+            var block = state.GetBlock;
             var container = block.StateContainer;
 
-            //return cached state from MetaLookup
+            //return if property doesnt exist
+            if (!block.HasProperty(property)) return container.DefaultState;        
+
+            //compute new metadata using the property's Encode
+            ushort newMeta = property.Encode(state.MetaData, value);  
             if (newMeta < container.MetaLookup.Length) return container.MetaLookup[newMeta]; 
 
-            //fallback: return default state
             return container.DefaultState; 
         } 
 
-        //generate all states for a block and return a container
+        //generate all states for a block and return a container, found this code online not mine
         public static BlockStateContainer GenerateStates(Block block)
         {
             //compute total bits used by summing property bit counts
             int bitsUsed = block.Properties.Sum(p => p.BitCount);
-            int metaSize = 1 << bitsUsed; 
+            int metaSize = 1 << bitsUsed;
+
             //number of metadata combinations
             var allStates = new BlockState[metaSize]; 
 
@@ -168,7 +168,7 @@ namespace OurCraft.Blocks.Block_Properties
             for (ushort i = 0; i < allStates.Length; i++)
             { 
                 container.StateLookup[i] = allStates[i];
-            } 
+            }
             container.DefaultState = container.States[0];
             return container;
         }

@@ -1,6 +1,6 @@
-﻿using OurCraft.World;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.World;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -18,19 +18,10 @@ namespace OurCraft.Blocks.Block_Implementations
             world.SetBlock(globalPos + hitNormal, DefaultState);
         }
 
-        public override void UpdateBlockState(Vector3 globalPos, BlockState thisBlock, ChunkManager world)
-        { }
-
         //light can pass through non full blocks
         public override bool IsLightPassable(BlockState state)
         {
             return true;
-        }
-
-        //these are not light sources
-        public override bool IsLightSource(BlockState state)
-        {
-            return false;
         }
 
         //light can pass through this block
