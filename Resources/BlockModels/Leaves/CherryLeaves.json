@@ -1,0 +1,67 @@
+﻿{
+  "Name": "cherry_leaves",
+  "IsTranslucent": false,
+  "AOSupport": true,
+
+  "FaceCull": {
+    "Bottom": "FullBlock",
+    "Top": "FullBlock",
+    "Front": "FullBlock",
+    "Back": "FullBlock",
+    "Right": "FullBlock",
+    "Left": "FullBlock"
+  },
+
+  "Elements": [
+    {
+      "From": [ 0, 0, 0 ],
+      "To": [ 16, 16, 16 ],
+
+      "Faces": {
+        "Top": {
+          "Texture": "Cherry_Leaves",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Top",
+          "AO": true
+        },
+        "Bottom": {
+          "Texture": "Cherry_Leaves",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Bottom",
+          "AO": true
+        },
+        "Front": {
+          "Texture": "Cherry_Leaves",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Front",
+          "AO": true
+        },
+        "Back": {
+          "Texture": "Cherry_Leaves",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Back",
+          "AO": true
+        },
+        "Right": {
+          "Texture": "Cherry_Leaves",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Right",
+          "AO": true
+        },
+        "Left": {
+          "Texture": "Cherry_Leaves",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Left",
+          "AO": true
+        }
+      }
+    }
+  ]
+}
+

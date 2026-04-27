@@ -34,7 +34,7 @@ namespace OurCraft.Blocks.Block_Implementations
 
             var stateToPlace = DefaultState.With(AXIS, axis); 
             world.SetBlock(globalPos + hitNormal, stateToPlace);
-        }
+        }       
 
         //interprets the axis of the log block
         public override void DebugState(BlockState thisBlock)

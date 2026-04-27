@@ -19,7 +19,7 @@ namespace OurCraft.World.Helpers
         public static void CreateChunkMesh(Chunk chunk, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
         Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
-            if (!chunk.HasVoxelData()) return;
+            if (!chunk.IsLit()) return;
             chunk.meshing = true;
             foreach (var subChunk in chunk.SubChunks)
             {
@@ -37,8 +37,21 @@ namespace OurCraft.World.Helpers
                 subChunk.TransparentGeo.vertices.TrimExcess();
             }
 
-            if (chunk.GetState() == ChunkState.VoxelOnly) chunk.SetState(ChunkState.Meshed);
+            if (chunk.GetState() == ChunkState.Lit) chunk.SetState(ChunkState.Meshed);
             chunk.meshing = false;       
+        }
+
+        //clears the mesh of a chunk if mesh data exists
+        public static void ClearChunkMesh(Chunk chunk)
+        {
+            if (!chunk.IsLit()) return;
+            foreach (var subChunk in chunk.SubChunks)
+            {
+                subChunk.ClearMesh();
+            }
+
+            chunk.batchedMesh.Delete();
+            chunk.transparentMesh.Delete();
         }
 
         //remesh all effected subchunks and reupload mesh to openGL
@@ -228,7 +241,7 @@ namespace OurCraft.World.Helpers
                 else if (nzFront) targetChunk = frontC;
             }
 
-            if (targetChunk == null || !targetChunk.HasVoxelData()) return Block.AIR;
+            if (targetChunk == null || !targetChunk.HasAllVoxelData()) return Block.AIR;
 
             //convert to local coordinates inside target chunk
             int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
@@ -275,7 +288,7 @@ namespace OurCraft.World.Helpers
                 else if (nzFront) targetChunk = frontC;
             }
 
-            if (targetChunk == null || !targetChunk.HasVoxelData()) return defaultLight;
+            if (targetChunk == null || !targetChunk.HasAllVoxelData()) return defaultLight;
 
             //convert to local coordinates inside target chunk
             int localX = ((nx & cs) + CHUNK_WIDTH) & cs;

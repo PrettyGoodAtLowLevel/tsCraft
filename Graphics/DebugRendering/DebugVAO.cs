@@ -3,6 +3,7 @@
 namespace OurCraft.Graphics.DebugRendering
 {
     //works as a wrapper for openGL vaos for debug vertices
+    //see regular vao class for explanation
     public class DebugVAO
     {
         private int ID = 0;

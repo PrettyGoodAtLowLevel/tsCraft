@@ -7,16 +7,17 @@ using OurCraft.Utility;
 using OurCraft.World;
 using System.Security.Cryptography;
 using OurCraft.Physics;
-using static OurCraft.Physics.VoxelPhysics;
 
 namespace OurCraft.Entities.Components
 {
-    //allows for player to interact with the world
+    //allows for player to interact with the world, this will eventually get nuked
     public class PlayerInteractions : Component
     {
         int currentBlockID = 0;
         readonly float reach = 4.0f;
         bool slowTime = false;
+        public Vector3 camOffset = Vector3.UnitY * RenderingConstants.CAM_HEIGHT_OFFSET;
+        public BlockState waterBlock;
 
         internal override void Register()
         {
@@ -31,6 +32,7 @@ namespace OurCraft.Entities.Components
         public override void OnCreation()
         {
             currentBlockID = BlockRegistry.GetBlockID("Grass Block");
+            waterBlock = BlockRegistry.GetDefaultBlockState("Water");
         }
 
         public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
@@ -42,7 +44,9 @@ namespace OurCraft.Entities.Components
 
         void HandleBlockInteractions(ChunkManager world, MouseState ms)
         {
-            bool hitBlock = RaycastVoxel(Transform.position, Transform.Forward, reach, (x, y, z) => world.GetBlockState(new Vector3(x, y, z)) != Block.AIR, out VoxelRaycastHit hit);
+            bool hitBlock = VoxelPhysics.RaycastVoxel(Transform.position + camOffset, Transform.Forward, reach,
+            (x, y, z) => world.GetBlockState(new Vector3(x, y, z)) != Block.AIR && world.GetBlockState(new Vector3(x, y, z)) != waterBlock,
+            out VoxelRaycastHit hit);
 
             //gameplay
             if (ms.IsButtonPressed(MouseButton.Left))
@@ -56,6 +60,9 @@ namespace OurCraft.Entities.Components
             {
                 if (hitBlock)
                 {
+                    PhysicsObj? rb = GameObject.GetComponent<PhysicsObj>();
+                    if (rb == null) return;
+
                     //get blocks
                     BlockState bottom, top, front, back, left, right;
 
@@ -65,6 +72,12 @@ namespace OurCraft.Entities.Components
                     back = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(0, 0, -1));
                     right = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(1, 0, 0));
                     left = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(-1, 0, 0));
+
+                    AABB predictedAABB = BlockRegistry.GetBlock(currentBlockID).GetPredictedAABB(hit.blockPos, hit.faceNormal,
+                    bottom, top, front, back, right, left,
+                    world.GetBlockState(hit.blockPos), world);
+
+                    if (AABB.Intersects(predictedAABB, VoxelPhysics.GetAABB(rb.position, rb.bounds))) return;
 
                     //try to add block
                     BlockRegistry.GetBlock(currentBlockID).PlaceBlockState(hit.blockPos, hit.faceNormal,
@@ -127,6 +140,7 @@ namespace OurCraft.Entities.Components
 
             //debug, will remove this later
             SpawnRigidBody(ks);
+            DebugRigidBody(ks);
             ManageTime(ks);
         }
         
@@ -140,20 +154,31 @@ namespace OurCraft.Entities.Components
                 ent.Transform.position = Transform.position;
 
                 DebugRenderBox box = ent.AddComponent<DebugRenderBox>();
-                box.max = new Vector3(0.4f, 0.9f, 0.4f);
-                box.min = new Vector3(-0.4f, -0.9f, -0.4f);
+                box.max = new Vector3(0.3f, 0.9f, 0.3f);
+                box.min = new Vector3(-0.3f, -0.9f, -0.3f);
                 box.SetUpRenderBox(Transform.Forward.Normalized());
 
-                RigidBody rb = ent.AddComponent<RigidBody>();
-                rb.bounds = new Vector3d(0.8, 1.8, 0.8);
-                rb.dragX = 0.0;
-                rb.dragY = 0.0;
-                rb.dragZ = 0.0;
-                rb.groundDragX = 0.0;
-                rb.groundDragZ = 0.0;
+                PhysicsObj rb = ent.AddComponent<PhysicsObj>();
+                rb.bounds = new Vector3d(0.6, 1.8, 0.6);
                 rb.AddImpulse(Transform.Forward * 25);
-                if (rand % 2 == 0) rb.useGravity = false;
             }           
+        }
+
+        void DebugRigidBody(KeyboardState ks)
+        {
+            if (ks.IsKeyPressed(Keys.B))
+            {
+                PhysicsObj? rb = GameObject.GetComponent<PhysicsObj>();
+                if (rb == null) return;
+
+                Console.Clear();
+                Console.WriteLine("Rigid Body Position: (" + rb.position.X + ", " + rb.position.Y + ", " + rb.position.Z + ")");
+                Console.WriteLine("Rigid Body Velocity: (" + rb.velocity.X + ", " + rb.velocity.Y + ", " + rb.velocity.Z + ")");
+                Console.WriteLine("Rigid Body Acceleration: (" + rb.acceleration.X + ", " + rb.acceleration.Y + ", " + rb.acceleration.Z + ")");
+                Console.WriteLine("Rigid Body Grounded: " + rb.grounded);
+                Console.WriteLine("Rigid Body in fluid: " + rb.inFluid);
+                Console.WriteLine("Rigid Body Underwater: " + rb.underWater);
+            }
         }
 
         void ManageTime(KeyboardState ks)

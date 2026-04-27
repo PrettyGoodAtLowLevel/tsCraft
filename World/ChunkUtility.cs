@@ -1,4 +1,4 @@
-﻿using System;
+﻿//contains a bunch of helpers dealing with chunks
 namespace OurCraft.World
 {
     //represents a chunk position
@@ -48,7 +48,9 @@ namespace OurCraft.World
     public enum ChunkState
     {
         Initialized,
-        VoxelOnly,
+        StructureReady,
+        StructuresPlaced,
+        Lit,
         Meshed,
         Built,
         Deleted

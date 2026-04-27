@@ -25,12 +25,9 @@ namespace OurCraft.Blocks.Meshing
 
             switch (type)
             {
-                case SlabType.Double:
-                    BlockMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, nb, mesh, lightData); break;
-                case SlabType.Top:
-                    BlockMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, nb, mesh, lightData); break;
-                default:
-                    BlockMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, nb, mesh, lightData); break;
+                case SlabType.Double: BlockMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, nb, mesh, lightData); break;
+                case SlabType.Top: BlockMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, nb, mesh, lightData); break;
+                default: BlockMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, nb, mesh, lightData); break;
             }
         }
 
@@ -39,12 +36,12 @@ namespace OurCraft.Blocks.Meshing
         {
             SlabType type = SlabBlock.SLAB_TYPE.Decode(state.MetaData);
 
-            switch (type)
+            return type switch
             {
-                case SlabType.Double: return cachedModelDouble.FaceCull[(byte)faceSide];
-                case SlabType.Top: return cachedModelTop.FaceCull[(byte)faceSide];
-                default: return cachedModelBottom.FaceCull[(byte)faceSide];
-            }        
+                SlabType.Double => cachedModelDouble.FaceCull[(byte)faceSide],
+                SlabType.Top => cachedModelTop.FaceCull[(byte)faceSide],
+                _ => cachedModelBottom.FaceCull[(byte)faceSide],
+            };
         }
     }
 }

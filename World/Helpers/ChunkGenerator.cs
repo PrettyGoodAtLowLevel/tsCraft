@@ -16,14 +16,18 @@ namespace OurCraft.World.Helpers
         const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
         const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
 
+        const int INTERP_STEP = 2; //sample every 2 blocks → 9 points per axis (0,4,8,12,16)
+        const int INTERP_GRID = (SUBCHUNK_SIZE / INTERP_STEP) + 1; //9
+
         //fills in all subchunks with block state data
-        public static void GenerateBlocks(Chunk chunk)
+        public static void BuildTerrain(Chunk chunk)
         {
             if (chunk.GetState() != ChunkState.Initialized) return;
             InitSubChunks(chunk);
-
+     
             //create noise regions
             NoiseRegion[,] noiseRegions = new NoiseRegion[CHUNK_WIDTH, CHUNK_WIDTH];
+
             for (int z = 0; z < CHUNK_WIDTH; z++)
             {
                 for (int x = 0; x < CHUNK_WIDTH; x++)
@@ -36,40 +40,68 @@ namespace OurCraft.World.Helpers
             }
 
             //use noise regions & create blocks
-            foreach (var subChunk in chunk.SubChunks)
-            {
-                CreateDensityMap(subChunk, noiseRegions);
-            }
+            foreach (var subChunk in chunk.SubChunks) CreateDensityMap(subChunk, noiseRegions);                                                   
+            foreach (var subChunk in chunk.SubChunks) SurfacePaint(subChunk, noiseRegions);            
+            StructureStart(chunk, noiseRegions);
 
-            foreach (var subChunk in chunk.SubChunks)
-            {
-                SurfacePaint(subChunk, noiseRegions);
-            }
+            chunk.SetState(ChunkState.StructureReady);         
+        }
 
-            foreach (var subChunk in chunk.SubChunks)
-            {
-                PlaceSurfaceFeatures(subChunk, noiseRegions);
-            }
+        //sorts all intersected structures within a chunk, and places the intersected blocks
+        public static void PlaceStructures(Chunk target, ChunkManager world, int radius = 1)
+        {
+            var featuresToPlace = CollectStructures(target, world, radius);
+            SortStructures(featuresToPlace);
 
-            //do pre lighting stage lighting calculations
-            chunk.MaxSolidY = GetChunkMaxSolidY(chunk) + 2;
-            InitLightMap(chunk, chunk.MaxSolidY);
+            //place all features
+            foreach (var pf in featuresToPlace) pf.feature.PlaceFeature(pf.startPos, target, world);
 
-            chunk.SetState(ChunkState.VoxelOnly);
+            //init lightmap
+            target.MaxSolidY = GetChunkMaxSolidY(target) + 2;
+            InitLightMap(target, target.MaxSolidY);
+
+            target.SetState(ChunkState.StructuresPlaced);
         }
 
         //create base density map - stone vs air
         static void CreateDensityMap(SubChunk subChunk, NoiseRegion[,] noiseRegions)
         {
-            //subchunk inside chunk xyz
             int cxp = subChunk.ChunkXPos * SUBCHUNK_SIZE;
             int cyp = subChunk.ChunkYPos * SUBCHUNK_SIZE;
             int czp = subChunk.ChunkZPos * SUBCHUNK_SIZE;
-
-            //chunk coord xz
             int ccx = CHUNK_WIDTH * subChunk.parent.ChunkPos.X;
             int ccz = CHUNK_WIDTH * subChunk.parent.ChunkPos.Z;
 
+            //sample coarser 9 x 9 x 9 grid 729 calls instead of 4096
+            float[,,] densityGrid = new float[INTERP_GRID, INTERP_GRID, INTERP_GRID];
+
+            for (int gz = 0; gz < INTERP_GRID; gz++)
+            {
+                for (int gx = 0; gx < INTERP_GRID; gx++)
+                {
+                    int regionX = Math.Min(cxp + gx * INTERP_STEP, noiseRegions.GetLength(0) - 1);
+                    int regionZ = Math.Min(czp + gz * INTERP_STEP, noiseRegions.GetLength(1) - 1);
+                    NoiseRegion nr = noiseRegions[regionX, regionZ];
+
+                    for (int gy = 0; gy < INTERP_GRID; gy++)
+                    {
+                        int globalY = cyp + gy * INTERP_STEP;
+                        float surfaceDist = nr.heightOffset - globalY;
+
+                        if (globalY > WorldGenerator.MAX_HEIGHT) { densityGrid[gx, gy, gz] = -1f; continue; }
+                        else if (globalY < WorldGenerator.MIN_HEIGHT) { densityGrid[gx, gy, gz] = 1f; continue; }  
+
+                        if (surfaceDist < -nr.maxDepth) { densityGrid[gx, gy, gz] = -1f; continue; }
+                        else if (surfaceDist > nr.maxDepth) { densityGrid[gx, gy, gz] = 1f; continue; }
+
+                        int globalX = cxp + gx * INTERP_STEP + ccx;
+                        int globalZ = czp + gz * INTERP_STEP + ccz;
+                        densityGrid[gx, gy, gz] = WorldGenerator.GetDensity(globalX, globalY, globalZ, nr);
+                    }
+                }
+            }
+
+            //interpolate density and place blocks
             for (int z = 0; z < SUBCHUNK_SIZE; z++)
             {
                 for (int x = 0; x < SUBCHUNK_SIZE; x++)
@@ -77,31 +109,23 @@ namespace OurCraft.World.Helpers
                     NoiseRegion noiseRegion = noiseRegions[cxp + x, czp + z];
                     for (int y = 0; y < SUBCHUNK_SIZE; y++)
                     {
-                        //create stone-air map
-                        int globalX = cxp + x + ccx;
-                        int globalY = cyp + y;
-                        int globalZ = czp + z + ccz;
-                        float density = WorldGenerator.GetDensity(globalX, globalY, globalZ, noiseRegion);
+                        float density = VoxelMath.TrilinearSample(densityGrid, x, y, z, INTERP_STEP);
 
-                        BlockState state = WorldGenerator.EmptyBlock;
-                        if (density > 0) state = WorldGenerator.WorldBlock;
+                        BlockState state = density > 0 ? WorldGenerator.WorldBlock : WorldGenerator.EmptyBlock;
                         subChunk.SetBlock(x, y, z, state);
 
-                        //fill air blocks below sea level with water
-                        if (subChunk.GetBlockState(x, y, z) == Block.AIR && globalY <= WorldGenerator.SEA_LEVEL)
+                        int globalY = cyp + y;
+                        if (state == WorldGenerator.EmptyBlock && globalY <= WorldGenerator.SEA_LEVEL)
                         {
-                            BlockState state2 =
-                                globalY == WorldGenerator.SEA_LEVEL ? noiseRegion.biome.WaterSurfaceBlock :
-                                noiseRegion.biome.WaterBlock;
-
-                            subChunk.SetBlock(x, y, z, state2);
+                            BlockState waterState = globalY == WorldGenerator.SEA_LEVEL ? noiseRegion.biome.WaterSurfaceBlock : noiseRegion.biome.WaterBlock;
+                            subChunk.SetBlock(x, y, z, waterState);
                         }
                     }
                 }
             }
         }
 
-        //this code is atrocious
+        //paints the surface blocks with biome surface blocks
         static void SurfacePaint(SubChunk subChunk, NoiseRegion[,] noiseRegions)
         {
             //subchunk inside chunk xyz
@@ -115,10 +139,10 @@ namespace OurCraft.World.Helpers
                 {
                     NoiseRegion noiseRegion = noiseRegions[cxp + x, czp + z];
                     Biome biome = noiseRegion.biome;
+
                     for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--) //top-down
                     {
                         BlockState current = subChunk.GetBlockState(x, y, z);
-
                         BlockState above = (y + 1 < SUBCHUNK_SIZE) ? subChunk.GetBlockState(x, y + 1, z):
                         subChunk.parent.GetBlockUnsafe(cxp + x, y + cyp + 1, czp + z);
 
@@ -142,47 +166,35 @@ namespace OurCraft.World.Helpers
             }
         }
 
-        //this code is atrocious
-        static void PlaceSurfaceFeatures(SubChunk subChunk, NoiseRegion[,] noiseRegions)
+        //plants structure starts in a chunk
+        static void StructureStart(Chunk chunk, NoiseRegion[,] noiseRegions)
         {
-            //subchunk inside chunk xyz
-            int cxp = subChunk.ChunkXPos * SUBCHUNK_SIZE;
-            int cyp = subChunk.ChunkYPos * SUBCHUNK_SIZE;
-            int czp = subChunk.ChunkZPos * SUBCHUNK_SIZE;
-
-            //chunk coord xz
-            int ccx = CHUNK_WIDTH * subChunk.parent.ChunkPos.X;
-            int ccz = CHUNK_WIDTH * subChunk.parent.ChunkPos.Z;
+            int ccx = CHUNK_WIDTH * chunk.ChunkPos.X;
+            int ccz = CHUNK_WIDTH * chunk.ChunkPos.Z;
             int seed = NoiseRouter.seed;
 
-            for (int z = 0; z < SUBCHUNK_SIZE; z++)
+            for (int z = 0; z < CHUNK_WIDTH; z++)
             {
-                for (int x = 0; x < SUBCHUNK_SIZE; x++)
+                for (int x = 0; x < CHUNK_WIDTH; x++)
                 {
-                    NoiseRegion noiseRegion = noiseRegions[cxp + x, czp + z];
-                    Biome biome = noiseRegion.biome;
-                    for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--) // top-down
+                    Biome biome = noiseRegions[x, z].biome;
+
+                    for (int y = CHUNK_HEIGHT - 1; y >= 0; y--)
                     {
-                        BlockState current = subChunk.GetBlockState(x, y, z);
-                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? subChunk.GetBlockState(x, y + 1, z):
-                        subChunk.parent.GetBlockUnsafe(cxp + x, cyp + y + 1, czp + z);
+                        BlockState current = chunk.GetBlockUnsafe(x, y, z);
+                        BlockState above = (y + 1 < CHUNK_HEIGHT) ? chunk.GetBlockUnsafe(x, y + 1, z) : Block.AIR;
 
-                        //only consider blocks with air above (i.e., surface or overhang)
-                        bool currentEligible = current == WorldGenerator.GetSurfaceBlock(biome, y + cyp);    
-                        if (currentEligible)
+                        if (current != WorldGenerator.GetSurfaceBlock(biome, y) || above != Block.AIR) continue;
+
+                        Vector3i worldPos = new(x + ccx, y, z + ccz);
+                        foreach (BiomeSurfaceFeature feature in biome.features)
                         {
-                            foreach (BiomeSurfaceFeature feature in biome.SurfaceFeatures)
+                            int rand = NoiseRouter.GetStructureRandomness(worldPos.X, worldPos.Y, worldPos.Z, seed, feature.chance);
+
+                            if (rand == 1 && feature.feature.CanPlaceFeature(worldPos + Vector3i.UnitY, chunk))
                             {
-                                Vector3i globalCoords = new(cxp + x + ccx, y + cyp, czp + z + ccz);
-
-                                //generate random number with deterministic coordinate hash function (super weird but thread safe)
-                                int rand = NoiseRouter.GetStructureRandomness(globalCoords.X, globalCoords.Y, globalCoords.Z, seed, feature.chance);
-
-                                if (rand == 1 && feature.feature.CanPlaceFeature(new Vector3i(cxp + x, y + cyp + 1, czp + z), subChunk.parent))
-                                {
-                                    feature.feature.PlaceFeature(new Vector3i(cxp + x, y + cyp + 1, czp + z), subChunk.parent);
-                                    break;
-                                }
+                                chunk.placedFeatures.Add(new PlacedFeature(feature.feature, worldPos + Vector3i.UnitY));
+                                break;
                             }
                         }
                     }
@@ -190,6 +202,7 @@ namespace OurCraft.World.Helpers
             }
         }
 
+        //initializes all subchunks in a chunk
         static void InitSubChunks(Chunk chunk)
         {
             chunk.DirtySubChunks = new bool[WIDTH_IN_SUBCHUNKS, HEIGHT_IN_SUBCHUNKS, WIDTH_IN_SUBCHUNKS];
@@ -205,6 +218,54 @@ namespace OurCraft.World.Helpers
                     }
                 }
             }
+        }
+
+        //finds all structures that intersect with the target chunk, grid of chunks
+        static List<PlacedFeature> CollectStructures(Chunk target, ChunkManager world, int radius)
+        {
+            var allFeatures = new List<PlacedFeature>();
+
+            //add intersected surface features
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dz = -radius; dz <= radius; dz++)
+                {
+                    Chunk? neighbor = world.GetChunk(new ChunkCoord(target.ChunkPos.X + dx, target.ChunkPos.Z + dz));
+                    if (neighbor == null || !neighbor.HasVoxelData()) continue;
+
+                    foreach (var sf in neighbor.placedFeatures)
+                    {
+                        if (sf.feature.notCrossChunk)
+                        {
+                            if (neighbor.ChunkPos == target.ChunkPos) allFeatures.Add(sf);
+                            continue;
+                        }
+                        if (SurfaceFeature.IntersectsChunk(target, sf.startPos, sf.feature))
+                        {
+                            allFeatures.Add(sf);
+                        }
+                    }
+                }
+            }
+
+            return allFeatures;
+        }
+
+        //determinsitically sorts structures (closest to origin first, then furthest last)
+        static void SortStructures(List<PlacedFeature> features)
+        {
+            features.Sort((a, b) =>
+            {
+                int distA = a.startPos.X * a.startPos.X + a.startPos.Y * a.startPos.Y + a.startPos.Z * a.startPos.Z;
+                int distB = b.startPos.X * b.startPos.X + b.startPos.Y * b.startPos.Y + b.startPos.Z * b.startPos.Z;
+                int cd = distA.CompareTo(distB);
+                if (cd != 0) return cd;
+                int cx = a.startPos.X.CompareTo(b.startPos.X);
+                if (cx != 0) return cx;
+                int cz = a.startPos.Z.CompareTo(b.startPos.Z);
+                if (cz != 0) return cz;
+                return a.startPos.Y.CompareTo(b.startPos.Y);
+            });
         }
 
         //scans chunk from top down to find the first y layer with blocks

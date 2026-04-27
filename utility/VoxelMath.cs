@@ -3,7 +3,6 @@
 namespace OurCraft.Utility
 {
     //contains custom helper math functions
-    //mainly for terrain gen
     public static class VoxelMath
     {
         //math helpers
@@ -76,6 +75,51 @@ namespace OurCraft.Utility
         public static byte UnpackLight16Sky(ushort light)
         {
             return (byte)((light >> 12) & 0xF);
+        }
+
+        //upscales n by n by n grid to m by x by x grid
+        public static float TrilinearSample(float[,,] grid, int x, int y, int z, int interpStep)
+        {
+            int gx0 = x / interpStep;
+            int gy0 = y / interpStep;
+            int gz0 = z / interpStep;
+            int gx1 = gx0 + 1;
+            int gy1 = gy0 + 1;
+            int gz1 = gz0 + 1;
+
+            float tx = (x % interpStep) / (float)interpStep;
+            float ty = (y % interpStep) / (float)interpStep;
+            float tz = (z % interpStep) / (float)interpStep;
+
+            float c000 = grid[gx0, gy0, gz0];
+            float c100 = grid[gx1, gy0, gz0];
+            float c010 = grid[gx0, gy1, gz0];
+            float c110 = grid[gx1, gy1, gz0];
+            float c001 = grid[gx0, gy0, gz1];
+            float c101 = grid[gx1, gy0, gz1];
+            float c011 = grid[gx0, gy1, gz1];
+            float c111 = grid[gx1, gy1, gz1];
+
+            float x00 = Lerp(c000, c100, tx);
+            float x10 = Lerp(c010, c110, tx);
+            float x01 = Lerp(c001, c101, tx);
+            float x11 = Lerp(c011, c111, tx);
+
+            float y0 = Lerp(x00, x10, ty);
+            float y1 = Lerp(x01, x11, ty);
+
+            return Lerp(y0, y1, tz);
+        }
+
+        //not my code - this thing i found online idk
+        public static unsafe float InvSqrt(float x)
+        {
+            float xhalf = 0.5f * x;
+            int i = *(int*)&x;
+            i = 0x5f3759df - (i >> 1);
+            x = *(float*)&i;
+            x = x * (1.5f - xhalf * x * x);
+            return x;
         }
     }
 

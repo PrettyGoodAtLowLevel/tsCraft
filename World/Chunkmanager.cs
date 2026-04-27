@@ -17,22 +17,27 @@ namespace OurCraft.World
         //tracking chunks
         public ConcurrentDictionary<ChunkCoord, Chunk> ChunkMap { get; private set; } = new();
         readonly ConcurrentDictionary<ChunkCoord, byte> genQueuedChunks = new();
+        readonly ConcurrentDictionary<ChunkCoord, byte> structureQueuedChunks = new();
         readonly ConcurrentDictionary<ChunkCoord, byte> meshQueuedChunks = new();
         readonly ConcurrentDictionary<ChunkCoord, byte> lightingQueuedChunks = new();
         readonly ConcurrentDictionary<ChunkCoord, byte> deletionQueuedChunks = new();
+        readonly ConcurrentDictionary<ChunkCoord, byte> meshDeletedChunks = new();
         readonly ConcurrentDictionary<Chunk, byte> modifiedChunks = new(); 
         readonly ConcurrentDictionary<Chunk, byte> uploadedChunks = new();
 
-        readonly ConcurrentQueue<ChunkCoord> chunkGenQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> terrainGenQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> structureGenQueue = new();
         readonly ConcurrentQueue<ChunkCoord> lightingQueue = new();
         readonly ConcurrentQueue<ChunkCoord> chunkMeshQueue = new();
         readonly ConcurrentQueue<Chunk> chunkUploadQueue = new();
         readonly ConcurrentQueue<ChunkCoord> deletionQueue = new();
+        readonly ConcurrentQueue<ChunkCoord> meshDeletionQueue = new();
         readonly ConcurrentQueue<Chunk> modifiedQueue = new(); //player modifications
         readonly ConcurrentQueue<ChunkCoord> remeshQueue = new();
 
         //rendering
         public int RenderDistance { get; private set; } = 0;
+        public int WorldDistance { get => RenderDistance + 1; }
         public float MaxChunkBuildPerFrame { get; private set; } = 0.01f;
         float chunkUploadTimer = 0;
 
@@ -41,25 +46,27 @@ namespace OurCraft.World
         readonly Transform playerTracking = new();
         
         //threading
-        private readonly ThreadPoolSystem threadPool;
+        private readonly ThreadPoolSystem terrainGenThread;
         private readonly ThreadPoolSystem lightThread;
 
-        public ChunkManager(int renderDistance, ref ThreadPoolSystem tp, ref ThreadPoolSystem lighting)
+        public ChunkManager(int renderDistance, ref ThreadPoolSystem terGen, ref ThreadPoolSystem lighting)
         { 
-            threadPool = tp;
+            terrainGenThread = terGen;        
             lightThread = lighting;
 
             Entity? playerEnt = EntityManager.GetEntity(EntityManager.PlayerEntityName);
             if (playerEnt != null) playerTracking = playerEnt.Transform;
             
-            RenderDistance = renderDistance;               
+            RenderDistance = renderDistance;
             lastPlayerChunk = new ChunkCoord(0, 0);        
         }
 
+        //debugs information on the stats of chunks
         public void Debug()
         {
             Console.WriteLine("total tracked chunks: " + ChunkMap.Count);
             Console.WriteLine("gen queued chunks: " + genQueuedChunks.Count);
+            Console.WriteLine("structure queued chunks: " + structureQueuedChunks.Count);
             Console.WriteLine("lighting queued chunks: " + lightingQueuedChunks.Count);
             Console.WriteLine("mesh queued chunks: " + meshQueuedChunks.Count);
             Console.WriteLine("upload queued chunks: " + uploadedChunks.Count);
@@ -72,9 +79,9 @@ namespace OurCraft.World
 
             List<ChunkCoord> toGenerate = [];
 
-            for (int x = playerChunk.X - RenderDistance; x <= playerChunk.X + RenderDistance; x++)
+            for (int x = playerChunk.X - WorldDistance; x <= playerChunk.X + WorldDistance; x++)
             {
-                for (int z = playerChunk.Z - RenderDistance; z <= playerChunk.Z + RenderDistance; z++)
+                for (int z = playerChunk.Z - WorldDistance; z <= playerChunk.Z + WorldDistance; z++)
                 {
                     toGenerate.Add(new ChunkCoord(x, z));
                 }
@@ -91,45 +98,114 @@ namespace OurCraft.World
             //generate in correct order
             foreach (var coord in toGenerate)
             {
-                if (!ChunkMap.ContainsKey(coord))
+                GenerateChunk(coord);
+            }
+        }
+
+        public void GenerateChunk(ChunkCoord coord)
+        {
+            if (!ChunkMap.ContainsKey(coord))
+            {
+                ChunkMap.TryAdd(coord, new Chunk(coord));
+                TerrainGenEnqueue(coord);
+            }
+            else
+            {
+                Chunk? chunk = GetChunk(coord);
+                if (chunk == null || chunk.Deleted() || ChunkOutOfRenderDistance(coord)) return;
+
+                if (chunk.GetState() == ChunkState.Initialized)
                 {
-                    ChunkMap.TryAdd(coord, new Chunk(coord));
-                    GenerationEnqueue(coord);
+                    TerrainGenEnqueue(coord);
+                    return;
+                }
+                if (chunk.GetState() == ChunkState.StructureReady)
+                {
+                    StructureEnqueue(coord);
+                    return;
+                }
+                if (chunk.GetState() == ChunkState.StructuresPlaced)
+                {
+                    LightEnqueue(coord);
+                    return;
+                }
+                if (chunk.GetState() == ChunkState.Lit)
+                {
+                    MeshEnqueue(coord);
+                    return;
                 }
             }
         }
 
         private void UnloadFarChunks()
         {
-            ChunkCoord playerChunk = GetPlayerChunk();
             foreach (var pair in ChunkMap)
             {
                 //full deletion
-                if (ChunkOutOfRenderDistance(pair.Key, playerChunk))
+                if (ChunkOutOfWorldDistance(pair.Key))
                 {
-                    if (pair.Value.Deleted()) return;
+                    if (pair.Value.Deleted()) continue;
                     
                     pair.Value.MarkForDeletion();                                            
                     DeletionEnqueue(pair.Key);                 
+                }
+                //mesh deletion
+                else if (ChunkOutOfRenderDistance(pair.Key))
+                {
+                    if (pair.Value.Deleted()) continue;
+
+                    MeshDeletionEnqueue(pair.Key);
                 }
             }
         }
 
         //build voxel data for chunks on seperate threads
-        private void ProcessChunkGenQueue()
+        private void ProcessTerrainGenQueue()
         {
-            if (chunkGenQueue.TryDequeue(out ChunkCoord coord))
-            {
-                genQueuedChunks.TryRemove(coord, out byte thing);
-
+            if (terrainGenQueue.TryDequeue(out ChunkCoord coord))
+            {                
                 Chunk? chunk = GetChunk(coord);
-                if (chunk == null) return;
-
-                threadPool.Submit(() =>
+                if (chunk == null || chunk.Deleted())
                 {
-                    ChunkGenerator.GenerateBlocks(chunk);
-                    LightEnqueue(chunk.ChunkPos);
+                    genQueuedChunks.TryRemove(coord, out byte thing);
+                    return;
+                }
+
+                terrainGenThread.Submit(() =>
+                {
+                    ChunkGenerator.BuildTerrain(chunk);
+                    if (!ChunkOutOfRenderDistance(coord)) StructureEnqueue(chunk.ChunkPos);
+                    genQueuedChunks.TryRemove(coord, out byte thing);
                 });
+            }
+        }
+
+        //places the blocks of structure starts in a chunk
+        private void ProcessStructureQueue()
+        {
+            if (structureGenQueue.TryDequeue(out ChunkCoord coord))
+            {
+                Chunk? chunk = GetChunk(coord);
+                if (chunk == null || chunk.Deleted())
+                {
+                    structureQueuedChunks.TryRemove(coord, out byte thing);
+                    return;
+                }
+
+                if (ChunkHasNeighbors(coord))
+                {
+                     terrainGenThread.Submit(() =>
+                     {
+                         ChunkGenerator.PlaceStructures(chunk, this);
+                         LightEnqueue(chunk.ChunkPos);
+                         structureQueuedChunks.TryRemove(coord, out byte thing);
+                     });
+                }
+                else if (!ChunkOutOfRenderDistance(coord) && chunk != null && !chunk.Deleted())
+                {
+                    structureQueuedChunks.TryRemove(coord, out byte thing);
+                    StructureEnqueue(coord);
+                }
             }
         }
 
@@ -137,8 +213,6 @@ namespace OurCraft.World
         private void ProcessLightQueue()
         {
             if (lightingQueue.IsEmpty) return;
-
-            ChunkCoord playerChunk = GetPlayerChunk();
 
             if (lightingQueue.TryDequeue(out ChunkCoord coord))
             {           
@@ -176,7 +250,7 @@ namespace OurCraft.World
                         lightingQueuedChunks.TryRemove(coord, out byte thing);
                     });
                 }
-                else if (!ChunkOutOfRenderDistance(coord, playerChunk) && chunk != null && !chunk.Deleted())
+                else if (!ChunkOutOfRenderDistance(coord) && chunk != null && !chunk.Deleted())
                 {
                     lightingQueuedChunks.TryRemove(coord, out byte thing);
                     LightEnqueue(coord);
@@ -213,14 +287,14 @@ namespace OurCraft.World
                     c3 = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1));
                     c4 = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));
 
-                    threadPool.Submit(() =>
+                    terrainGenThread.Submit(() =>
                     {
                         ChunkBuilder.CreateChunkMesh(chunk, left, right, front, back, c1, c2, c3, c4);
                         UploadEnqueue(chunk);
                         meshQueuedChunks.TryRemove(coord, out byte thing);
                     });
                 }
-                else if (!ChunkOutOfRenderDistance(coord, playerChunk) && chunk != null && !chunk.Deleted())
+                else if (!ChunkOutOfRenderDistance(coord) && chunk != null && !chunk.Deleted())
                 {
                     meshQueuedChunks.TryRemove(coord, out byte thing);
                     MeshEnqueue(coord);
@@ -232,8 +306,6 @@ namespace OurCraft.World
         private void ProcessRemeshQueue()
         {
             if (remeshQueue.IsEmpty) return;
-
-            ChunkCoord playerChunk = GetPlayerChunk();
             
             if (remeshQueue.TryDequeue(out ChunkCoord coord))
             {
@@ -243,7 +315,7 @@ namespace OurCraft.World
                 bool res = MeshEnqueue(coord);
 
                 //if cant add to meshing queue again, retry later
-                if (!res && !ChunkOutOfRenderDistance(coord, playerChunk))
+                if (!res && !ChunkOutOfRenderDistance(coord))
                 {
                     RemeshEnqueue(coord);
                 }
@@ -257,14 +329,26 @@ namespace OurCraft.World
             if (chunkUploadQueue.TryDequeue(out Chunk? chunk))
             {
                 uploadedChunks.TryRemove(chunk, out byte thing);
-                if (chunk != null && chunk.HasVoxelData() && chunkUploadTimer > MaxChunkBuildPerFrame)
+                if (chunk != null && chunk.IsLit() && chunkUploadTimer > MaxChunkBuildPerFrame)
                 {
                     ChunkRenderer.GLUploadChunk(chunk);                
                     chunkUploadTimer = 0;
                 }
-                else if (chunk != null && chunk.HasVoxelData())
+                else if (chunk != null && chunk.HasAllVoxelData())
                 {
                     UploadEnqueue(chunk);
+                }
+            }
+        }
+
+        //deletes meshes out of render distance
+        private void ProcessDeletedMeshes()
+        {
+            while(!meshDeletionQueue.IsEmpty)
+            {
+                if (meshDeletionQueue.TryDequeue(out ChunkCoord coord))
+                {
+                    DeleteChunkMesh(coord);
                 }
             }
         }
@@ -276,22 +360,7 @@ namespace OurCraft.World
             {
                 if (deletionQueue.TryDequeue(out ChunkCoord coord))
                 {
-                    Chunk? chunk = GetChunk(coord);
-                    //if chunk is null, then its already deleted and we can skip
-                    if (chunk == null) continue;
-
-                    if (ChunkMap.Remove(coord, out chunk))
-                    {
-                        //remove from queues, and delete vram data
-                        deletionQueuedChunks.Remove(coord, out byte thing);
-                        lightingQueuedChunks.Remove(coord, out thing);
-                        meshQueuedChunks.Remove(coord, out thing);
-                        chunk.Delete();
-                    }
-                    else
-                    {
-                        DeletionEnqueue(coord);
-                    }
+                    DeleteChunk(coord);
                 }
             }         
         }
@@ -327,26 +396,84 @@ namespace OurCraft.World
             }
 
             //manage chunks
-            ProcessChunkGenQueue();
+            ProcessTerrainGenQueue();
+            ProcessStructureQueue();
             ProcessLightQueue();
             ProcessMeshQueue();
             ProcessRemeshQueue();
             ProcessChunkUploadQueue();
 
             ProcessModifiedChunks();
+            ProcessDeletedMeshes();
             ProcessDeletedChunks();
 
             chunkUploadTimer += time;
         }
 
+        //fully deletes a chunk
+        public void DeleteChunk(ChunkCoord coord)
+        {
+            Chunk? chunk = GetChunk(coord);
+            if (chunk == null) return;
+
+            if (ChunkOutOfWorldDistance(coord))
+            {
+                if (ChunkMap.Remove(coord, out chunk))
+                {
+                    lightingQueuedChunks.Remove(coord, out byte thing);
+                    meshQueuedChunks.Remove(coord, out thing);
+                    structureQueuedChunks.Remove(coord, out thing);                   
+                    
+                    chunk.Delete();
+                    genQueuedChunks.Remove(coord, out thing);
+                    meshDeletedChunks.Remove(coord, out thing);
+                    deletionQueuedChunks.Remove(coord, out thing);
+                }
+                else if (chunk != null)
+                {
+                    DeletionEnqueue(coord);
+                }
+            }
+        }
+
+        //only deletes the mesh of a chunk
+        public void DeleteChunkMesh(ChunkCoord coord)
+        {
+            Chunk? chunk = GetChunk(coord);
+            if (chunk == null || chunk.Deleted()) return;
+
+            if (ChunkOutOfRenderDistance(coord))
+            {
+                //remove from queues, and delete vram data
+                lightingQueuedChunks.Remove(coord, out byte thing);
+                meshQueuedChunks.Remove(coord, out thing);
+                structureQueuedChunks.Remove(coord, out thing);
+                genQueuedChunks.Remove(coord, out thing);
+                
+                ChunkBuilder.ClearChunkMesh(chunk);
+                if (chunk.IsLit()) chunk.SetState(ChunkState.Lit);
+                meshDeletedChunks.Remove(coord, out thing);
+            }
+        }
+
         //safely allows a chunk to be queued for voxel generation
-        private void GenerationEnqueue(ChunkCoord coord)
+        private void TerrainGenEnqueue(ChunkCoord coord)
         {
             if (!genQueuedChunks.ContainsKey(coord))
             {
                 genQueuedChunks.TryAdd(coord, 0);
-                chunkGenQueue.Enqueue(coord);
+                terrainGenQueue.Enqueue(coord);
             }               
+        }
+
+        //allows a chunk to be safely enqueued for structure placement
+        private void StructureEnqueue(ChunkCoord coord)
+        {
+            if (!structureQueuedChunks.ContainsKey(coord))
+            {
+                structureQueuedChunks.TryAdd(coord, 0);
+                structureGenQueue.Enqueue(coord);
+            }
         }
 
         //safely allows a chunk to be queued for trying mesh generation
@@ -387,6 +514,16 @@ namespace OurCraft.World
                 uploadedChunks.TryAdd(chunk, 0);
                 chunkUploadQueue.Enqueue(chunk);
             }             
+        }
+
+        //safely allows a chunk to be queued for mesh deletion
+        private void MeshDeletionEnqueue(ChunkCoord coord)
+        {
+            if (!meshDeletedChunks.ContainsKey(coord))
+            {
+                meshDeletedChunks.TryAdd(coord, 0);
+                meshDeletionQueue.Enqueue(coord);
+            }
         }
 
         //safely allows a chunk to be queued for deletion
@@ -436,18 +573,50 @@ namespace OurCraft.World
         }
 
         //checks if a chunk is too far away from player and should be unrendered
-        private bool ChunkOutOfRenderDistance(ChunkCoord coord, ChunkCoord playerChunk)
+        public bool ChunkOutOfRenderDistance(ChunkCoord coord)
         {
+            ChunkCoord playerChunk = GetPlayerChunk();
             return MathF.Abs(coord.Z - playerChunk.Z) > RenderDistance || MathF.Abs(coord.X - playerChunk.X) > RenderDistance;
         }
 
-        //checks if a chunk can light or mesh
+        //checks if a chunk is too far away from a player and should be deleted
+        private bool ChunkOutOfWorldDistance(ChunkCoord coord)
+        {
+            ChunkCoord playerChunk = GetPlayerChunk();
+            return MathF.Abs(coord.Z - playerChunk.Z) > WorldDistance || MathF.Abs(coord.X - playerChunk.X) > WorldDistance;
+        }
+
+        //checks if a chunk can structure place, light, or mesh
         public bool ChunkWorkable(ChunkCoord coord)
         {
             Chunk? thisChunk = GetChunk(coord);
+            return (thisChunk != null && thisChunk.HasVoxelData());
+        }
 
-            if (thisChunk == null) return false;
-            if (!thisChunk.HasVoxelData()) return false;
+        //checks if a chunk has neighbors with voxel data around them
+        private bool ChunkHasNeighbors(ChunkCoord coord)
+        {
+            //get this chunk and adjacent chunks
+            Chunk? thisChunk, left, right, back, front;
+            thisChunk = GetChunk(coord);
+            left = GetChunk(new ChunkCoord(coord.X - 1, coord.Z));
+            right = GetChunk(new ChunkCoord(coord.X + 1, coord.Z));
+            front = GetChunk(new ChunkCoord(coord.X, coord.Z + 1));
+            back = GetChunk(new ChunkCoord(coord.X, coord.Z - 1));
+
+            //if chunks dont exist or dont have block data, then back out
+            if (thisChunk == null || left == null || right == null || front == null || back == null) return false;
+            if (!thisChunk.HasVoxelData() || !left.HasVoxelData() || !right.HasVoxelData() || !front.HasVoxelData() || !back.HasVoxelData()) return false;
+
+            //get corners as well
+            Chunk? backLeft, backRight, frontLeft, frontRight;
+            backLeft = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1));
+            backRight = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1));
+            frontLeft = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1));
+            frontRight = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));
+
+            if (backLeft == null || backRight == null || frontLeft == null || frontRight == null) return false;
+            if (!backLeft.HasVoxelData() || !backRight.HasVoxelData() || !frontLeft.HasVoxelData() || !frontRight.HasVoxelData()) return false;
 
             return true;
         }

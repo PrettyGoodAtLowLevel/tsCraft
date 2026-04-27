@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Utility;
-using static OurCraft.Graphics.FrustumCulling;
 
 namespace OurCraft.Entities.Components
 {
@@ -13,6 +12,7 @@ namespace OurCraft.Entities.Components
         public int FOV = RenderingConstants.DEFAULT_FOV;
         readonly float nearPlane = RenderingConstants.DEFAULT_NEAR_PLANE;
         readonly float farPlane = RenderingConstants.DEFAULT_FAR_PLANE;
+        public Vector3 offset = Vector3.UnitY * RenderingConstants.CAM_HEIGHT_OFFSET;
 
         private Matrix4 cameraMatrix;
 
@@ -27,9 +27,10 @@ namespace OurCraft.Entities.Components
             BaseSystem<CameraRender>.Unregister(this);
         }
 
-        public FrustumPlane[] GetFrustum()
+        //get frustum of camera
+        public Graphics.FrustumCulling.FrustumPlane[] GetFrustum()
         {
-            return ExtractFrustumPlanes(cameraMatrix);
+            return Graphics.FrustumCulling.ExtractFrustumPlanes(cameraMatrix);
         }
 
         //updates the camera matrix with a view and perspective function

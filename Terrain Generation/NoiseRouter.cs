@@ -24,7 +24,7 @@ namespace OurCraft.Terrain_Generation
         static readonly FastNoiseLite temperatureNoise;
         static readonly FastNoiseLite humidityNoise;
         static readonly FastNoiseLite vegetationNoise;
-
+         
         //better randomness
         public static readonly int seed = 0;
         static readonly int offsetX = 0;
@@ -114,7 +114,6 @@ namespace OurCraft.Terrain_Generation
         public static float GetTemperatureNoise(int x, int z)
         {
             float wx = x + offsetX, wz = z + offsetZ;
-            temperatureNoise.DomainWarp(ref wx, ref wz);
             return temperatureNoise.GetNoise(wx, wz);
         }
 
@@ -122,7 +121,6 @@ namespace OurCraft.Terrain_Generation
         public static float GetHumidityNoise(int x, int z)
         {
             float wx = x + offsetX, wz = z + offsetZ;
-            humidityNoise.DomainWarp(ref wx, ref wz);
             return humidityNoise.GetNoise(wx, wz);
         }
 
@@ -130,7 +128,6 @@ namespace OurCraft.Terrain_Generation
         public static float GetVegetationNoise(int x, int z)
         {
             float wx = x + offsetX, wz = z + offsetZ;
-           vegetationNoise.DomainWarp(ref wx, ref wz);
             return vegetationNoise.GetNoise(wx, wz);
         }
 
@@ -184,27 +181,29 @@ namespace OurCraft.Terrain_Generation
             float humid = GetHumidityNoise(x, z);
             float veg = GetVegetationNoise(x, z);
 
+            float amp =
+            TerrainSplines.weirdnessSpline.Evaluate(w) +
+            TerrainSplines.fractureSpline.Evaluate(fracture) +
+            TerrainSplines.erosionAmplificationSpline.Evaluate(ero);
+
             //convert into a less messy float format
             string formattedReg = DebugRegionalNoise(reg);
             string formattedEro = DebugErosionNoise(ero);
             string formattedRiv = DebugRiverNoise(riv);
+            string formattedAmp = DebugAmplification(amp);
 
             //find the current biome based on noisemap values
             float ft = TerrainSplines.temperatureSpline.Evaluate(temp);
             float fh = TerrainSplines.humiditySpline.Evaluate(humid);
             float fv = TerrainSplines.vegetationSpline.Evaluate(veg);
-            Biome biome = WorldGenerator.GetBiome();
-
-            string formattedAmplification =
-            (TerrainSplines.weirdnessSpline.Evaluate(w) + 
-            TerrainSplines.fractureSpline.Evaluate(fracture)).ToString("F3");
+            Biome biome = WorldGenerator.GetBiome((int)ft, (int)fh, (int)fv);
 
             //print
             Console.WriteLine("========Terrain Builder========");
             Console.WriteLine("regional: " + formattedReg);
             Console.WriteLine("erosion: " + formattedEro);
             Console.WriteLine("river: " + formattedRiv);
-            Console.WriteLine("amplification: " + formattedAmplification + '\n');
+            Console.WriteLine("amplification: " + formattedAmp + '\n');
 
             Console.WriteLine("========Biome Builder========");
             Console.WriteLine("Temperature: " + (TemperatureIndex)ft);
@@ -215,9 +214,7 @@ namespace OurCraft.Terrain_Generation
 
         public static string DebugRegionalNoise(float r)
         {
-            if (r <= -0.75f)
-                return "Far From Mainland";
-            else if (r <= -0.4)
+            if (r <= -0.4f)
                 return "Off Mainland";
             else if (r <= -0.25f)
                 return "Coastal";
@@ -241,6 +238,20 @@ namespace OurCraft.Terrain_Generation
             if (r <= 0.2f && r >= 0)
                 return "River";
             return "None";
+        }
+
+        public static string DebugAmplification(float a)
+        {
+            if (a <= 10.5f)
+                return "Flat";
+            else if (a <= 25)
+                return "Bumpy";
+            else if (a <= 50)
+                return "Amplified";
+            else if (a <= 100)
+                return "Crazy";
+            else
+                return "Fractured";
         }
     }    
 

@@ -17,6 +17,7 @@ namespace OurCraft.Blocks.Meshing
             return FaceType.INDENTED;
         }
 
+        //add block shape
         public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData aOData)
         {
             BlockMeshBuilder.BuildXShapeBlock(pos, Tex, mesh, aOData.thisLight);

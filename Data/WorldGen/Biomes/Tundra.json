@@ -26,29 +26,36 @@
 
   "SurfaceFeatures": [
     {
-      "Name": "SpruceLog",
-      "Chance": 10000
+      "Name": "Crimson Mega Spruce Tree",
+      "Chance": 25000
     },
     {
-      "Name": "SpruceBush",
-      "Chance": 4000
+      "Name": "Mega Spruce Tree",
+      "Chance": 21000
     },
     {
-      "Name": "SpruceLeaves",
-      "Chance": 2000
+      "Name": "Stone Boulder",
+      "Chance": 20000
     },
     {
-      "Name": "SpruceOakTree",
-      "Chance": 700
+      "Name": "Cherry Spruce Tree",
+      "Chance": 15000
     },
     {
-      "Name": "SpruceTree",
-      "Chance": 450
+      "Name": "Crimson Spruce Tree",
+      "Chance": 6100
     },
     {
-      "Name": "Grass",
-      "Chance": 300
+      "Name": "Spruce Oak Tree",
+      "Chance": 3000
+    },
+    {
+      "Name": "Spruce Tree",
+      "Chance": 1500
+    },
+    {
+      "Name": "Grass Plant",
+      "Chance": 1000
     }
-
   ]
 }

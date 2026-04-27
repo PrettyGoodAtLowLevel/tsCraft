@@ -4,13 +4,14 @@ using OurCraft.Utility;
 
 namespace OurCraft.Terrain_Generation
 {
-    //does all of the math for the world generation
+    //creates the terrain of the world + where structures should start
     public static class WorldGenerator
     {
         //terrain height values
         public const int SEA_LEVEL = WorldGenConstants.DEFAULT_SEA_LEVEL;
         public const int MIN_HEIGHT = WorldGenConstants.DEFAULT_MIN_HEIGHT;
         public const int MAX_HEIGHT = WorldGenConstants.DEFAULT_MAX_HEIGHT;
+        public const float MAX_AMP = 256;
 
         static BlockState worldBlock;
         static BlockState emptyBlock;
@@ -35,40 +36,45 @@ namespace OurCraft.Terrain_Generation
             float weirdness = NoiseRouter.GetWeirdnessNoise(x, z);
             float fracture = NoiseRouter.GetFractureNoise(x, z);
 
-            //evaluate splines for terrain shape
+            //evaluate splines for terrain offset
             float conOffset = TerrainSplines.regionSpline.Evaluate(continentalness);
             float eroOffset = TerrainSplines.erosionSpline.Evaluate(erosion);
             float rivOffset = TerrainSplines.riverSpline.Evaluate(river);
             float rivFactor = TerrainSplines.riverFactorSpline.Evaluate(erosion);
-            float amplification =
-            TerrainSplines.weirdnessSpline.Evaluate(weirdness) + TerrainSplines.fractureSpline.Evaluate(fracture);
 
+            //evaluate splines for terrain intensity
+            float amplification =
+            TerrainSplines.weirdnessSpline.Evaluate(weirdness) +         //small bumps
+            TerrainSplines.fractureSpline.Evaluate(fracture) +           //rare fantasy terrain
+            TerrainSplines.erosionAmplificationSpline.Evaluate(erosion); //mountain roughness bias
+
+            //clamp amplification
+            float finalAmp = Math.Min(amplification, MAX_AMP);
             int maxDepth = GetMaxDepth(amplification);
+
+            //find biome
+            float temp = NoiseRouter.GetTemperatureNoise(x, z);
+            float humid = NoiseRouter.GetHumidityNoise(x, z);
+            float veg = NoiseRouter.GetVegetationNoise(x, z);
+
+            float ft = TerrainSplines.temperatureSpline.Evaluate(temp);
+            float fh = TerrainSplines.humiditySpline.Evaluate(humid);
+            float fv = TerrainSplines.vegetationSpline.Evaluate(veg);
+
             //combine noise outputs
-            float offset = conOffset + eroOffset + (rivOffset * rivFactor);      
-            return new NoiseRegion(offset, amplification, GetBiome(), maxDepth);
+            float offset = conOffset + eroOffset + (rivOffset * rivFactor);
+            return new NoiseRegion(offset, finalAmp, GetBiome((int)ft, (int)fh, (int)fv), maxDepth);
         }
 
         //indexes into the biome table with the current temp, humidity, and vegetation
-        public static Biome GetBiome()
+        public static Biome GetBiome(int temp, int humid, int veg)
         {
-            return BiomeData.FindBiome();
+            return BiomeData.GetBiome(temp, humid, veg);
         } 
 
         //creates the detailed shape of terrain by adding 3d detail to the raw heightmap
         public static float GetDensity(int x, int y, int z, NoiseRegion control)
-        {
-            //hard clamp values, also boosts generation speed
-            if (y > MAX_HEIGHT) return -1;
-            else if (y < MIN_HEIGHT) return 1;
-
-            //distance from surface (positive below surface, negative above)
-            float surfaceDist = control.heightOffset - y;
-
-            //early-out optimization beyond influence range
-            if (surfaceDist < -control.maxDepth) return -1f; //far above terrain
-            if (surfaceDist > control.maxDepth) return 1f;   //deep underground
-
+        {          
             float rawDensity = (control.heightOffset - y) / 1.0f;
             float rawNoise = NoiseRouter.GetDetailNoise(x, y, z);
             float finalDensity = rawDensity + (rawNoise * control.amplification);

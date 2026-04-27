@@ -42,6 +42,23 @@ namespace OurCraft.Blocks.Block_Implementations
             else world.SetBlock(globalPos + hitNormal, state);
         }
 
+        //get the AABB if slab was placed in world spot
+        public override AABB GetPredictedAABB(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        {
+            SlabType thisBlockState = thisBlock.GetProperty(SLAB_TYPE);
+            SlabType stateToPlace = SlabType.Bottom;
+
+            if (hitNormal.Y == 1 && thisBlock.BlockID == id && thisBlockState == SlabType.Bottom) stateToPlace = SlabType.Double;
+            else if (hitNormal.Y == -1 && thisBlock.BlockID == id && thisBlockState == SlabType.Top) stateToPlace = SlabType.Double;
+            else if (hitNormal.Y == 1) stateToPlace = SlabType.Bottom;
+            else if (hitNormal.Y == -1) stateToPlace = SlabType.Top;
+
+            BlockState state = DefaultState.With(SLAB_TYPE, stateToPlace);
+
+            if (stateToPlace == SlabType.Double) return state.GetAABB(globalPos);
+            else return state.GetAABB(globalPos + hitNormal);
+        }
+
         //if double slab, then is opaque, if single slab then light can pass through
         public override bool IsLightPassable(BlockState state)
         {
@@ -68,15 +85,13 @@ namespace OurCraft.Blocks.Block_Implementations
             Console.WriteLine(", Slab Type: " + slabType.ToString());
         }
 
+        //constructs an AABB based on state + world position
         public override AABB GetAABB(Vector3d worldPos, BlockState state)
         {           
             SlabType thisState = state.GetProperty(SLAB_TYPE);
 
-            if (thisState == SlabType.Double)
-                return new AABB { min = worldPos, max = worldPos + Vector3d.One };
-
-            if (thisState == SlabType.Bottom)
-                return new AABB { min = worldPos, max = worldPos + new Vector3d(1.0, 0.5, 1.0) };
+            if (thisState == SlabType.Double) return new AABB { min = worldPos, max = worldPos + Vector3d.One };
+            if (thisState == SlabType.Bottom) return new AABB { min = worldPos, max = worldPos + new Vector3d(1.0, 0.5, 1.0) };
             
             return new AABB
             {

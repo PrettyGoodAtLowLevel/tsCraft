@@ -5,6 +5,7 @@ using OurCraft.Graphics.Voxel_Lighting;
 
 namespace OurCraft.Blocks.Meshing
 {
+    //basic one model block shape
     public class FullBlockModelShape : BlockShape
     {
         public CachedBlockModel cachedModel = new();

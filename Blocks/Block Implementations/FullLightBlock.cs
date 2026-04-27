@@ -4,6 +4,7 @@ using OurCraft.Utility;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
+    //full block, but with lighting
     public class FullLightBlock : FullBlock
     {
         public Vector3i lightValue;

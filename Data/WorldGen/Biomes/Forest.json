@@ -1,0 +1,53 @@
+{
+  "Name": "Forest",
+  "Temperature": "Warm",
+  "Humidity": "Normal",
+  "Vegetation": "Dense",
+
+  "Heights": {
+    "Regular": 130,
+    "Ocean": 100,
+    "Shore": 127,
+    "Peak": 230
+  },
+
+  "Blocks": {
+    "Water": "Water",
+    "WaterSurface": "Water",
+    "Surface": "Grass Block",
+    "SubSurface": "Dirt",
+    "PeakSurface": "Stone",
+    "PeakSubSurface": "Stone",
+    "ShoreSurface": "Grass Block",
+    "ShoreSubSurface": "Dirt",
+    "OceanSurface": "Grass Block",
+    "OceanSubSurface": "Dirt"
+  },
+
+  "SurfaceFeatures": [
+    {
+      "Name": "Autumn Oak Tree",
+      "Chance": 2500
+    },
+    {
+      "Name": "Fallen Oak Log",
+      "Chance": 2000
+    },
+    {
+      "Name": "Oak Bush",
+      "Chance": 1000
+    },
+    {
+      "Name": "Birch Oak Tree",
+      "Chance": 900
+    },
+    {
+      "Name": "Oak Tree",
+      "Chance": 100
+    },
+    {
+      "Name": "Grass Plant",
+      "Chance": 20
+    }
+  ]
+}

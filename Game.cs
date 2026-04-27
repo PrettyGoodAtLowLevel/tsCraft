@@ -7,7 +7,6 @@ using OurCraft.Graphics;
 using OurCraft.Utility;
 using OurCraft.World;
 using OurCraft.Terrain_Generation;
-using OurCraft.Terrain_Generation.SurfaceFeatures;
 using OurCraft.Entities;
 
 namespace OurCraft
@@ -15,7 +14,7 @@ namespace OurCraft
     //base game class, holds all the game data
     public class Game : GameWindow
     {
-        readonly ThreadPoolSystem worldGenThreads;
+        readonly ThreadPoolSystem terrainGenThreads;
         readonly ThreadPoolSystem lightingThread;
         readonly ChunkManager world;        
         readonly Renderer renderer;
@@ -25,17 +24,17 @@ namespace OurCraft
         {ClientSize = new Vector2i(RenderingConstants.SCREEN_WIDTH, RenderingConstants.SCREEN_HEIGHT)})
         {
             Title = "Our Craft";
-            worldGenThreads = new(threadCount:8);
+            terrainGenThreads = new(threadCount:8);
             lightingThread = new(threadCount:1);
 
             TextureRegistry.InitTextures();
             BlockRegistry.InitBlocks();
             WorldGenerator.SetGlobalBlocks();
-            SurfaceFeatureRegistry.InitializeFeatures();
+            SurfaceFeatureRegistry.InitSurfaceFeatures();
             BiomeData.Init();
-            EntityManager.Init();
+            EntityManager.InitPlayer();
 
-            world = new ChunkManager(renderDistance:5, ref worldGenThreads, ref lightingThread);          
+            world = new ChunkManager(renderDistance:5, ref terrainGenThreads, ref lightingThread);          
             renderer = new Renderer(ref world, RenderingConstants.SCREEN_WIDTH, RenderingConstants.SCREEN_HEIGHT);          
         }
 
@@ -74,7 +73,7 @@ namespace OurCraft
         {
             base.OnUnload();
 
-            worldGenThreads.Dispose();
+            terrainGenThreads.Dispose();
             lightingThread.Dispose();
         }
 

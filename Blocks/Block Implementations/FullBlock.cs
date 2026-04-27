@@ -8,7 +8,6 @@ namespace OurCraft.Blocks.Block_Implementations
     //full regular full cube solid block implementation
     public class FullBlock : Block
     {
-        //csctr
         public FullBlock(string name, BlockShape shape): base(name, shape) { }
 
         //nothing special just add the block on the face the player is looking at

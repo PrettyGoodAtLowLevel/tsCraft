@@ -3,15 +3,11 @@ using StbImageSharp;
 
 namespace OurCraft
 {
-
     //picture data mapped onto mesh vertices
     public class Texture
     {
-        //members
         private int ID = 0;
         public string path = string.Empty;
-
-        //methods
 
         //initialize id
         public Texture() { ID = 0; }

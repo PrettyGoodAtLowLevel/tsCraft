@@ -1,4 +1,5 @@
 ﻿//contains all constant and widely used values
+
 namespace OurCraft.Utility
 {
     public static class RenderingConstants
@@ -12,6 +13,8 @@ namespace OurCraft.Utility
 
         public const int BLOCK_TEXTURE_WIDTH = 32;
         public const int BLOCK_TEXTURE_HEIGHT = 16;
+
+        public const float CAM_HEIGHT_OFFSET = 0.75f;
     }
 
     public static class MathConstants
@@ -39,11 +42,14 @@ namespace OurCraft.Utility
         public const double DEFAULT_TIME_SCALE = 1.0;
         public const double PHYSICS_TICK = 0.02;
         public const double MAX_ACCUM = 0.08;
-        public const double BLOCK_TICK = 0.05;
-        public const double GRAVITY = 9.8;
+        public const double BLOCK_TICK = 0.05;      
 
         public const double MAX_VEL_Y = 100.0;
         public const double MAX_VEL_XZ = 100.0;
+
+        public const float DEFAULT_FRICTION = 10.0f;
+        public const float DEFAULT_BOUNCE = 0.0f;
+        public const double GRAVITY = 9.8;
     }
 
     public static class LightConstants

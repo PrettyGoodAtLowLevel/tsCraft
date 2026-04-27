@@ -7,7 +7,7 @@ namespace OurCraft.Blocks
     //1. create a json file config for the block, see json block config for documentation
     //2. use block loader's "Register Block" 'BlockLoader.RegisterBlockType(path))'
     //optionally you can cache the block by assigning it to the respective type
-    public static class BlockRegistry
+    public static class BlockRegistry //all blocks stored here
     {
         //all blocks
         static readonly List<Block> blocks = [];
@@ -30,11 +30,13 @@ namespace OurCraft.Blocks
             BlockLoader.RegisterFullBlock("Natural/DirtBlock.json");
             BlockLoader.RegisterFullBlock("Natural/StoneBlock.json");
             BlockLoader.RegisterFullBlock("Natural/SandBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/CactusBlock.json");
 
             BlockLoader.RegisterFullBlock("Natural/SnowBlock.json");
             BlockLoader.RegisterFullBlock("Natural/SnowyGrassBlock.json");           
             BlockLoader.RegisterFullBlock("Natural/IceBlock.json");
             BlockLoader.RegisterFullBlock("Natural/GravelBlock.json");
+            BlockLoader.RegisterFullBlock("Natural/SlimeBlock.json");
 
             BlockLoader.RegisterWaterBlock("Natural/WaterBlock.json");
             BlockLoader.RegisterCrossBlock("Natural/Rose.json");
@@ -45,6 +47,9 @@ namespace OurCraft.Blocks
             BlockLoader.RegisterLeavesBlock("Natural/SpruceLeaves.json");
             BlockLoader.RegisterLeavesBlock("Natural/BirchLeaves.json");
             BlockLoader.RegisterLeavesBlock("Natural/JungleLeaves.json");
+            BlockLoader.RegisterLeavesBlock("Natural/AutumnLeaves.json");
+            BlockLoader.RegisterLeavesBlock("Natural/CrimsonLeaves.json");
+            BlockLoader.RegisterLeavesBlock("Natural/CherryLeaves.json");
 
             BlockLoader.RegisterLogBlock("Logs/OakLog.json");
             BlockLoader.RegisterLogBlock("Logs/SpruceLog.json");

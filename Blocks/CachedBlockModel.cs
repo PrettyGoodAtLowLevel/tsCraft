@@ -29,6 +29,7 @@ namespace OurCraft.Blocks
                 CubeFaces faceIndex = BlockShape.FaceNameToCubeFace(kvp.Key);
                 cached.FaceCull[(byte)faceIndex] = BlockShape.FaceTypeFromString(kvp.Value);     
             }
+
             //now map the cuboid elements properly
             cached.Cuboids = [];
             foreach (var c in jsonModel.Elements)

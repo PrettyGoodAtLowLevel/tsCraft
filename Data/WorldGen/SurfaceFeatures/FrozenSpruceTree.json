@@ -1,0 +1,6 @@
+{
+  "Name": "Frozen Spruce Tree",
+  "LogBlock": "Ice Block",
+  "LeavesBlock": "Snow",
+  "PlaceOn": "Snowy Grass Block"
+}

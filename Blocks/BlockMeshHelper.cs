@@ -9,30 +9,22 @@ namespace OurCraft.Blocks
     //contains tons of helpers for building block meshes in a chunk
     public static class BlockMeshHelper
     {
-        //const data
         private const int TEX_SIZE_IN_BLOCKS_X = RenderingConstants.BLOCK_TEXTURE_WIDTH; //512 / 16
         private const int TEX_SIZE_IN_BLOCKS_Y = RenderingConstants.BLOCK_TEXTURE_HEIGHT; //256 / 16
 
-        //face culling things
+        //gets the opposite of a specified face direction
         public static CubeFaces Opposite(CubeFaces face)
         {
-            switch (face)
+            return face switch
             {
-                case CubeFaces.BOTTOM:
-                    return CubeFaces.TOP;
-                case CubeFaces.TOP:
-                    return CubeFaces.BOTTOM;
-                case CubeFaces.FRONT:
-                    return CubeFaces.BACK;
-                case CubeFaces.BACK:
-                    return CubeFaces.FRONT;
-                case CubeFaces.RIGHT:
-                    return CubeFaces.LEFT;
-                case CubeFaces.LEFT:
-                    return CubeFaces.RIGHT;
-                default:
-                    return CubeFaces.BOTTOM;
-            }
+                CubeFaces.BOTTOM => CubeFaces.TOP,
+                CubeFaces.TOP => CubeFaces.BOTTOM,
+                CubeFaces.FRONT => CubeFaces.BACK,
+                CubeFaces.BACK => CubeFaces.FRONT,
+                CubeFaces.RIGHT => CubeFaces.LEFT,
+                CubeFaces.LEFT => CubeFaces.RIGHT,
+                _ => CubeFaces.BOTTOM,
+            };
         }
 
         //gets the state of each block from face type, then checks if the faces should be visible
@@ -70,13 +62,14 @@ namespace OurCraft.Blocks
             return true;
         }
 
-        //bunch of texture uv math helpers down here
+        //get x coord of texture based on texture id index
         public static float GetTextureX(int textureID)
         {
             int x = textureID % TEX_SIZE_IN_BLOCKS_X;
             return x * NormalizedBlockTextureX();
         }
 
+        //get y coord of texture based on texture id index
         public static float GetTextureY(int textureID)
         {
             int y = textureID / TEX_SIZE_IN_BLOCKS_X;
@@ -84,11 +77,13 @@ namespace OurCraft.Blocks
             return texY;
         }
 
+        //converts voxel texture to openGL texture on x axis
         public static float NormalizedBlockTextureX()
         {
             return 1.0f / TEX_SIZE_IN_BLOCKS_X;
         }
 
+        //converts voxel texture to openGL texture on y axis
         public static float NormalizedBlockTextureY()
         {
             return 1.0f / TEX_SIZE_IN_BLOCKS_Y;
@@ -121,7 +116,7 @@ namespace OurCraft.Blocks
                         BlockState neighborState = neighbors[f];
                         if (!BlockMeshHelper.IsFaceVisible(nb.thisState, neighborState, faceDir)) continue;
                     }
-                    ushort lighting = lights[f];                   
+                    ushort lighting = face.Cullable ? lights[f] : ld.thisLight;                   
                     //add the face: this will compute v0->v3 positions per-face and call the AddQuadUV overload.
                     AddModelFace(pos, cuboid, faceDir, face.UV.X, face.UV.Y, face.UV.Z, face.UV.W, mesh, lighting);
                 }

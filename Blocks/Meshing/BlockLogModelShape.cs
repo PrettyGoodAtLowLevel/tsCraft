@@ -26,12 +26,9 @@ namespace OurCraft.Blocks.Meshing
 
             switch (axis)
             {
-                case Axis.X:
-                    BlockMeshBuilder.BuildFromCachedModel(cachedModelX, pos, nb, mesh, lightData); break;
-                case Axis.Y:
-                    BlockMeshBuilder.BuildFromCachedModel(cachedModelY, pos, nb, mesh, lightData); break;
-                default:
-                    BlockMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, nb, mesh, lightData); break;
+                case Axis.X: BlockMeshBuilder.BuildFromCachedModel(cachedModelX, pos, nb, mesh, lightData); break;
+                case Axis.Y: BlockMeshBuilder.BuildFromCachedModel(cachedModelY, pos, nb, mesh, lightData); break;
+                default: BlockMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, nb, mesh, lightData); break;
             }
         }
 

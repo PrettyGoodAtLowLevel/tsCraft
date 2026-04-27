@@ -29,6 +29,8 @@ namespace OurCraft.Graphics.Voxel_Lighting
             //do block lights
             BlockLightingEngine.SeedBlockLights(world, chunk, blockLights);
             BlockLightingEngine.PropagateBlockLights(world, blockLights);
+
+            chunk.SetState(ChunkState.Lit);
         }
 
         //adds a block light into the world after inital load
@@ -103,6 +105,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         {            
             ConcurrentQueue<LightNode> lights = new ConcurrentQueue<LightNode>();
             ConcurrentQueue<SkyLightNode> skyLights = new ConcurrentQueue<SkyLightNode>();
+
             Span<(int dx, int dy, int dz)> dirs =
             [
                 ( 1, 0, 0), (-1, 0, 0), ( 0, 1, 0),
@@ -119,7 +122,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                 int cx = VoxelMath.FloorDivPow2(wx, CHUNK_SIZE);
                 int cz = VoxelMath.FloorDivPow2(wz, CHUNK_SIZE);
                 Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
-                if (chunk == null || !chunk.HasVoxelData() || chunk.Deleted()) continue;
+                if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted()) continue;
 
                 int lx = VoxelMath.ModPow2(wx, CHUNK_SIZE);
                 int lz = VoxelMath.ModPow2(wz, CHUNK_SIZE);

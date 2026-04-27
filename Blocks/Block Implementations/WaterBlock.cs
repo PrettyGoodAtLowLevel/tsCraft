@@ -1,4 +1,5 @@
 ﻿using OurCraft.Blocks.Block_Properties;
+using OurCraft.Physics;
 using OurCraft.Utility;
 
 namespace OurCraft.Blocks.Block_Implementations
@@ -31,6 +32,12 @@ namespace OurCraft.Blocks.Block_Implementations
         public override bool IsFluid(BlockState state)
         {
             return true;
+        }
+
+        public override BlockPhysics GetBlockPhysics(BlockState state)
+        {
+            BlockPhysics physics = new(){ isFluid = true };
+            return physics;
         }
     }
 }

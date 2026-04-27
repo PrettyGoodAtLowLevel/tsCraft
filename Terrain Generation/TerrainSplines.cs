@@ -21,6 +21,9 @@ namespace OurCraft.Terrain_Generation
         //extra amplifier for really weird fantasy terrain
         public static readonly SplineGraph fractureSpline = SplineJson.LoadSpline("FractureSpline.json");
 
+        //extra amplifier for high erosion areas
+        public static readonly SplineGraph erosionAmplificationSpline = SplineJson.LoadSpline("ErosionAmplificationSpline.json");
+
         //makes sure rivers dont look too harsh ontop of mountains
         public static readonly SplineGraph riverFactorSpline = SplineJson.LoadSpline("RiverFactorSpline.json");
 

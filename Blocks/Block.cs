@@ -6,7 +6,7 @@ using OurCraft.Physics;
 
 namespace OurCraft.Blocks
 {
-    //we pass around block neighbors so much its better to keep them packed in a struct
+    //tightly packed neighbor block state data
     public struct NeighborBlocks
     {
         public BlockState thisState, bottom, top, front, back, right, left;
@@ -24,6 +24,10 @@ namespace OurCraft.Blocks
         public List<IBlockProperty> Properties = [];
         public Dictionary<IBlockProperty, byte> PropertyLookup = [];
         public BlockStateContainer StateContainer = new();
+
+        //physics
+        public float friction = 10.0f;
+        public float bounce = 0.0f;
 
         //visuals
         public BlockShape blockShape;
@@ -55,7 +59,10 @@ namespace OurCraft.Blocks
         public ushort GetID() { return id; }
 
         //determines each block's way of changing the chunk block state data when placed
-        public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) { } 
+        public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) { }
+        //determines which block state will be placed in the world if block was placed by player
+        public virtual AABB GetPredictedAABB(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) 
+        { return DefaultState.GetAABB(globalPos + hitNormal); }
 
         //determines each block's way of updating
         public virtual void UpdateBlockState(Vector3 globalPos, BlockState thisBlock, ChunkManager world) { }
@@ -76,6 +83,10 @@ namespace OurCraft.Blocks
         public virtual bool IsPhysicsSolid(BlockState state) => false; //cant walk past
         public virtual bool IsFluid(BlockState state) => false;
         public virtual AABB GetAABB(Vector3d worldPos, BlockState state) => new AABB();
-        public virtual BlockPhysics GetBlockPhysics(BlockState state) => new BlockPhysics();
+        public virtual BlockPhysics GetBlockPhysics(BlockState state)
+        {
+            BlockPhysics physics = new() { friction = this.friction, bounce = this.bounce };
+            return physics;
+        }
     }
 }

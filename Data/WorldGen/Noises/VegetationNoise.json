@@ -3,6 +3,6 @@
   "FractalType": "FBm",
   "DomainWarpType": "OpenSimplex2",
   "Frequency": 0.00025,
-  "Octaves": 2,
-  "Warp": 20
+  "Octaves": 1,
+  "Warp": 0
 }

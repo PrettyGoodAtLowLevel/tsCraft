@@ -23,7 +23,7 @@ namespace OurCraft.Graphics.DebugRendering
         }
     }
 
-    //allows for a vbo to be used with debug vertices
+    //allows for a vbo to be used with debug vertices, see default vbo for documentation
     public class DebugVBO
     {
         public int ID { get; private set; }

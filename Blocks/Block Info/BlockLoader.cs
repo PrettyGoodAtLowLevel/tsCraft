@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace OurCraft.Blocks.Block_Info
 {
-    //provides helpers for loading in blocks
+    //provides helpers for loading in blocks, most code is extremely similar so no documentation needed
     public static class BlockLoader
     {
         public static FullBlock RegisterFullBlock(string fileName)
@@ -31,6 +31,8 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+            block.friction = result.Friction;
+            block.bounce = result.Bounce;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -59,6 +61,8 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+            block.friction = result.Friction;
+            block.bounce = result.Bounce;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -87,6 +91,8 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+            block.bounce = result.Bounce;
+            block.friction = result.Friction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -143,6 +149,8 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+            block.friction = result.Friction;
+            block.bounce = result.Bounce;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -171,6 +179,8 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+            block.friction = result.Friction;
+            block.bounce = result.Bounce;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -201,6 +211,8 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+            block.friction = result.Friction;
+            block.bounce = result.Bounce;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -231,6 +243,8 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+            block.friction = result.Friction;
+            block.bounce = result.Bounce;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);

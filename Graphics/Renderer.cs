@@ -15,13 +15,13 @@ namespace OurCraft.Graphics
     {        
         //chunk drawing
         private readonly ChunkManager chunks;
-        private static readonly Shader chunkShader = new();
+        public static readonly Shader chunkShader = new();
         private static readonly Shader debugShader = new();
         private readonly CameraRender? sceneCamera;
 
         //post processing
         private readonly FBO postFBO; 
-        private static readonly Shader postShader = new(); 
+        public static readonly Shader postShader = new(); 
         private readonly FullscreenQuad postProcessingQuad;
         private int screenWidth, screenHeight;
 
@@ -114,7 +114,7 @@ namespace OurCraft.Graphics
             debugShader.Activate();
             foreach (var box in boxes)
             {
-                box.mesh.Draw(debugShader, box.Transform, sceneCamera.Transform.position);
+                box.mesh.Draw(debugShader, box.Transform, sceneCamera.Transform.position + sceneCamera.offset);
             }
         }
 
@@ -193,6 +193,7 @@ namespace OurCraft.Graphics
             return chunks.ChunkMap.Values.Where(c =>
             {
                 if (c.GetState() != ChunkState.Built) return false;
+                if (chunks.ChunkOutOfRenderDistance(c.ChunkPos)) return false;
 
                 //shift chunk bounds into camera-relative space
                 Vector3 min = (Vector3)c.ChunkMin - camPos;

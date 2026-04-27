@@ -17,17 +17,19 @@ namespace OurCraft.Entities
         static double accum = 0.0;
         public static double Alpha { get; private set; } = 0.0;
 
-        //entity tracking
         readonly static Dictionary<string, Entity> Entities = [];
         public static string PlayerEntityName { get; private set; } = "Player";
         public static int EntityCount => Entities.Count;
 
+        //tries to get an entity, gives null if not found
         public static Entity? GetEntity(string name)
         {
             if (Entities.TryGetValue(name, out Entity? value)) return value;
             return null;
         }
 
+        //adds an entity if non existent and returns it
+        //if entity already exists, returns existing entity
         public static Entity AddEntity(string name)
         {
             if (!Entities.TryGetValue(name, out Entity? entity))
@@ -43,6 +45,7 @@ namespace OurCraft.Entities
             return entity;
         }
 
+        //removes entity if not player entity
         public static void RemoveEntity(string name)
         {
             if (name.Equals(PlayerEntityName))
@@ -58,33 +61,34 @@ namespace OurCraft.Entities
             }           
         }
 
+        //sets the player entity
         public static void SetPlayerEntity(string name)
         {
             PlayerEntityName = name;
         }                 
 
         //creates the player entity
-        public static void Init()
+        public static void InitPlayer()
         {
             Entity player = AddEntity("Player");
-            player.Transform.position = new Vector3d(0.5, 160, 0.5);
+            player.Transform.position = new Vector3d(0.5, 400, 0.5);
 
             PlayerController c = player.AddComponent<PlayerController>();
-            RigidBody rb = player.AddComponent<RigidBody>();
+            DebugRenderBox render = player.AddComponent<DebugRenderBox>();
+            player.AddComponent<PhysicsObj>();           
             player.AddComponent<CameraRender>();
             player.AddComponent<PlayerInteractions>();
             player.AddComponent<DayNightCycle>();
-
-            rb.bounds = new Vector3d(0.6, 0.8, 0.6);
-            c.rb = rb;
-            rb.useGravity = false;
-            rb.dragY = 3.0;
-            rb.dragX = 3.0;
-            rb.dragZ = 3.0;
+          
+            c.OnStart();
+            render.min = new Vector3(-0.3f, -0.9f, -0.3f);
+            render.max = new Vector3(0.3f, 0.9f, 0.3f);
+            render.SetUpRenderBox(Vector3.Zero);
 
             SetPlayerEntity("Player");
         }
 
+        //updates all systems
         public static void Update(ChunkManager world, double dt, KeyboardState kb, MouseState ms)
         {
             double scaledTime = dt * TimeScale;
@@ -112,6 +116,7 @@ namespace OurCraft.Entities
         }
     }  
 
+    //list of different systems
     public class DebugRenderSystem : BaseSystem<DebugRenderBox>
     {
         public static List<DebugRenderBox> AllRenderBoxes => Components;

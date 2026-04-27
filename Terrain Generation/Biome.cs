@@ -1,6 +1,5 @@
 ﻿using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.Terrain_Generation.SurfaceFeatures;
 using System.Text.Json;
 
 namespace OurCraft.Terrain_Generation
@@ -37,8 +36,7 @@ namespace OurCraft.Terrain_Generation
         public BlockState OceanSurfaceBlock { get; set; }
         public BlockState OceanSubSurfaceBlock { get; set; }
 
-        //surface features list
-        public List<BiomeSurfaceFeature> SurfaceFeatures = [];
+        public List<BiomeSurfaceFeature> features = [];
     }
 
     //json representation of biome
@@ -60,6 +58,7 @@ namespace OurCraft.Terrain_Generation
         public List<BiomeFeatureConfig> SurfaceFeatures { get; set; } = new();
     }
 
+    //what block height is configured to what blocks
     public class BiomeHeightConfig
     {
         public int Regular { get; set; } = 130;
@@ -68,6 +67,7 @@ namespace OurCraft.Terrain_Generation
         public int Peak { get; set; } = 200;
     }
 
+    //the surface blocks of a biome
     public class BiomeBlockConfig
     {
         public string Water { get; set; } = "Water";
@@ -82,9 +82,10 @@ namespace OurCraft.Terrain_Generation
         public string OceanSubSurface { get; set; } = "Stone";
     }
 
+    //name of feature to find in surface feature map + chance to spawn
     public class BiomeFeatureConfig
     {
-        public string Name { get; set; } = "UnknownFeature";
+        public string Name { get; set; } = "Unknown Feature";
         public int Chance { get; set; } = 1000;
     }
 
@@ -126,9 +127,10 @@ namespace OurCraft.Terrain_Generation
                 OceanSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.OceanSubSurface),
             };
 
-            foreach (var feature in config.SurfaceFeatures)
+            foreach (var surface in config.SurfaceFeatures)
             {
-                biome.SurfaceFeatures.Add(new BiomeSurfaceFeature(SurfaceFeatureRegistry.GetFeature(feature.Name), feature.Chance));
+                SurfaceFeature feature = SurfaceFeatureRegistry.GetFeature(surface.Name);
+                biome.features.Add(new BiomeSurfaceFeature(feature, surface.Chance));
             }
 
             return biome;

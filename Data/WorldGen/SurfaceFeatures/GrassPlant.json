@@ -1,0 +1,6 @@
+﻿{
+  "Name": "Grass Plant",
+  "PlaceOn": "Grass Block",
+  "AltPlaceOn": "Snowy Grass Block",
+  "PlantBlock": "Grass"
+}

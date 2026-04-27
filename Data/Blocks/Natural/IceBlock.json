@@ -1,4 +1,5 @@
 {
   "Name": "Ice Block",
-  "ModelPath": "Natural/IceBlock.json"
+  "ModelPath": "Natural/IceBlock.json",
+  "Friction": 0.0
 }

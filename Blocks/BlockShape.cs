@@ -21,10 +21,10 @@ namespace OurCraft.Blocks
     public enum FaceType
     {
         AIR,
-        FULLBLOCK,           //regular cube face
+        FULLBLOCK,      //regular cube face
         CUTOUT,         //things like stairs
-        BOTTOMSLAB,    //botom part of slab
-        TOPSLAB,       //top slab
+        BOTTOMSLAB,     //botom part of slab
+        TOPSLAB,        //top slab
         INDENTED,       //faces that are not on the edge of a cube 
         WATER,          //water (duh)
         WATERTOP,

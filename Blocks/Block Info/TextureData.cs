@@ -24,6 +24,7 @@ namespace OurCraft.Blocks
             AddTexture("Natural/CactusTopTex.json");
             AddTexture("Natural/CactusSideTex.json");
             AddTexture("Natural/CactusBottomTex.json");
+            AddTexture("Natural/SlimeTex.json");
 
             AddTexture("Natural/StoneTex.json");
             AddTexture("Building/CobbleStoneTex.json");
@@ -44,6 +45,10 @@ namespace OurCraft.Blocks
             AddTexture("Leaves/BirchLeavesTex.json");
             AddTexture("Planks/BirchPlanksTex.json");
 
+            AddTexture("Leaves/AutumnLeaves.json");
+            AddTexture("Leaves/CrimsonLeaves.json");
+            AddTexture("Leaves/CherryLeaves.json");
+
             AddTexture("Logs/JungleLogSideTex.json");
             AddTexture("Logs/JungleLogTopTex.json");
             AddTexture("Leaves/JungleLeavesTex.json");
@@ -59,14 +64,14 @@ namespace OurCraft.Blocks
             AddTexture("Building/LapizBlockTex.json");
         }
 
-        public static bool HasTexture(string name) => textureMap.ContainsKey(name);
-
+        //helper for getting textures
         public static int GetTextureID(string name)
         {
             if (!textureMap.TryGetValue(name, out int id)) throw new KeyNotFoundException($"Texture name not found in registry: '{name}'");
             return id;
         }
 
+        //adds a texture to texture registry
         public static void AddTexture(string fileName)
         {
             TextureJson json = TextureJson.LoadTexture(fileName);
@@ -80,6 +85,7 @@ namespace OurCraft.Blocks
         public string Handle { get; set; } = "";
         public int ID { get; set; } = 0;
 
+        //helper to load texture data from json
         public static TextureJson LoadTexture(string fileName)
         {
             string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Resources/Textures/IDs/{fileName}";

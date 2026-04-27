@@ -7,10 +7,8 @@ namespace OurCraft
     //also allows to set the shader source for the current rendering path, and allows to manipulate currently bound shader uniforms
     public class Shader
     {
-        //members
         public int ID {get; private set;}
 
-        //methods
         //initialize id
         public Shader() { ID = 0; }
 

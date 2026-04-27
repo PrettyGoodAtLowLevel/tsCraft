@@ -20,6 +20,7 @@ namespace OurCraft.Entities.Components
             BaseSystem<DebugRenderBox>.Unregister(this);
         }
 
+        //build mesh
         public void SetUpRenderBox(Vector3 color)
         {
             mesh.SetUpMesh(max, min, color);

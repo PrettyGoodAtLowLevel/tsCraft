@@ -1,0 +1,6 @@
+﻿{
+  "Name": "Slime Block",
+  "ModelPath": "Natural/SlimeBlock.json",
+  "Bounce": 0.9,
+  "Friction": 25.0
+}

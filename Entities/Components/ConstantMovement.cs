@@ -19,6 +19,7 @@ namespace OurCraft.Entities.Components
             BaseSystem<ConstantMovement>.Unregister(this);
         }
 
+        //move entity in forward vector
         public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
         {
             Transform.position += speed * Transform.Forward * (float)time;

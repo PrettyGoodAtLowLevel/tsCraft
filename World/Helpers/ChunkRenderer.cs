@@ -6,10 +6,11 @@ namespace OurCraft.World.Helpers
     //helps render and create openGL buffers of chunks
     public static class ChunkRenderer
     {
+        //uploads mesh to openGL
         public static void GLUploadChunk(Chunk chunk)
         {
             ChunkState state = chunk.GetState();
-            if (state == ChunkState.Deleted || state == ChunkState.VoxelOnly || state == ChunkState.Initialized || chunk.IsMeshing())
+            if (state == ChunkState.Deleted || state == ChunkState.StructureReady || state == ChunkState.Initialized || chunk.IsMeshing())
                 return;
 
             UploadBatchedMesh(chunk, chunk.batchedMesh, transparent: false);
@@ -18,14 +19,16 @@ namespace OurCraft.World.Helpers
             chunk.SetState(ChunkState.Built);
         }
 
+        //draws solid geometry of chunk relative to cam
         public static void DrawSolid(Chunk chunk, Shader shader, CameraRender cam)
         {
-            chunk.batchedMesh.Draw(shader, chunk.WorldPos, cam.Transform.position);
+            chunk.batchedMesh.Draw(shader, chunk.RenderWorldPos, cam.Transform.position + cam.offset);
         }
 
+        //draws transparent geometry of chunk relative to cam
         public static void DrawTransparent(Chunk chunk, Shader shader, CameraRender cam)
         {
-            chunk.transparentMesh.Draw(shader, chunk.WorldPos, cam.Transform.position);
+            chunk.transparentMesh.Draw(shader, chunk.RenderWorldPos, cam.Transform.position + cam.offset);
         }
 
         //combines vertex data of subchunks into one big openGL mesh

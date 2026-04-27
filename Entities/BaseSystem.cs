@@ -8,18 +8,21 @@ namespace OurCraft.Entities
     {
         protected static List<T> Components = [];
 
+        //adds component
         public static void Register(T component)
         {
             component.OnCreation();
             Components.Add(component);
         }
 
+        //removes component
         public static void Unregister(T component)
         {
             component.OnDestroy();
             Components.Remove(component);
         }
 
+        //initialize all components
         public static void Start()
         {
             foreach (T component in Components)
@@ -28,6 +31,7 @@ namespace OurCraft.Entities
             }
         }
 
+        //update all components
         public static void Update(ChunkManager world, double deltaTime, KeyboardState kb, MouseState ms)
         {
             foreach (T component in Components)
@@ -36,6 +40,7 @@ namespace OurCraft.Entities
             }
         }
 
+        //update all components each physics frame
         public static void FixedUpdate(ChunkManager world)
         {
             foreach (T component in Components)
@@ -44,6 +49,7 @@ namespace OurCraft.Entities
             }
         }
 
+        //remove all components
         public static void Clear()
         {
             foreach (var component in Components)

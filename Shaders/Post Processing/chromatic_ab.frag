@@ -15,6 +15,7 @@ out vec4 FragColor;
 
 void main()
 {
+
     //chromatic aberration
     vec2 center = vec2(0.5, 0.5);
     vec2 dir = TexCoords - center;

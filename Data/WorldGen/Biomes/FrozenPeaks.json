@@ -13,7 +13,7 @@
 
   "Blocks": {
     "Water": "Water",
-    "WaterSurface": "Ice Block",
+    "WaterSurface": "Water",
     "Surface": "Snowy Grass Block",
     "SubSurface": "Dirt",
     "PeakSurface": "Ice Block",
@@ -26,16 +26,16 @@
 
   "SurfaceFeatures": [
     {
-      "Name": "SpruceTree",
-      "Chance": 950
+      "Name": "Ice Boulder",
+      "Chance": 10000
     },
     {
-      "Name": "FrozenTree",
-      "Chance": 800
+      "Name": "Spruce Tree",
+      "Chance": 1800
     },
     {
-      "Name": "SpruceLeaves",
-      "Chance": 750
+      "Name": "Frozen Spruce Tree",
+      "Chance": 1400
     }
   ]
 }

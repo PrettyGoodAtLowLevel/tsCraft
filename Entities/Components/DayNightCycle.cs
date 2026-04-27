@@ -5,6 +5,7 @@ using OurCraft.World;
 
 namespace OurCraft.Entities.Components
 {
+    //testing day night cycle system
     public class DayNightCycle : Component
     {
         //clock for the full day cycle
@@ -35,6 +36,7 @@ namespace OurCraft.Entities.Components
             BaseSystem<DayNightCycle>.Unregister(this);
         }
 
+        //update sky color based on time
         public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
         {
             cycleTime += (float)(time * cycleSpeed);

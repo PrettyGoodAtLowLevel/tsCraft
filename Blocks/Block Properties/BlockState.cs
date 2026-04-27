@@ -86,6 +86,7 @@ namespace OurCraft.Blocks.Block_Properties
         private int currentOffset = 0;
         public int BitsUsed => currentOffset;
 
+        //add enum, increase bitcount by how many elements in enum
         public EnumProperty<T> AddEnum<T>() where T : Enum
         { 
             int count = Enum.GetValues(typeof(T)).Length; 
@@ -95,13 +96,15 @@ namespace OurCraft.Blocks.Block_Properties
             return prop; 
         } 
 
+        //add bool property, increase bitcount by 1
         public BoolProperty AddBool()
         { 
             var prop = new BoolProperty(currentOffset);
             currentOffset += 1;
             return prop;
-        } 
+        }
 
+        //add byte property, increase bitcount by 8
         public ByteProperty AddByte()
         {
             var prop = new ByteProperty(currentOffset); 
@@ -223,6 +226,7 @@ namespace OurCraft.Blocks.Block_Properties
         private readonly int bitOffset; 
         private readonly int bitCount = 1;
         public int BitCount => bitCount;
+
         public BoolProperty(int offset)
         {
             bitOffset = offset;
@@ -254,17 +258,20 @@ namespace OurCraft.Blocks.Block_Properties
         { 
             bitOffset = offset; 
         } 
+
         public int BitCount => bitCount; 
         public byte Decode(ushort data)
         {
             return (byte)((data >> bitOffset) & 0xFF);
         } 
+
         object IBlockProperty.Decode(ushort data) => Decode(data);
         public ushort Encode(ushort oldData, byte newValue)
         { 
             ushort cleared = (ushort)(oldData & ~(0xFF << bitOffset)); 
             return (ushort)(cleared | (newValue << bitOffset)); 
         } 
+
         ushort IBlockProperty<byte>.Encode(ushort oldData, byte newValue) => Encode(oldData, newValue);
         ushort IBlockProperty.Encode(ushort oldData, object value) => Encode(oldData, (byte)value); 
     }
