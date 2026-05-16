@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text.Json;
 using FastNoiseLiteRef;
+using OurCraft.Utility;
 
 namespace OurCraft.Terrain_Generation
 {
@@ -283,6 +284,8 @@ namespace OurCraft.Terrain_Generation
     //noise file represented in json
     public class NoiseJson
     {
+        private static readonly string noiseFilePath = FileConstants.WORLD_GEN_DATA_PATH + "Noises/";
+
         public string NoiseType { get; set; } = "";
         public string FractalType { get; set; } = "";
         public string DomainWarpType { get; set; } = "";
@@ -292,35 +295,33 @@ namespace OurCraft.Terrain_Generation
 
         public static NoiseJson Load(string fileName, bool debug = false)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/Noises/{fileName}";
+            string path = noiseFilePath + fileName;
             string json = File.ReadAllText(path);
 
             //allow case-insensitive JSON property matching
             var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
+            {  PropertyNameCaseInsensitive = true };
 
             var result = JsonSerializer.Deserialize<NoiseJson>(json, options);
 
             if (debug)
             {
-                if (result == null)
-                    Console.WriteLine("Deserialization failed!");
-                else
-                    Console.WriteLine("Loaded noise config successfully!");
+                if (result == null) Console.WriteLine("Deserialization failed!");
+                else Console.WriteLine("Loaded noise config successfully!");
             }
 
             //if thing is null return default noise json fast noise lite
             if (result == null)
             {
-                NoiseJson temp = new NoiseJson();
-                temp.NoiseType = "OpenSimplex2";
-                temp.FractalType = "FBm";
-                temp.DomainWarpType = "OpenSimplex2";
-                temp.Frequency = 0.01f;
-                temp.Octaves = 0;
-                temp.Warp = 0;
+                NoiseJson temp = new()
+                {
+                    NoiseType = "OpenSimplex2",
+                    FractalType = "FBm",
+                    DomainWarpType = "OpenSimplex2",
+                    Frequency = 0.01f,
+                    Octaves = 0,
+                    Warp = 0
+                };
                 return temp;
             }
 

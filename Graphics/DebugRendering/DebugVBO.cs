@@ -53,6 +53,11 @@ namespace OurCraft.Graphics.DebugRendering
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
 
-        public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);   
+        public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+        public override string ToString()
+        {
+            return $"ID: {ID}";
+        }
     }
 }

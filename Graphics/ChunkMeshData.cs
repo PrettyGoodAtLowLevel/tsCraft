@@ -22,5 +22,10 @@
         {
             vertices.Add(v);
         }
+
+        public override string ToString()
+        {
+            return $"Vertex Count: {vertices.Count}";
+        }
     }
 }

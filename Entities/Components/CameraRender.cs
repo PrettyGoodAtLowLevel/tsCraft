@@ -12,7 +12,7 @@ namespace OurCraft.Entities.Components
         public int FOV = RenderingConstants.DEFAULT_FOV;
         readonly float nearPlane = RenderingConstants.DEFAULT_NEAR_PLANE;
         readonly float farPlane = RenderingConstants.DEFAULT_FAR_PLANE;
-        public Vector3 offset = Vector3.UnitY * RenderingConstants.CAM_HEIGHT_OFFSET;
+        public Vector3 offset = Vector3.Zero;
 
         private Matrix4 cameraMatrix;
 

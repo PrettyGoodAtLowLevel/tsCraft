@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Graphics;
+using OurCraft.Physics;
 using OurCraft.Utility;
 using OurCraft.World;
 
@@ -50,6 +51,7 @@ namespace OurCraft.Entities.Components
         Vector2 lookVector;
         Vector3d moveDir;
         public PhysicsObj? rb;
+        public Transform? orientation;
 
         internal override void Register()
         {
@@ -74,15 +76,15 @@ namespace OurCraft.Entities.Components
         }
 
         //manage speed, input, and look direction of player
-        public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
+        public override void OnUpdate(ChunkManager world, KeyboardState kb, MouseState ms)
         {
-            if (rb == null) return;
+            if (rb == null || orientation == null) return;
 
-            UpdateRotation(ms);
-            UpdateDir(kb);
+            UpdateRotation(ms, orientation);
+            UpdateDir(kb, orientation);
 
-            ManageCoyoteTime((float)time, rb);                    
-            JumpInput(kb, (float)time, rb);
+            ManageCoyoteTime((float)Time.DeltaTime, rb);                    
+            JumpInput(kb, (float)Time.DeltaTime, rb);
             ManageSpeed(rb);
 
             PostProcessEffects(rb);
@@ -95,7 +97,7 @@ namespace OurCraft.Entities.Components
         }
 
         //update look rotation based on mouse input
-        void UpdateRotation(MouseState mouse)
+        void UpdateRotation(MouseState mouse, Transform orientation)
         {
             lookVector.Y -= (float)(mouse.Delta.X * Sensitivity);
             lookVector.X -= (float)(mouse.Delta.Y * Sensitivity);
@@ -104,14 +106,14 @@ namespace OurCraft.Entities.Components
 
             Quaternion pitch = Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(lookVector.X));
             Quaternion yaw = Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(lookVector.Y));
-            Transform.rotation = Quaternion.Normalize(yaw * pitch);
+            orientation.localRotation = Quaternion.Normalize(yaw * pitch);
         }
 
         //update move direction based on input and look rotation
-        void UpdateDir(KeyboardState kb)
+        void UpdateDir(KeyboardState kb, Transform orientation)
         {
-            Vector3d forward = Transform.Forward;
-            Vector3d right = Transform.Right;
+            Vector3d forward = orientation.Forward;
+            Vector3d right = orientation.Right;
 
             forward.Y = 0;
             forward.Normalize();

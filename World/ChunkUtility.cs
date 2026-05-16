@@ -16,9 +16,15 @@ namespace OurCraft.World
         {
             return (one.X == other.X && one.Z == other.Z);
         }
+
         public static bool operator !=(ChunkCoord one, ChunkCoord other)
         {
             return !(one == other);
+        }
+
+        public override string ToString()
+        {
+            return $"X: {X}, Z: {Z}";
         }
 
         //hashing

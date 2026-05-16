@@ -15,8 +15,8 @@ namespace OurCraft.Graphics
         //each chunk has one of these that combines all subchunk mesh data for one combined mesh
 
         //gl objects
-        private readonly VAO vao;
-        private readonly VBO vbo;
+        private readonly BlockVAO vao;
+        private readonly BlockVBO vbo;
         private readonly EBO ebo;
         public static Texture globalBlockTexture = new();
 
@@ -28,8 +28,8 @@ namespace OurCraft.Graphics
         //initialize everything
         public ChunkMesh()
         {
-            vao = new VAO();
-            vbo = new VBO();
+            vao = new BlockVAO();
+            vbo = new BlockVBO();
             ebo = new EBO();
         }
 

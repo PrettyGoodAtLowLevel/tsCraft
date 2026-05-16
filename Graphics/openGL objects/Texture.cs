@@ -1,4 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL4;
+using OurCraft.Graphics.openGL_objects.OurCraft;
 using StbImageSharp;
 
 namespace OurCraft
@@ -8,6 +9,7 @@ namespace OurCraft
     {
         private int ID = 0;
         public string path = string.Empty;
+        public ulong Handle;
 
         //initialize id
         public Texture() { ID = 0; }
@@ -44,7 +46,12 @@ namespace OurCraft
             //set filtering and wrapping
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest); 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat); GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat); 
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat); GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+            //set up bindless texture handle
+            Handle = Bindless.GetTextureHandle((uint)ID);
+            Bindless.MakeTextureHandleResident(Handle);
+
             return true;
         }
 
@@ -53,30 +60,23 @@ namespace OurCraft
         {
             if (ID != 0)
             {
+                Bindless.MakeTextureHandleNonResident(Handle);
                 GL.DeleteTexture(ID);
+
                 ID = 0;
             }
         }
 
-        //bind texture
+        //bind texture, only for chunk shader
         public void Bind(TextureUnit unit = TextureUnit.Texture0)
         {
             GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, ID);
         }
 
-        //unbind texture
-        public void Unbind()
+        public override string ToString()
         {
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-        }
-
-        //set uniform texture in frag shader
-        public void Use(Shader shader, string uniformName, int unitIndex)
-        {
-            shader.Activate();
-            int location = GL.GetUniformLocation(shader.ID, uniformName);
-            GL.Uniform1(location, unitIndex);
+            return $"ID: {ID}, Path: {path}, Handle: {Handle}";
         }
     }
 }

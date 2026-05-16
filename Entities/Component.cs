@@ -22,7 +22,7 @@ namespace OurCraft.Entities
         public virtual void OnStart() { }
 
         //On Update is called once per frame
-        public virtual void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms) { }
+        public virtual void OnUpdate(ChunkManager world, KeyboardState kb, MouseState ms) { }
 
         //On FixedUpdate is called once per physics tick
         public virtual void OnFixedUpdate(ChunkManager world) { }

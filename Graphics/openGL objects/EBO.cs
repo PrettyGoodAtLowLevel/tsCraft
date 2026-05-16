@@ -47,5 +47,10 @@ namespace OurCraft
         {
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
+
+        public override string ToString()
+        {
+            return $"ID: {ID}";
+        }
     }
 }

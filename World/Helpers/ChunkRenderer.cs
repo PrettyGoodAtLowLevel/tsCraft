@@ -15,26 +15,27 @@ namespace OurCraft.World.Helpers
 
             UploadBatchedMesh(chunk, chunk.batchedMesh, transparent: false);
             UploadBatchedMesh(chunk, chunk.transparentMesh, transparent: true);
-
+            
             chunk.SetState(ChunkState.Built);
         }
 
         //draws solid geometry of chunk relative to cam
         public static void DrawSolid(Chunk chunk, Shader shader, CameraRender cam)
         {
-            chunk.batchedMesh.Draw(shader, chunk.RenderWorldPos, cam.Transform.position + cam.offset);
+            chunk.batchedMesh.Draw(shader, chunk.RenderWorldPos, cam.Transform.WorldPosition + cam.offset);
         }
 
         //draws transparent geometry of chunk relative to cam
         public static void DrawTransparent(Chunk chunk, Shader shader, CameraRender cam)
         {
-            chunk.transparentMesh.Draw(shader, chunk.RenderWorldPos, cam.Transform.position + cam.offset);
+            chunk.transparentMesh.Draw(shader, chunk.RenderWorldPos, cam.Transform.WorldPosition + cam.offset);
         }
 
         //combines vertex data of subchunks into one big openGL mesh
         private static void UploadBatchedMesh(Chunk chunk, ChunkMesh mesh, bool transparent = false)
         {
             //compute size upfront
+            mesh.Delete();
             int totalVertexCount = 0;
 
             foreach (var subChunk in chunk.SubChunks)

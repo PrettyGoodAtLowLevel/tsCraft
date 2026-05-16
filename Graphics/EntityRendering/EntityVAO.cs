@@ -1,12 +1,12 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace OurCraft.Graphics
+namespace OurCraft.Graphics.EntityRendering
 {
-    //refrences vertex data and memory layout of vertex data
-    public class VAO
+    //see block vao for documentation, this is the same thing but for entities
+    public class EntityVAO
     {
         private int ID = 0;
-        public VAO() { ID = 0; }
+        public EntityVAO() { ID = 0; }
 
         public void Create() => ID = GL.GenVertexArray();
 
@@ -20,7 +20,7 @@ namespace OurCraft.Graphics
         }
 
         //float attribute vec2, vec3
-        public void LinkAttrib(VBO vbo, int layout, int numComponents, VertexAttribPointerType type, bool normalize, int stride, IntPtr offset)
+        public void LinkAttrib(EntityVBO vbo, int layout, int numComponents, VertexAttribPointerType type, bool normalize, int stride, IntPtr offset)
         {
             vbo.Bind();
             //use the IntPtr overload so offset is interpreted as a byte offset, not a pointer value accidentally.
@@ -30,7 +30,7 @@ namespace OurCraft.Graphics
         }
 
         //integer attribute, int, byte, short
-        public void LinkAttribInt(VBO vbo, int layout, int numComponents, VertexAttribIntegerType type, int stride, IntPtr offset)
+        public static void LinkAttribInt(EntityVBO vbo, int layout, int numComponents, VertexAttribIntegerType type, int stride, IntPtr offset)
         {
             vbo.Bind();
             GL.VertexAttribIPointer(layout, numComponents, type, stride, offset);
@@ -39,6 +39,11 @@ namespace OurCraft.Graphics
         }
 
         public void Bind() => GL.BindVertexArray(ID);
-        public void Unbind() => GL.BindVertexArray(0);
+        public static void Unbind() => GL.BindVertexArray(0);
+
+        public override string ToString()
+        {
+            return $"ID: {ID}";
+        }
     }
 }

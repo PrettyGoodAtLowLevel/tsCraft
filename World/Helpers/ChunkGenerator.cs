@@ -2,8 +2,8 @@
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation;
-using OurCraft.Terrain_Generation.SurfaceFeatures;
 using OurCraft.Utility;
+using System.Diagnostics;
 
 namespace OurCraft.World.Helpers
 {
@@ -16,15 +16,14 @@ namespace OurCraft.World.Helpers
         const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
         const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
 
-        const int INTERP_STEP = 2; //sample every 2 blocks → 9 points per axis (0,4,8,12,16)
-        const int INTERP_GRID = (SUBCHUNK_SIZE / INTERP_STEP) + 1; //9
+        public const int INTERP_STEP = 2; //sample every 2 blocks → 9 points per axis (0,4,8,12,16)
+        public const int INTERP_GRID = (SUBCHUNK_SIZE / INTERP_STEP) + 1; //9
 
         //fills in all subchunks with block state data
-        public static void BuildTerrain(Chunk chunk)
+        public static void CreateTerrain(Chunk chunk)
         {
             if (chunk.GetState() != ChunkState.Initialized) return;
             InitSubChunks(chunk);
-     
             //create noise regions
             NoiseRegion[,] noiseRegions = new NoiseRegion[CHUNK_WIDTH, CHUNK_WIDTH];
 
@@ -40,11 +39,12 @@ namespace OurCraft.World.Helpers
             }
 
             //use noise regions & create blocks
-            foreach (var subChunk in chunk.SubChunks) CreateDensityMap(subChunk, noiseRegions);                                                   
-            foreach (var subChunk in chunk.SubChunks) SurfacePaint(subChunk, noiseRegions);            
+            foreach (var subChunk in chunk.SubChunks) CreateDensityMap(subChunk, noiseRegions);
+            foreach (var subChunk in chunk.SubChunks) SurfacePaint(subChunk, noiseRegions);           
             StructureStart(chunk, noiseRegions);
 
-            chunk.SetState(ChunkState.StructureReady);         
+            chunk.SetState(ChunkState.StructureReady);
+            chunk.generating = false;
         }
 
         //sorts all intersected structures within a chunk, and places the intersected blocks
@@ -69,60 +69,12 @@ namespace OurCraft.World.Helpers
             int cxp = subChunk.ChunkXPos * SUBCHUNK_SIZE;
             int cyp = subChunk.ChunkYPos * SUBCHUNK_SIZE;
             int czp = subChunk.ChunkZPos * SUBCHUNK_SIZE;
+
             int ccx = CHUNK_WIDTH * subChunk.parent.ChunkPos.X;
             int ccz = CHUNK_WIDTH * subChunk.parent.ChunkPos.Z;
 
-            //sample coarser 9 x 9 x 9 grid 729 calls instead of 4096
-            float[,,] densityGrid = new float[INTERP_GRID, INTERP_GRID, INTERP_GRID];
-
-            for (int gz = 0; gz < INTERP_GRID; gz++)
-            {
-                for (int gx = 0; gx < INTERP_GRID; gx++)
-                {
-                    int regionX = Math.Min(cxp + gx * INTERP_STEP, noiseRegions.GetLength(0) - 1);
-                    int regionZ = Math.Min(czp + gz * INTERP_STEP, noiseRegions.GetLength(1) - 1);
-                    NoiseRegion nr = noiseRegions[regionX, regionZ];
-
-                    for (int gy = 0; gy < INTERP_GRID; gy++)
-                    {
-                        int globalY = cyp + gy * INTERP_STEP;
-                        float surfaceDist = nr.heightOffset - globalY;
-
-                        if (globalY > WorldGenerator.MAX_HEIGHT) { densityGrid[gx, gy, gz] = -1f; continue; }
-                        else if (globalY < WorldGenerator.MIN_HEIGHT) { densityGrid[gx, gy, gz] = 1f; continue; }  
-
-                        if (surfaceDist < -nr.maxDepth) { densityGrid[gx, gy, gz] = -1f; continue; }
-                        else if (surfaceDist > nr.maxDepth) { densityGrid[gx, gy, gz] = 1f; continue; }
-
-                        int globalX = cxp + gx * INTERP_STEP + ccx;
-                        int globalZ = czp + gz * INTERP_STEP + ccz;
-                        densityGrid[gx, gy, gz] = WorldGenerator.GetDensity(globalX, globalY, globalZ, nr);
-                    }
-                }
-            }
-
-            //interpolate density and place blocks
-            for (int z = 0; z < SUBCHUNK_SIZE; z++)
-            {
-                for (int x = 0; x < SUBCHUNK_SIZE; x++)
-                {
-                    NoiseRegion noiseRegion = noiseRegions[cxp + x, czp + z];
-                    for (int y = 0; y < SUBCHUNK_SIZE; y++)
-                    {
-                        float density = VoxelMath.TrilinearSample(densityGrid, x, y, z, INTERP_STEP);
-
-                        BlockState state = density > 0 ? WorldGenerator.WorldBlock : WorldGenerator.EmptyBlock;
-                        subChunk.SetBlock(x, y, z, state);
-
-                        int globalY = cyp + y;
-                        if (state == WorldGenerator.EmptyBlock && globalY <= WorldGenerator.SEA_LEVEL)
-                        {
-                            BlockState waterState = globalY == WorldGenerator.SEA_LEVEL ? noiseRegion.biome.WaterSurfaceBlock : noiseRegion.biome.WaterBlock;
-                            subChunk.SetBlock(x, y, z, waterState);
-                        }
-                    }
-                }
-            }
+            float[] densityGrid = CreateDensityGrid(noiseRegions, cxp, cyp, czp, ccx, ccz);
+            InterpolateCells(subChunk, densityGrid, noiseRegions, cxp, cyp, czp);
         }
 
         //paints the surface blocks with biome surface blocks
@@ -143,7 +95,7 @@ namespace OurCraft.World.Helpers
                     for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--) //top-down
                     {
                         BlockState current = subChunk.GetBlockState(x, y, z);
-                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? subChunk.GetBlockState(x, y + 1, z):
+                        BlockState above = (y + 1 < SUBCHUNK_SIZE) ? subChunk.GetBlockState(x, y + 1, z) :
                         subChunk.parent.GetBlockUnsafe(cxp + x, y + cyp + 1, czp + z);
 
                         bool currentEligible = current != Block.AIR && current != biome.WaterBlock && current != biome.WaterSurfaceBlock;
@@ -202,8 +154,134 @@ namespace OurCraft.World.Helpers
             }
         }
 
+        //creates a coarse grid using density noise sampling
+        static float[] CreateDensityGrid(NoiseRegion[,] noiseRegions, int cxp, int cyp, int czp, int ccx, int ccz)
+        {
+            const int GRID = INTERP_GRID;
+            float[] densityGrid = new float[GRID * GRID * GRID];
+
+            //build coarse density grid
+            for (int gz = 0; gz < GRID; gz++)
+            {
+                int sampleZ = czp + gz * INTERP_STEP;
+
+                for (int gx = 0; gx < GRID; gx++)
+                {
+                    int sampleX = cxp + gx * INTERP_STEP;
+
+                    NoiseRegion nr = noiseRegions[Math.Min(sampleX, noiseRegions.GetLength(0) - 1), Math.Min(sampleZ, noiseRegions.GetLength(1) - 1)];
+
+                    int globalX = sampleX + ccx;
+                    int globalZ = sampleZ + ccz;
+
+                    for (int gy = 0; gy < GRID; gy++)
+                    {
+                        int globalY = cyp + gy * INTERP_STEP;
+                        float density;
+
+                        if (globalY > WorldGenerator.MAX_HEIGHT) density = -1f;
+                        else if (globalY < WorldGenerator.MIN_HEIGHT) density = 1f;
+                        else
+                        {
+                            float surfaceDist = nr.heightOffset - globalY;
+
+                            if (surfaceDist < -nr.maxDepth) density = -1f;
+                            else if (surfaceDist > nr.maxDepth) density = 1f;
+                            else density = WorldGenerator.GetDensity(globalX, globalY, globalZ, nr);
+                        }
+
+                        densityGrid[VoxelMath.GridIndex(gx, gy, gz)] = density;
+                    }
+                }
+            }
+
+            return densityGrid;
+        }
+
+        //interpolates the generated density grid and sets blocks
+        static void InterpolateCells(SubChunk subChunk, float[] grid, NoiseRegion[,] noiseRegions, int cxp, int cyp, int czp)
+        {
+            const int GRID = INTERP_GRID;
+            int step = INTERP_STEP;
+
+            int solidIndex = subChunk.palette.GetOrAddIndex(WorldGenerator.WorldBlock);
+            int airIndex = subChunk.palette.GetOrAddIndex(WorldGenerator.EmptyBlock);
+
+            for (int gz = 0; gz < GRID - 1; gz++)
+            {
+                for (int gx = 0; gx < GRID - 1; gx++)
+                {
+                    for (int gy = 0; gy < GRID - 1; gy++)
+                    {
+                        //corner densities
+                        float c000 = grid[VoxelMath.GridIndex(gx, gy, gz)];
+                        float c100 = grid[VoxelMath.GridIndex(gx + 1, gy, gz)];
+                        float c010 = grid[VoxelMath.GridIndex(gx, gy + 1, gz)];
+                        float c110 = grid[VoxelMath.GridIndex(gx + 1, gy + 1, gz)];
+
+                        float c001 = grid[VoxelMath.GridIndex(gx, gy, gz + 1)];
+                        float c101 = grid[VoxelMath.GridIndex(gx + 1, gy, gz + 1)];
+                        float c011 = grid[VoxelMath.GridIndex(gx, gy + 1, gz + 1)];
+                        float c111 = grid[VoxelMath.GridIndex(gx + 1, gy + 1, gz + 1)];
+
+                        //fill the interpolation cell
+                        for (int z = 0; z < step; z++)
+                        {
+                            float tz = z / (float)step;
+
+                            float z00 = VoxelMath.Lerp(c000, c001, tz);
+                            float z10 = VoxelMath.Lerp(c100, c101, tz);
+                            float z01 = VoxelMath.Lerp(c010, c011, tz);
+                            float z11 = VoxelMath.Lerp(c110, c111, tz);
+
+                            for (int y = 0; y < step; y++)
+                            {
+                                float ty = y / (float)step;
+
+                                float y0 = VoxelMath.Lerp(z00, z01, ty);
+                                float y1 = VoxelMath.Lerp(z10, z11, ty);
+
+                                float density = y0;
+                                float densityStep = (y1 - y0) / step;
+
+                                int localY = gy * step + y;
+                                int localZ = gz * step + z;
+
+                                for (int x = 0; x < step; x++)
+                                {
+                                    int localX = gx * step + x;
+
+                                    int state = density > 0 ? solidIndex : airIndex;
+                                    subChunk.isAllAir = state != solidIndex && subChunk.isAllAir;
+                                    subChunk.SetBlockFast(localX, localY, localZ, state);
+
+                                    if (state == airIndex)
+                                    {
+                                        int globalY = cyp + localY;
+
+                                        if (globalY <= WorldGenerator.SEA_LEVEL)
+                                        {
+                                            NoiseRegion nr = noiseRegions[cxp + localX, czp + localZ];
+                                            int waterIndex = subChunk.palette.GetOrAddIndex(nr.biome.WaterBlock);
+                                            int waterSurfaceIndex = subChunk.palette.GetOrAddIndex(nr.biome.WaterSurfaceBlock);
+
+                                            int water = globalY == WorldGenerator.SEA_LEVEL ? waterSurfaceIndex : waterIndex;
+                                            subChunk.SetBlockFast(localX, localY, localZ, water);
+                                            subChunk.isAllAir = false;
+                                        }
+                                    }
+
+                                    density += densityStep;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         //initializes all subchunks in a chunk
-        static void InitSubChunks(Chunk chunk)
+        public static void InitSubChunks(Chunk chunk)
         {
             chunk.DirtySubChunks = new bool[WIDTH_IN_SUBCHUNKS, HEIGHT_IN_SUBCHUNKS, WIDTH_IN_SUBCHUNKS];
             chunk.SubChunks = new SubChunk[WIDTH_IN_SUBCHUNKS, HEIGHT_IN_SUBCHUNKS, WIDTH_IN_SUBCHUNKS];
@@ -214,7 +292,7 @@ namespace OurCraft.World.Helpers
                 {
                     for (int z = 0; z < WIDTH_IN_SUBCHUNKS; z++)
                     {
-                        chunk.SubChunks[x, y, z] = new SubChunk(chunk, x, y, z);
+                        chunk.SubChunks[x, y, z] = new SubChunk(chunk, x, y, z);                      
                     }
                 }
             }

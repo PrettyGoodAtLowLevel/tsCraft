@@ -25,8 +25,7 @@ namespace OurCraft.openGL_objects
             //create framebuffer texture
             ColorTexture = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, ColorTexture);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba16f, width, height, 0,
-                          PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba16f, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 
             //have texture bounds set correctly
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
@@ -35,8 +34,7 @@ namespace OurCraft.openGL_objects
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 
             //send framebuffer to openGL
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                                    TextureTarget.Texture2D, ColorTexture, 0);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, ColorTexture, 0);
 
             //enable depth writes for the frame buffer to the render buffer
             if (withDepth)
@@ -44,8 +42,7 @@ namespace OurCraft.openGL_objects
                 DepthRBO = GL.GenRenderbuffer();
                 GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, DepthRBO);
                 GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, width, height);
-                GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
-                                           RenderbufferTarget.Renderbuffer, DepthRBO);
+                GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, DepthRBO);
             }
 
             //error checking
@@ -76,6 +73,11 @@ namespace OurCraft.openGL_objects
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Viewport(0, 0, screenWidth, screenHeight);
+        }
+
+        public override string ToString()
+        {
+            return $"ID: {ID}, ColorTexture: {ColorTexture}, DepthRBO: {DepthRBO}, Width: {width}, Height: {height}";
         }
     }
 }

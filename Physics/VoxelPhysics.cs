@@ -11,6 +11,14 @@ namespace OurCraft.Physics
         public Vector3i blockPos;
         public Vector3i faceNormal;
         public double distance;
+
+        public readonly override string ToString()
+        {
+            string str = "";
+
+            str += $"BlockPos: {blockPos}, FaceNormal {faceNormal}, Distance {distance}";
+            return str;
+        }
     }
 
     //represents a basic bounding box in the world
@@ -34,6 +42,14 @@ namespace OurCraft.Physics
             && (point.Y >= box.min.Y && point.Y <= box.max.Y)
             && (point.Z >= box.min.Z && point.Z <= box.max.Z);
         }
+
+        public readonly override string ToString()
+        {
+            string str = "";
+
+            str += $"Min: {min}, Max: {max}";
+            return str;
+        }
     }
 
     //represents basic block physics
@@ -44,6 +60,14 @@ namespace OurCraft.Physics
         public float bounce = 0.0f;
 
         public BlockPhysics() { }
+
+        public readonly override string ToString()
+        {
+            string str = "";
+
+            str += $"IsFluid: {isFluid}, Friction: {friction}, Bounce: {bounce}";
+            return str;
+        }
     }
 
     //provides helpers for collision detection, raycasting, etc

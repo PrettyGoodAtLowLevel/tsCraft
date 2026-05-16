@@ -46,11 +46,11 @@ namespace OurCraft.Entities.Components
         //initialize all physical properties
         public override void OnCreation()
         {
-            previousPosition = Vector3d.Zero;
+            previousPosition = Transform.WorldPosition;
             velocity = Vector3d.Zero;
             headOffset = Vector3d.Zero;
             acceleration = Vector3d.Zero;
-            position = Transform.position;
+            position = Transform.WorldPosition;
             bounds = Vector3d.One;
         }
 
@@ -62,9 +62,9 @@ namespace OurCraft.Entities.Components
         }
 
         //set transform position to interpolated position
-        public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
+        public override void OnUpdate(ChunkManager world, KeyboardState kb, MouseState ms)
         {
-            Transform.position = GetRenderPos();
+            Transform.localPosition = GetRenderPos();
         }
 
         //instantly changes the velocity to a rigid body

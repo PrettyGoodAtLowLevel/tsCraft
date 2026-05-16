@@ -18,6 +18,7 @@ namespace OurCraft.Entities.Components
         bool slowTime = false;
         public Vector3 camOffset = Vector3.UnitY * RenderingConstants.CAM_HEIGHT_OFFSET;
         public BlockState waterBlock;
+        public Transform? orientation;
 
         internal override void Register()
         {
@@ -35,16 +36,17 @@ namespace OurCraft.Entities.Components
             waterBlock = BlockRegistry.GetDefaultBlockState("Water");
         }
 
-        public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
+        public override void OnUpdate(ChunkManager world, KeyboardState kb, MouseState ms)
         {
+            if (orientation == null) return;
             ScrollBlocks(ms);
-            HandleBlockInteractions(world, ms);
-            DebugInteractions(world, kb);
+            HandleBlockInteractions(world, ms, orientation);
+            DebugInteractions(world, kb, orientation);
         }
 
-        void HandleBlockInteractions(ChunkManager world, MouseState ms)
+        void HandleBlockInteractions(ChunkManager world, MouseState ms, Transform orientation)
         {
-            bool hitBlock = VoxelPhysics.RaycastVoxel(Transform.position + camOffset, Transform.Forward, reach,
+            bool hitBlock = VoxelPhysics.RaycastVoxel(orientation.WorldPosition, orientation.Forward, reach,
             (x, y, z) => world.GetBlockState(new Vector3(x, y, z)) != Block.AIR && world.GetBlockState(new Vector3(x, y, z)) != waterBlock,
             out VoxelRaycastHit hit);
 
@@ -100,6 +102,7 @@ namespace OurCraft.Entities.Components
                     Console.WriteLine("SkyLight: " + skyLight);
                     Console.WriteLine("\nDebugging BlockState at: (" + hit.blockPos.X + ", " + hit.blockPos.Y + ", " + hit.blockPos.Z + ")");
                     BlockState state = world.GetBlockState(hit.blockPos);
+                    Console.WriteLine(state.ToString());
                     state.DebugState();
                 }
             }
@@ -126,42 +129,60 @@ namespace OurCraft.Entities.Components
         }
 
         //debug, will remove this later
-        void DebugInteractions(ChunkManager world, KeyboardState ks)
+        void DebugInteractions(ChunkManager world, KeyboardState ks, Transform orientation)
         {
             DebugChunkState(world, ks);
 
             if (ks.IsKeyPressed(Keys.R))
             {
                 Console.Clear();
-                NoiseRouter.DebugPrint((int)Transform.position.X, (int)Transform.position.Z);
+                NoiseRouter.DebugPrint((int)Transform.WorldPosition.X, (int)Transform.WorldPosition.Z);
             }
 
             if (ks.IsKeyPressed(Keys.T)) Console.WriteLine(EntityManager.EntityCount);
 
             //debug, will remove this later
-            SpawnRigidBody(ks);
+            SpawnTestEntity(ks, orientation);
             DebugRigidBody(ks);
             ManageTime(ks);
         }
-        
-        void SpawnRigidBody(KeyboardState ks)
+
+        void SpawnTestEntity(KeyboardState ks, Transform orientation)
         {
-            
             if (ks.IsKeyPressed(Keys.Y))
             {
                 int rand = RandomNumberGenerator.GetInt32(1000);
-                Entity ent = EntityManager.AddEntity("phys " + rand);
-                ent.Transform.position = Transform.position;
 
-                DebugRenderBox box = ent.AddComponent<DebugRenderBox>();
-                box.max = new Vector3(0.3f, 0.9f, 0.3f);
-                box.min = new Vector3(-0.3f, -0.9f, -0.3f);
-                box.SetUpRenderBox(Transform.Forward.Normalized());
+                Entity entCenter = EntityManager.AddEntity("phys " + rand);
+                entCenter.Transform.localPosition = orientation.WorldPosition;
+                EntityRender model = entCenter.AddComponent<EntityRender>();
 
-                PhysicsObj rb = ent.AddComponent<PhysicsObj>();
+                if (rand % 12 == 0) model.LoadModel("horse.json", "Textures/Mc Skins/horseBlack.png");
+                else if (rand % 12 == 1) model.LoadModel("cloveModel.json", "Textures/Mc Skins/Clove val mc skin.png");
+                else if (rand % 12 == 2) model.LoadModel("creeper.json", "Textures/Mc Skins/creeper.png");
+                else if (rand % 12 == 3) model.LoadModel("ravager.json", "Textures/Mc Skins/ravager.png");
+                else if (rand % 12 == 4) model.LoadModel("enderMan.json", "Textures/Mc Skins/enderman.png");
+                else if (rand % 12 == 5) model.LoadModel("witch.json", "Textures/Mc Skins/witch.png");
+                else if (rand % 12 == 6) model.LoadModel("wolf.json", "Textures/Mc Skins/wolf.png");
+                else if (rand % 12 == 7) model.LoadModel("hoglin.json", "Textures/Mc Skins/hoglin.png");
+                else if (rand % 12 == 8) model.LoadModel("panda.json", "Textures/Mc Skins/panda.png");
+                else if (rand % 12 == 9) model.LoadModel("evoker.json", "Textures/Mc Skins/evoker.png");
+                else if (rand % 12 == 10) model.LoadModel("warden.json", "Textures/Mc Skins/warden.png");
+                else model.LoadModel("spider.json", "Textures/Mc Skins/spider.png");
+
+                model.model.root.localScale *= (Vector3.One * (1.8f / 2));
+                model.model.root.localPosition += Vector3d.UnitY * -(1.8f / 2);
+
+                //physics
+                PhysicsObj rb = entCenter.AddComponent<PhysicsObj>();
                 rb.bounds = new Vector3d(0.6, 1.8, 0.6);
-                rb.AddImpulse(Transform.Forward * 25);
-            }           
+                rb.AddImpulse(orientation.Forward * 25);
+
+                DebugRenderBox aabbbox = entCenter.AddComponent<DebugRenderBox>();
+                aabbbox.max = new Vector3(0.3f, 0.9f, 0.3f);
+                aabbbox.min = new Vector3(-0.3f, -0.9f, -0.3f);
+                aabbbox.SetUpRenderBox(orientation.Forward);
+            }
         }
 
         void DebugRigidBody(KeyboardState ks)
@@ -186,8 +207,8 @@ namespace OurCraft.Entities.Components
             if (ks.IsKeyPressed(Keys.X))
             {
                 slowTime = !slowTime;
-                if (slowTime) EntityManager.TimeScale = 0.25;
-                else EntityManager.TimeScale = 1.0;
+                if (slowTime) Time.TimeScale = 0.25;
+                else Time.TimeScale = 1.0;
             }
         }
 

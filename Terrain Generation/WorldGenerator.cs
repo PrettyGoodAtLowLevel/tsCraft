@@ -1,6 +1,7 @@
 ﻿using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
+using System.Runtime.CompilerServices;
 
 namespace OurCraft.Terrain_Generation
 {
@@ -70,15 +71,21 @@ namespace OurCraft.Terrain_Generation
         public static Biome GetBiome(int temp, int humid, int veg)
         {
             return BiomeData.GetBiome(temp, humid, veg);
-        } 
+        }
 
         //creates the detailed shape of terrain by adding 3d detail to the raw heightmap
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float GetDensity(int x, int y, int z, NoiseRegion control)
-        {          
-            float rawDensity = (control.heightOffset - y) / 1.0f;
+        {
+            float rawDensity = control.heightOffset - y;
             float rawNoise = NoiseRouter.GetDetailNoise(x, y, z);
-            float finalDensity = rawDensity + (rawNoise * control.amplification);
-            return Math.Clamp(finalDensity, -1, 1);
+
+            float density = rawDensity + rawNoise * control.amplification;
+
+            if (density > 1f) return 1f;
+            if (density < -1f) return -1f;
+
+            return density;
         }
 
         //finds the surface block of the world based on biome and height
@@ -103,12 +110,9 @@ namespace OurCraft.Terrain_Generation
         //for optimization purposes
         public static int GetMaxDepth(float amp)
         {
-            if (amp < 7.5f)
-                return 10;
-            else if (amp < 50.5f)
-                return 60;
-            else
-                return 150;
+            if (amp < 7.5f) return 10;
+            else if (amp < 50.5f) return 60;
+            else return 150;
         }
     }
 }

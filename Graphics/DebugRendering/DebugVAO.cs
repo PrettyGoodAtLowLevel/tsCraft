@@ -30,6 +30,11 @@ namespace OurCraft.Graphics.DebugRendering
         }
 
         public void Bind() => GL.BindVertexArray(ID);
-        public void Unbind() => GL.BindVertexArray(0); 
+        public void Unbind() => GL.BindVertexArray(0);
+
+        public override string ToString()
+        {
+            return $"ID: {ID}";
+        }
     }
 }

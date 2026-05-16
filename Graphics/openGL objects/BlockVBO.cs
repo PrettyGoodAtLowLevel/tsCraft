@@ -1,7 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OurCraft.Utility;
-using OurCraft.World;
 using System.Runtime.InteropServices;
 
 namespace OurCraft.Graphics
@@ -52,11 +51,11 @@ namespace OurCraft.Graphics
     }
 
     //holds vertex data for openGL
-    public class VBO
+    public class BlockVBO
     {
         public int ID { get; private set; }
 
-        public VBO() { ID = 0; }
+        public BlockVBO() { ID = 0; }
 
         //uploads vertex data
         public void Create()
@@ -84,5 +83,10 @@ namespace OurCraft.Graphics
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, ID);
         public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+        public override string ToString()
+        {
+            return $"ID: {ID}";
+        }
     }
 }

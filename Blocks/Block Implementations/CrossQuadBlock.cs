@@ -9,7 +9,7 @@ namespace OurCraft.Blocks.Block_Implementations
     {
         public CrossQuadBlock(string name, BlockShape shape): base(name, shape)
         {
-            IsSolid = false;
+            IsRenderSolid = false;
         }
 
         //nothing special just add the block on the face the player is looking at

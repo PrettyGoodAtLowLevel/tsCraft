@@ -45,5 +45,10 @@ namespace OurCraft.Graphics
             GL.BindVertexArray(quadVAO);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
         }
+
+        public override string ToString()
+        {
+            return $"ID: {quadVAO}";
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OurCraft.Utility;
 
 namespace OurCraft
 {
@@ -7,6 +8,8 @@ namespace OurCraft
     //also allows to set the shader source for the current rendering path, and allows to manipulate currently bound shader uniforms
     public class Shader
     {
+        private readonly static string shadersFilePath = FileConstants.SHADERS_PATH;
+
         public int ID {get; private set;}
 
         //initialize id
@@ -22,7 +25,7 @@ namespace OurCraft
         //tries to load in shader source code from sepcified file paths
         public void Create(string vertexFile, string fragmentFile)
         {
-            string shaderFilePath = "C:/Users/alial/OneDrive/Desktop/OurCraft/Shaders/";
+            string shaderFilePath = shadersFilePath;
 
             string vertexCode = File.ReadAllText(shaderFilePath + vertexFile);
             string fragmentCode = File.ReadAllText(shaderFilePath + fragmentFile);
@@ -130,6 +133,11 @@ namespace OurCraft
                 string infoLog = GL.GetProgramInfoLog(program);
                 Console.WriteLine($"ERROR::PROGRAM_LINKING_ERROR\n{infoLog}");
             }
+        }
+
+        public override string ToString()
+        {
+            return $"ID: {ID}";
         }
     }
 }

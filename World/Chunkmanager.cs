@@ -38,8 +38,6 @@ namespace OurCraft.World
         //rendering
         public int RenderDistance { get; private set; } = 0;
         public int WorldDistance { get => RenderDistance + 1; }
-        public float MaxChunkBuildPerFrame { get; private set; } = 0.01f;
-        float chunkUploadTimer = 0;
 
         //player refrences
         ChunkCoord lastPlayerChunk;
@@ -58,7 +56,7 @@ namespace OurCraft.World
             if (playerEnt != null) playerTracking = playerEnt.Transform;
             
             RenderDistance = renderDistance;
-            lastPlayerChunk = new ChunkCoord(0, 0);        
+            Generate();
         }
 
         //debugs information on the stats of chunks
@@ -70,35 +68,40 @@ namespace OurCraft.World
             Console.WriteLine("lighting queued chunks: " + lightingQueuedChunks.Count);
             Console.WriteLine("mesh queued chunks: " + meshQueuedChunks.Count);
             Console.WriteLine("upload queued chunks: " + uploadedChunks.Count);
-            Console.WriteLine("deletion queued chunks: " + deletionQueuedChunks.Count);           
+            Console.WriteLine("deletion queued chunks: " + deletionQueuedChunks.Count);
         }
 
+        //spiral chunk generation starting from player
         public void Generate()
         {
             ChunkCoord playerChunk = GetPlayerChunk();
+            GenerateChunk(playerChunk);
 
-            List<ChunkCoord> toGenerate = [];
+            int x = 0;
+            int z = 0;
 
-            for (int x = playerChunk.X - WorldDistance; x <= playerChunk.X + WorldDistance; x++)
+            int dx = 0;
+            int dz = -1;
+
+            int max = WorldDistance * 2 + 1;
+            int maxI = max * max;
+
+            for (int i = 0; i < maxI; i++)
             {
-                for (int z = playerChunk.Z - WorldDistance; z <= playerChunk.Z + WorldDistance; z++)
+                if (Math.Abs(x) <= WorldDistance && Math.Abs(z) <= WorldDistance)
                 {
-                    toGenerate.Add(new ChunkCoord(x, z));
+                    ChunkCoord coord = new(playerChunk.X + x, playerChunk.Z + z);
+                    GenerateChunk(coord);
                 }
-            }
 
-            //sort by distance from player chunk
-            toGenerate.Sort((a, b) =>
-            {
-                int da = Math.Abs(a.X - playerChunk.X) + Math.Abs(a.Z - playerChunk.Z);
-                int db = Math.Abs(b.X - playerChunk.X) + Math.Abs(b.Z - playerChunk.Z);
-                return da.CompareTo(db);
-            });
+                //spiral turning logic
+                if (x == z || (x < 0 && x == -z) || (x > 0 && x == 1 - z))
+                {
+                    (dx, dz) = (-dz, dx);
+                }
 
-            //generate in correct order
-            foreach (var coord in toGenerate)
-            {
-                GenerateChunk(coord);
+                x += dx;
+                z += dz;
             }
         }
 
@@ -171,9 +174,12 @@ namespace OurCraft.World
                     return;
                 }
 
+                if (chunk.generating) return;
+                chunk.generating = true;
                 terrainGenThread.Submit(() =>
                 {
-                    ChunkGenerator.BuildTerrain(chunk);
+                    using (Profiler.Scope("Terrain Gen")) ChunkGenerator.CreateTerrain(chunk);
+
                     if (!ChunkOutOfRenderDistance(coord)) StructureEnqueue(chunk.ChunkPos);
                     genQueuedChunks.TryRemove(coord, out byte thing);
                 });
@@ -196,7 +202,8 @@ namespace OurCraft.World
                 {
                      terrainGenThread.Submit(() =>
                      {
-                         ChunkGenerator.PlaceStructures(chunk, this);
+                         using (Profiler.Scope("Structure Gen")) ChunkGenerator.PlaceStructures(chunk, this);
+
                          LightEnqueue(chunk.ChunkPos);
                          structureQueuedChunks.TryRemove(coord, out byte thing);
                      });
@@ -228,7 +235,7 @@ namespace OurCraft.World
                     //light chunk, enqueue current for meshing, update neighbors
                     lightThread.Submit(() =>
                     {
-                        VoxelLightingEngine.LightChunk(chunk, this);
+                        using (Profiler.Scope("Lighting")) VoxelLightingEngine.LightChunk(chunk, this);
                         MeshEnqueue(coord);
                         
                         //get chunks and update them if already built
@@ -244,7 +251,7 @@ namespace OurCraft.World
                         Chunk?[] chunks = [left, right, front, back, c1, c2, c3, c4];
 
                         foreach (var chunkd in chunks)
-                            if (chunkd != null && CanBeRemeshed(chunkd))
+                            if (chunkd != null && CanBeRemeshed(chunkd) && ChunkHasNeighbors(chunkd.ChunkPos))
                                 RemeshEnqueue(chunkd.ChunkPos);
 
                         lightingQueuedChunks.TryRemove(coord, out byte thing);
@@ -289,7 +296,7 @@ namespace OurCraft.World
 
                     terrainGenThread.Submit(() =>
                     {
-                        ChunkBuilder.CreateChunkMesh(chunk, left, right, front, back, c1, c2, c3, c4);
+                        using (Profiler.Scope("Mesh Gen")) ChunkBuilder.CreateChunkMesh(chunk, left, right, front, back, c1, c2, c3, c4);
                         UploadEnqueue(chunk);
                         meshQueuedChunks.TryRemove(coord, out byte thing);
                     });
@@ -329,10 +336,9 @@ namespace OurCraft.World
             if (chunkUploadQueue.TryDequeue(out Chunk? chunk))
             {
                 uploadedChunks.TryRemove(chunk, out byte thing);
-                if (chunk != null && chunk.IsLit() && chunkUploadTimer > MaxChunkBuildPerFrame)
+                if (chunk != null && chunk.IsLit())
                 {
-                    ChunkRenderer.GLUploadChunk(chunk);                
-                    chunkUploadTimer = 0;
+                    using (Profiler.Scope("GL Upload")) ChunkRenderer.GLUploadChunk(chunk);                
                 }
                 else if (chunk != null && chunk.HasAllVoxelData())
                 {
@@ -384,15 +390,15 @@ namespace OurCraft.World
         }
 
         //load and unload chunks, and do multithreading stuff
-        public void Update(float time)
+        public void Update()
         {        
             ChunkCoord currentPlayerChunk = GetPlayerChunk();
             //moved between chunks
             if (currentPlayerChunk.X != lastPlayerChunk.X || currentPlayerChunk.Z != lastPlayerChunk.Z)
-            {
+            {              
                 UnloadFarChunks();
-                Generate();
-                lastPlayerChunk = currentPlayerChunk;
+                Generate();        
+                lastPlayerChunk = currentPlayerChunk;               
             }
 
             //manage chunks
@@ -406,8 +412,6 @@ namespace OurCraft.World
             ProcessModifiedChunks();
             ProcessDeletedMeshes();
             ProcessDeletedChunks();
-
-            chunkUploadTimer += time;
         }
 
         //fully deletes a chunk
@@ -558,8 +562,8 @@ namespace OurCraft.World
         //gets the chunk the player is in
         public ChunkCoord GetPlayerChunk()
         {
-            int pX = (int)Math.Floor(playerTracking.position.X);
-            int pZ = (int)Math.Floor(playerTracking.position.Z);
+            int pX = (int)Math.Floor(playerTracking.WorldPosition.X);
+            int pZ = (int)Math.Floor(playerTracking.WorldPosition.Z);
 
             //get chunk position from world position
             int chunkX = pX / WorldConstants.CHUNK_WIDTH;
@@ -576,14 +580,14 @@ namespace OurCraft.World
         public bool ChunkOutOfRenderDistance(ChunkCoord coord)
         {
             ChunkCoord playerChunk = GetPlayerChunk();
-            return MathF.Abs(coord.Z - playerChunk.Z) > RenderDistance || MathF.Abs(coord.X - playerChunk.X) > RenderDistance;
+            return Math.Abs(coord.Z - playerChunk.Z) > RenderDistance || Math.Abs(coord.X - playerChunk.X) > RenderDistance;
         }
 
         //checks if a chunk is too far away from a player and should be deleted
         private bool ChunkOutOfWorldDistance(ChunkCoord coord)
         {
             ChunkCoord playerChunk = GetPlayerChunk();
-            return MathF.Abs(coord.Z - playerChunk.Z) > WorldDistance || MathF.Abs(coord.X - playerChunk.X) > WorldDistance;
+            return Math.Abs(coord.Z - playerChunk.Z) > WorldDistance || Math.Abs(coord.X - playerChunk.X) > WorldDistance;
         }
 
         //checks if a chunk can structure place, light, or mesh
@@ -628,54 +632,54 @@ namespace OurCraft.World
         }
 
         //get block state
-        public BlockState GetBlockState(Vector3 pos)
+        public BlockState GetBlockState(Vector3d pos)
         {
             //world to chunk coord
-            int chunkX = (int)MathF.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
-            int chunkZ = (int)MathF.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
+            int chunkX = (int)Math.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)Math.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
             Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
 
             if (chunk == null) return Block.AIR;
 
             //get local coords
-            int lx = ModPow2((int)MathF.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
-            int ly = (int)MathF.Floor(pos.Y);
-            int lz = ModPow2((int)MathF.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
+            int lx = ModPow2((int)Math.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
+            int ly = (int)Math.Floor(pos.Y);
+            int lz = ModPow2((int)Math.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
 
             return chunk.GetBlockSafe(lx, ly, lz);
         }
 
         //get the light in a chunk
-        public ushort GetLight(Vector3 pos)
+        public ushort GetLight(Vector3d pos)
         {
             //world to chunk coord
-            int chunkX = (int)MathF.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
-            int chunkZ = (int)MathF.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
+            int chunkX = (int)Math.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)Math.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
             Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
 
             if (chunk == null) return 0;
 
             //get local coords
-            int lx = ModPow2((int)MathF.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
-            int ly = (int)MathF.Floor(pos.Y);
-            int lz = ModPow2((int)MathF.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
+            int lx = ModPow2((int)Math.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
+            int ly = (int)Math.Floor(pos.Y);
+            int lz = ModPow2((int)Math.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
 
             return chunk.GetLight(lx, ly, lz);
         }
 
         //try set block in a chunk
-        public void SetBlock(Vector3 pos, BlockState state)
+        public void SetBlock(Vector3d pos, BlockState state)
         {
             if (pos.Y < 0 || pos.Y >= WorldConstants.CHUNK_HEIGHT) return;
             //world to chunk coord
-            int chunkX = (int)MathF.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
-            int chunkZ = (int)MathF.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
+            int chunkX = (int)Math.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)Math.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
             Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
 
             //get local chunk positions
-            int lx = ModPow2((int)MathF.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
-            int ly = (int)MathF.Floor(pos.Y);
-            int lz = ModPow2((int)MathF.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
+            int lx = ModPow2((int)Math.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
+            int ly = (int)Math.Floor(pos.Y);
+            int lz = ModPow2((int)Math.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
             if (chunk == null || chunk.GetState() != ChunkState.Built) return;
 
             //update light
@@ -712,9 +716,9 @@ namespace OurCraft.World
         {
             const int c = WorldConstants.CHUNK_WIDTH - 1;
 
-            int gx = (int)MathF.Floor(pos.X);
-            int gy = (int)MathF.Floor(pos.Y);
-            int gz = (int)MathF.Floor(pos.Z);
+            int gx = pos.X;
+            int gy = pos.Y;
+            int gz = pos.Z;
             
             int lx = gx & c;
             int lz = gz & c;

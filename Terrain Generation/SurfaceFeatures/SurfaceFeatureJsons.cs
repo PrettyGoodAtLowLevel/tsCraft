@@ -1,5 +1,6 @@
 using OurCraft.Blocks;
 using OurCraft.Terrain_Generation.SurfaceFeatures;
+using OurCraft.Utility;
 using System.Text.Json;
 
 //contains all json configs of surface features
@@ -15,7 +16,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -44,7 +46,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -71,7 +74,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -98,7 +102,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -127,7 +132,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -156,7 +162,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -184,7 +191,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -213,7 +221,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -240,7 +249,8 @@ namespace OurCraft.Terrain_Generation
 
         public static void LoadJsonConfig(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/SurfaceFeatures/{fileName}";
+            string filePath = FileConstants.WORLD_GEN_DATA_PATH + "SurfaceFeatures/";
+            string path = filePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

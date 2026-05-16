@@ -1,6 +1,6 @@
-﻿using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
+﻿using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
+using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
 
 namespace OurCraft.World
@@ -11,6 +11,7 @@ namespace OurCraft.World
     {
         public const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
         public const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
+        public bool isAllAir = true;
 
         //world data
         public int ChunkXPos { get; private set; } = 0;
@@ -20,7 +21,7 @@ namespace OurCraft.World
 
         //block storage
         private IBlockIndexStorage blockIndices;
-        private readonly BlockPalette palette;
+        public readonly BlockPalette palette;
         public List<ushort> lightSources = [];
 
         //mesh data
@@ -37,7 +38,7 @@ namespace OurCraft.World
             palette = new BlockPalette();
             blockIndices = new ByteBlockStorage(SUBCHUNK_SIZE * SUBCHUNK_SIZE * SUBCHUNK_SIZE);
             SolidGeo = new ChunkMeshData();
-            TransparentGeo = new ChunkMeshData();
+            TransparentGeo = new ChunkMeshData(); 
         }       
 
         public void ClearMesh()
@@ -66,23 +67,23 @@ namespace OurCraft.World
             if (state.GetBlock.IsLightSource(state)) lightSources.Add(VoxelMath.PackPos32(x, y, z));
 
             //auto-upgrade to ushort
-            if (paletteIndex > byte.MaxValue && blockIndices is ByteBlockStorage)
-            {
-                UpgradeStorage();
-            }
+            if (paletteIndex > byte.MaxValue && blockIndices is ByteBlockStorage) UpgradeStorage();
 
+            if (state != WorldGenerator.EmptyBlock) isAllAir = false;
+
+            blockIndices.Set(index, paletteIndex);
+        }
+
+        //really quick setblock, (like during density generation)
+        public void SetBlockFast(int x, int y, int z, int paletteIndex)
+        {
+            int index = VoxelMath.SubChunkFlatten(x, y, z);        
             blockIndices.Set(index, paletteIndex);
         }
 
         public bool IsAllAir()
         {
-            if (palette.Count > 1) return false;
-
-            if (palette.entryMap.TryGetValue(Block.AIR, out int value))
-            {
-                return true;
-            }
-            return false;
+            return isAllAir;
         }
 
         private static int Flatten(int x, int y, int z)
@@ -101,6 +102,16 @@ namespace OurCraft.World
                 newStorage.Set(i, oldStorage.Get(i));
             }
             blockIndices = newStorage;
+        }
+
+        public override string ToString()
+        {
+            string str = "";
+
+            str += $"SubChunk in chunk pos: ({ChunkXPos}, {ChunkYPos}, {ChunkZPos}), ";
+            str += $"Light Sources: {lightSources.Count}";
+
+            return str;
         }
     }
 }

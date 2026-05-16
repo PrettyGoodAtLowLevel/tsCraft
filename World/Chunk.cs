@@ -4,6 +4,7 @@ using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
+using OurCraft.World.Helpers;
 
 namespace OurCraft.World
 {
@@ -36,7 +37,7 @@ namespace OurCraft.World
 
         //state tracking
         volatile ChunkState state;
-        public volatile bool meshing = false;
+        public volatile bool generating = false;
         public List<Vector3i> changes = [];
 
         public Chunk(ChunkCoord coord)
@@ -62,7 +63,7 @@ namespace OurCraft.World
         public void SetState(ChunkState state) => this.state = state;
         public bool HasVoxelData() => state != ChunkState.Deleted && state != ChunkState.Initialized; //terrain is built
         public bool HasAllVoxelData() => state != ChunkState.Deleted && state != ChunkState.Initialized && state != ChunkState.StructureReady; //structures are placed
-        public bool IsMeshing() => meshing;
+        public bool IsMeshing() => generating;
         public bool IsLit() => state == ChunkState.Lit || state == ChunkState.Meshed  || state == ChunkState.Built;
         public bool Modifiyable() => state == ChunkState.Built;
         public bool Deleted() => state == ChunkState.Deleted;       
@@ -103,7 +104,8 @@ namespace OurCraft.World
             int subChunkZ = z / SubChunk.SUBCHUNK_SIZE;
             int localZ = z & sb;
 
-            return SubChunks[subChunkX, subChunkY, subChunkZ].GetBlockState(localX, localY, localZ);
+            SubChunk sub = SubChunks[subChunkX, subChunkY, subChunkZ];
+            return sub.GetBlockState(localX, localY, localZ);            
         }
 
         public void SetBlock(int x, int globalY, int z, BlockState state)

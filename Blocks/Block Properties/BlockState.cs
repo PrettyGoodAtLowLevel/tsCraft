@@ -39,9 +39,28 @@ namespace OurCraft.Blocks.Block_Properties
 
         public void DebugState() => GetBlock.DebugState(this);       
         public T GetProperty<T>(IBlockProperty<T> property) => property.Decode(MetaData);
-        
 
-        //hashing
+        //debug & hashing
+        public override string ToString()
+        {
+            string str = "";
+
+            str += $"Block ID: {BlockID}, ";
+            str += $"Debug MetaData: {MetaData}, ";
+            str += $"Name: '{Name}'\n";
+
+            str += $"Is Light Source: {IsLightSource}, ";
+            str += $"Is Light Passable: {LightPassable}, ";
+            str += $"Light Level RGB: '{LightLevel}', ";
+            str += $"Sky Light Attenuation: {SkyLightAttenuation} \n";
+
+            str += $"Detects Collision: {DetectsCollision}, ";
+            str += $"Physics Solid: {IsPhysicsSolid}, ";
+            str += $"Is Fluid: {IsFluid} \n";
+
+            return str;
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is BlockState other && BlockID == other.BlockID && MetaData == other.MetaData;

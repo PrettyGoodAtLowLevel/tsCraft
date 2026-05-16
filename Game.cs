@@ -1,5 +1,4 @@
-﻿using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
+﻿using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Blocks;
@@ -20,10 +19,8 @@ namespace OurCraft
         readonly Renderer renderer;
 
         //creates threads, block data, entity data, then chunk manager + renderer
-        public Game(): base(GameWindowSettings.Default, new NativeWindowSettings()
-        {ClientSize = new Vector2i(RenderingConstants.SCREEN_WIDTH, RenderingConstants.SCREEN_HEIGHT)})
+        public Game(NativeWindowSettings settings): base(GameWindowSettings.Default, settings)
         {
-            Title = "Our Craft";
             terrainGenThreads = new(threadCount:8);
             lightingThread = new(threadCount:1);
 
@@ -33,9 +30,10 @@ namespace OurCraft
             SurfaceFeatureRegistry.InitSurfaceFeatures();
             BiomeData.Init();
             EntityManager.InitPlayer();
-
+            Time.Reset();
+            
             world = new ChunkManager(renderDistance:5, ref terrainGenThreads, ref lightingThread);          
-            renderer = new Renderer(ref world, RenderingConstants.SCREEN_WIDTH, RenderingConstants.SCREEN_HEIGHT);          
+            renderer = new Renderer(ref world, RenderingConstants.SCREEN_WIDTH, RenderingConstants.SCREEN_HEIGHT);
         }
 
         //first load, create resources here
@@ -44,7 +42,6 @@ namespace OurCraft
             base.OnLoad();
 
             CursorState = CursorState.Grabbed;    
-            world.Generate();
         }
 
         //rendering one frame, called after update, render things here
@@ -61,10 +58,13 @@ namespace OurCraft
         {
             base.OnUpdateFrame(args);
 
-            EntityManager.FixedUpdate(world, args.Time);
-            EntityManager.Update(world, args.Time, KeyboardState, MouseState);
-            world.Update((float)args.Time); 
-            
+            using (Profiler.Scope("Fixed Update")) EntityManager.FixedUpdate(world);
+            using (Profiler.Scope("Update")) EntityManager.Update(world, KeyboardState, MouseState);           
+               
+            world.Update();
+            Time.Increment(args);
+
+            if (KeyboardState.IsKeyPressed(Keys.D5)) DebugProfiling();
             if (KeyboardState.IsKeyPressed(Keys.Escape)) Close();
         }
 
@@ -72,7 +72,6 @@ namespace OurCraft
         protected override void OnUnload()
         {
             base.OnUnload();
-
             terrainGenThreads.Dispose();
             lightingThread.Dispose();
         }
@@ -81,8 +80,28 @@ namespace OurCraft
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-
             renderer.ResizeScene(Size.X, Size.Y);
+        }
+
+        static void DebugProfiling()
+        {
+            Console.Clear();
+            Console.WriteLine("--------Chunk Generation--------");
+            Console.WriteLine("Average Terrain Gen Time: " + (int)Profiler.GetProfileEntry("Terrain Gen").AverageMs + " ms");
+            Console.WriteLine("Average Structure Gen Time: " + (int)Profiler.GetProfileEntry("Structure Gen").AverageMs + " ms");
+            Console.WriteLine("Average Lighting Time: " + (int)Profiler.GetProfileEntry("Lighting").AverageMs + " ms");
+            Console.WriteLine("Average Mesh Gen Time: " + (int)Profiler.GetProfileEntry("Mesh Gen").AverageMs + " ms");
+            Console.WriteLine("Average GL Upload Time: " + (float)Profiler.GetProfileEntry("GL Upload").AverageMs + " ms");
+
+            Console.WriteLine();
+            Console.WriteLine("--------Game Logic--------");
+            Console.WriteLine("Average Physics Update Time: " + (float)Profiler.GetProfileEntry("Fixed Update").AverageMs + " ms");
+            Console.WriteLine("Average Entity Update Time: " + (float)Profiler.GetProfileEntry("Update").AverageMs + " ms");
+
+            Console.WriteLine();
+            Console.WriteLine("--------Rendering--------");
+            Console.WriteLine("Average Chunk Render Time: " + (float)Profiler.GetProfileEntry("Chunk Rendering").AverageMs + " ms");
+            Console.WriteLine("Average Entity Render Time: " + (float)Profiler.GetProfileEntry("Entity Rendering").AverageMs + " ms");
         }
     }
 }

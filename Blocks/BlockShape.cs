@@ -77,5 +77,15 @@ namespace OurCraft.Blocks
         {
             return TextureRegistry.GetTextureID(name);
         }
+
+        public override string ToString()
+        {
+            string str = "";
+
+            str += $"Occludes Everything: {IsFullOpaqueBlock}, ";
+            str += $"Is Translucent: {IsTranslucent}";
+
+            return str;
+        }
     }
 }

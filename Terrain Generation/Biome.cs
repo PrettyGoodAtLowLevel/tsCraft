@@ -1,5 +1,6 @@
 ﻿using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.Utility;
 using System.Text.Json;
 
 namespace OurCraft.Terrain_Generation
@@ -92,10 +93,12 @@ namespace OurCraft.Terrain_Generation
     //helper for loading biome json and converting it to runtime biome data
     public static class BiomeLoader
     {
+        private readonly static string biomePath = FileConstants.WORLD_GEN_DATA_PATH + "Biomes/";
+
         //loads a json config in c# off a file from json file
-        public static BiomeJson LoadBiomeConfig(string path)
+        public static BiomeJson LoadBiomeConfig(string fileName)
         {
-            string filePath = "C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/Biomes/"+path;
+            string filePath = biomePath + fileName;
             string json = File.ReadAllText(filePath);
             return JsonSerializer.Deserialize<BiomeJson>(json)!;
         }

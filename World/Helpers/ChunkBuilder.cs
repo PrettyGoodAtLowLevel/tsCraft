@@ -20,7 +20,7 @@ namespace OurCraft.World.Helpers
         Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
         {
             if (!chunk.IsLit()) return;
-            chunk.meshing = true;
+            chunk.generating = true;
             foreach (var subChunk in chunk.SubChunks)
             {
                 subChunk.ClearMesh();
@@ -38,7 +38,7 @@ namespace OurCraft.World.Helpers
             }
 
             if (chunk.GetState() == ChunkState.Lit) chunk.SetState(ChunkState.Meshed);
-            chunk.meshing = false;       
+            chunk.generating = false;       
         }
 
         //clears the mesh of a chunk if mesh data exists

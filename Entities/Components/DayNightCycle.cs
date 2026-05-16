@@ -37,9 +37,9 @@ namespace OurCraft.Entities.Components
         }
 
         //update sky color based on time
-        public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
+        public override void OnUpdate(ChunkManager world, KeyboardState kb, MouseState ms)
         {
-            cycleTime += (float)(time * cycleSpeed);
+            cycleTime += (float)(Time.DeltaTime * cycleSpeed);
             cycleTime -= MathF.Floor(cycleTime);
 
             float skyBlend = GetSkyBlend(cycleTime);

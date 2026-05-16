@@ -10,9 +10,8 @@ namespace OurCraft.Entities
     //provides helpers for managing entities & updating them efficiently
     public class EntityManager
     {
-        static readonly double fixedTimestep = PhysicsConstants.PHYSICS_TICK;
+        static readonly double physTick = PhysicsConstants.PHYSICS_TICK;
         static readonly double maxAccum = PhysicsConstants.MAX_ACCUM;
-        public static double TimeScale = PhysicsConstants.DEFAULT_TIME_SCALE;
 
         static double accum = 0.0;
         public static double Alpha { get; private set; } = 0.0;
@@ -71,48 +70,63 @@ namespace OurCraft.Entities
         public static void InitPlayer()
         {
             Entity player = AddEntity("Player");
-            player.Transform.position = new Vector3d(0.5, 400, 0.5);
+            Entity camera = AddEntity("Camera");
+            Entity viewModel = AddEntity("View Model");
+
+            player.Transform.localPosition = new Vector3d(0.5, 400, 0.5);
+            camera.Transform.parent = player.Transform;
+            camera.Transform.localPosition += Vector3d.UnitY * RenderingConstants.CAM_HEIGHT_OFFSET;
+            viewModel.Transform.parent = camera.Transform;
 
             PlayerController c = player.AddComponent<PlayerController>();
-            DebugRenderBox render = player.AddComponent<DebugRenderBox>();
-            player.AddComponent<PhysicsObj>();           
-            player.AddComponent<CameraRender>();
-            player.AddComponent<PlayerInteractions>();
+            PlayerInteractions i = player.AddComponent<PlayerInteractions>();
+            player.AddComponent<PhysicsObj>();                       
             player.AddComponent<DayNightCycle>();
-          
-            c.OnStart();
-            render.min = new Vector3(-0.3f, -0.9f, -0.3f);
-            render.max = new Vector3(0.3f, 0.9f, 0.3f);
-            render.SetUpRenderBox(Vector3.Zero);
 
+            camera.AddComponent<CameraRender>();
+            EntityRender playerHand = viewModel.AddComponent<EntityRender>();
+            viewModel.AddComponent<ViewModelSway>();
+            ViewBobbing camViewBobbing = camera.AddComponent<ViewBobbing>();
+            ViewBobbing viewBobbing = viewModel.AddComponent<ViewBobbing>();
+
+            c.OnStart();           
+            c.orientation = camera.Transform;
+            i.orientation = camera.Transform;
+
+            playerHand.LoadModel("playerSkin.json", "Textures/Mc Skins/Wither_Skeleten.png");
+            playerHand.model.root.localScale *= (Vector3.One * 0.65f);
+            viewModel.Transform.localPosition = new Vector3d(0.125, -0.6, -0.115);
+            viewBobbing.OnStart();
+            camViewBobbing.intensity *= 5;
+            camViewBobbing.OnStart();
             SetPlayerEntity("Player");
         }
 
         //updates all systems
-        public static void Update(ChunkManager world, double dt, KeyboardState kb, MouseState ms)
+        public static void Update(ChunkManager world, KeyboardState kb, MouseState ms)
         {
-            double scaledTime = dt * TimeScale;
-            PlayerControllerSystem.Update(world, scaledTime, kb, ms);
-            PlayerInteractionSystem.Update(world, scaledTime, kb, ms);
-            ConstantMovementSystem.Update(world, scaledTime, kb, ms);
-            PhysicsSystem.Update(world, scaledTime, kb, ms);
-            DayNightCycleSystem.Update(world, scaledTime, kb, ms);
+            PlayerControllerSystem.Update(world, kb, ms);
+            PlayerInteractionSystem.Update(world, kb, ms);
+            ConstantMovementSystem.Update(world, kb, ms);
+            PhysicsSystem.Update(world, kb, ms);
+            DayNightCycleSystem.Update(world, kb, ms);
+            ViewModelSwaySystem.Update(world, kb, ms);
+            ViewBobbingSystem.Update(world, kb, ms);
         }
 
         //update physics every fixed timestep using accumlation
-        public static void FixedUpdate(ChunkManager world, double dt)
+        public static void FixedUpdate(ChunkManager world)
         {
-            double scaledTime = dt * TimeScale;
-            accum += scaledTime;
+            accum += Time.DeltaTime;
             if (accum > maxAccum) accum = maxAccum;
 
-            while (accum >= fixedTimestep)
+            while (accum >= physTick)
             {
                 PlayerControllerSystem.FixedUpdate(world);
                 PhysicsSystem.StepPhysics(world);
-                accum -= fixedTimestep;
+                accum -= physTick;
             }
-            Alpha = accum / fixedTimestep;
+            Alpha = accum / physTick;
         }
     }  
 
@@ -120,6 +134,11 @@ namespace OurCraft.Entities
     public class DebugRenderSystem : BaseSystem<DebugRenderBox>
     {
         public static List<DebugRenderBox> AllRenderBoxes => Components;
+    }
+
+    public class EntityRenderSystem : BaseSystem<EntityRender>
+    {
+        public static List<EntityRender> AllModels => Components;
     }
 
     public class CameraRenderSystem : BaseSystem<CameraRender>
@@ -135,4 +154,8 @@ namespace OurCraft.Entities
     public class ConstantMovementSystem : BaseSystem<ConstantMovement> { }
 
     public class DayNightCycleSystem : BaseSystem<DayNightCycle> { }
+
+    public class ViewModelSwaySystem : BaseSystem<ViewModelSway> { }
+
+    public class ViewBobbingSystem : BaseSystem<ViewBobbing> { }
 }

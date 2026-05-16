@@ -7,7 +7,7 @@ namespace OurCraft.Blocks.Block_Implementations
     {
         public AirBlock(string name, BlockShape shape): base(name, shape)
         {
-            IsSolid = false;
+            IsRenderSolid = false;
         }
 
         //light can pass through air, durr

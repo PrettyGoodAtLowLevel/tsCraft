@@ -1,5 +1,7 @@
 ﻿//contains all constant and widely used values
 
+using OpenTK.Graphics.ES20;
+
 namespace OurCraft.Utility
 {
     public static class RenderingConstants
@@ -14,7 +16,7 @@ namespace OurCraft.Utility
         public const int BLOCK_TEXTURE_WIDTH = 32;
         public const int BLOCK_TEXTURE_HEIGHT = 16;
 
-        public const float CAM_HEIGHT_OFFSET = 0.75f;
+        public const float CAM_HEIGHT_OFFSET = 0.65f;
     }
 
     public static class MathConstants
@@ -39,10 +41,11 @@ namespace OurCraft.Utility
 
     public static class PhysicsConstants
     {
-        public const double DEFAULT_TIME_SCALE = 1.0;
-        public const double PHYSICS_TICK = 0.02;
+        public const double DEFAULT_TIME_SCALE = 1.0;      
         public const double MAX_ACCUM = 0.08;
-        public const double BLOCK_TICK = 0.05;      
+
+        public const double PHYSICS_TICK = 0.02;
+        public const double BLOCK_TICK = 0.05;
 
         public const double MAX_VEL_Y = 100.0;
         public const double MAX_VEL_XZ = 100.0;
@@ -80,4 +83,24 @@ namespace OurCraft.Utility
         public const int DEFAULT_MIN_HEIGHT = 90;
         public const int DEFAULT_MAX_HEIGHT = 320;
     }
+
+    public static class FileConstants
+    {
+        public const string DEFAULT_PATH = "C:/Users/alial/OneDrive/Desktop/OurCraft/";
+
+        public const string SHADERS_PATH = DEFAULT_PATH + "Shaders/";
+        public const string DEBUG_SHADERS_PATH = SHADERS_PATH + "DebugDrawing/";
+        public const string ENTITY_SHADERS_PATH = SHADERS_PATH + "EntityDrawing/";
+        public const string POST_PROCESSING_PATH = SHADERS_PATH + "Post Processing/";
+
+        public const string RESOURCES_PATH = DEFAULT_PATH + "Resources/";
+        public const string DATA_PATH = DEFAULT_PATH + "Data/";
+
+        public const string BLOCK_DATA_PATH = DATA_PATH + "Blocks/";
+        public const string WORLD_GEN_DATA_PATH = DATA_PATH + "WorldGen/";
+
+        public const string BLOCK_MODEL_PATH = RESOURCES_PATH + "BlockModels/";
+        public const string TEXTURES_PATH = RESOURCES_PATH + "Textures/";
+    }
+
 }

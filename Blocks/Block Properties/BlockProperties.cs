@@ -1,4 +1,4 @@
-﻿//contains a list of block state properties that blockstates can implement
+﻿//contains a list of block state properties that block states can implement
 namespace OurCraft.Blocks.Block_Properties
 {
     //for log rotation

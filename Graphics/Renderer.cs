@@ -17,6 +17,7 @@ namespace OurCraft.Graphics
         private readonly ChunkManager chunks;
         public static readonly Shader chunkShader = new();
         private static readonly Shader debugShader = new();
+        private static readonly Shader entityShader = new();
         private readonly CameraRender? sceneCamera;
 
         //post processing
@@ -53,6 +54,7 @@ namespace OurCraft.Graphics
             //create all shaders
             chunkShader.Create("default.vert", "default.frag");
             debugShader.Create("DebugDrawing/Debug.vert", "DebugDrawing/Debug.frag");
+            entityShader.Create("EntityDrawing/Entity.vert", "EntityDrawing/Entity.frag");
             postShader.Create("Post Processing/fullscreen.vert", "Post Processing/chromatic_ab.frag");
             skyColor = new Vector3(0.5f, 0.6f, 0.7f);
 
@@ -82,6 +84,7 @@ namespace OurCraft.Graphics
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(TriangleFace.Back);
+
             GL.Enable(EnableCap.FramebufferSrgb);
             GL.Viewport(0, 0, width, height);
         }
@@ -96,7 +99,8 @@ namespace OurCraft.Graphics
             ClearScene();
             UpdateCamera(sceneCamera);
             DrawDebugBoxes(sceneCamera);
-            DrawRawChunks(sceneCamera);   
+            using (Profiler.Scope("Entity Rendering")) DrawEntityMeshes(sceneCamera);
+            using (Profiler.Scope("Chunk Rendering")) DrawRawChunks(sceneCamera);   
             postFBO.Unbind(screenWidth, screenHeight);
 
             //apply post processing effects
@@ -112,10 +116,15 @@ namespace OurCraft.Graphics
         {
             var boxes = DebugRenderSystem.AllRenderBoxes;
             debugShader.Activate();
-            foreach (var box in boxes)
-            {
-                box.mesh.Draw(debugShader, box.Transform, sceneCamera.Transform.position + sceneCamera.offset);
-            }
+            foreach (var box in boxes) box.mesh.Draw(debugShader, box.Transform, sceneCamera.Transform.WorldPosition + sceneCamera.offset);            
+        }
+
+        //get all entity meshes and draw them
+        private static void DrawEntityMeshes(CameraRender sceneCamera)
+        {
+            var models = EntityRenderSystem.AllModels;
+            entityShader.Activate();
+            foreach (var mod in models) mod.model.Draw(entityShader, sceneCamera.Transform.WorldPosition + sceneCamera.offset);          
         }
 
         //draws chunks without any post processing
@@ -132,11 +141,7 @@ namespace OurCraft.Graphics
             GL.Enable(EnableCap.DepthTest);
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
-
-            foreach (var chunk in visibleChunks)
-            {
-                ChunkRenderer.DrawSolid(chunk, chunkShader, sceneCamera);
-            }
+            foreach (var chunk in visibleChunks) ChunkRenderer.DrawSolid(chunk, chunkShader, sceneCamera);
 
             //translucent pass
             //weird depth managing but we only have water so its fine
@@ -144,12 +149,8 @@ namespace OurCraft.Graphics
             GL.BlendFunc(BlendingFactor.One, BlendingFactor.OneMinusSrcAlpha);
             GL.DepthMask(true);
             GL.Enable(EnableCap.DepthTest);
-
-            foreach (var chunk in visibleChunks)
-            {
-                ChunkRenderer.DrawTransparent(chunk, chunkShader, sceneCamera);
-            }
-
+            foreach (var chunk in visibleChunks) ChunkRenderer.DrawTransparent(chunk, chunkShader, sceneCamera);
+            
             GL.DepthMask(true);
             GL.Disable(EnableCap.Blend);
         }
@@ -183,12 +184,13 @@ namespace OurCraft.Graphics
             sceneCamera.UpdateMatrix();
             sceneCamera.SendToShader(chunkShader, "camMatrix");
             sceneCamera.SendToShader(debugShader, "camMatrix");
+            sceneCamera.SendToShader(entityShader, "camMatrix");
         }
 
         //gets all the visible chunks
         private List<Chunk> GetChunks(CameraRender sceneCamera)
         {
-            Vector3 camPos = (Vector3)sceneCamera.Transform.position;
+            Vector3 camPos = (Vector3)sceneCamera.Transform.WorldPosition;
 
             return chunks.ChunkMap.Values.Where(c =>
             {

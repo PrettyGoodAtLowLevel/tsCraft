@@ -4,12 +4,12 @@ using OurCraft.Utility;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
-    //like full block but translucent
+    //similar to full block, but translucent and has fluid properties
     public class WaterBlock : FullBlock
     {
         public WaterBlock(string name, BlockShape shape): base(name, shape)
         {
-            IsSolid = false;
+            IsRenderSolid = false;
         }
 
         //light can pass through semi transparent water

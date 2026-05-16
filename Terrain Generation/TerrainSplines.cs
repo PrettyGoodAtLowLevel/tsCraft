@@ -40,12 +40,14 @@ namespace OurCraft.Terrain_Generation
     //json representation of spline
     public class SplineJson
     {
+        private static readonly string splinesFilePath = FileConstants.WORLD_GEN_DATA_PATH + "Splines/";
+
         public List<SplinePointJson> Points { get; set; } = [];
 
         public static SplineGraph LoadSpline(string fileName)
         {
             //Load JSON
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/WorldGen/Splines/{fileName}";
+            string path = splinesFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

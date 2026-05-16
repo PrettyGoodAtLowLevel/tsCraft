@@ -31,7 +31,7 @@ namespace OurCraft.Blocks
 
         //visuals
         public BlockShape blockShape;
-        public bool IsSolid = true;
+        public bool IsRenderSolid = true;
 
         //globals
         public static readonly BlockState AIR;

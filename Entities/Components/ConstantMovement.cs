@@ -20,9 +20,9 @@ namespace OurCraft.Entities.Components
         }
 
         //move entity in forward vector
-        public override void OnUpdate(ChunkManager world, double time, KeyboardState kb, MouseState ms)
+        public override void OnUpdate(ChunkManager world,  KeyboardState kb, MouseState ms)
         {
-            Transform.position += speed * Transform.Forward * (float)time;
+            Transform.localPosition += speed * Transform.Forward * (float)Time.DeltaTime;
         }
     }
 }

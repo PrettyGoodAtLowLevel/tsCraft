@@ -23,6 +23,7 @@ namespace OurCraft.Blocks
         public static ushort GetBlockID(string name) => blockRegistry[name];
         public static BlockState GetDefaultBlockState(string name) => GetBlock(GetBlockID(name)).DefaultState;
 
+        //loads all blocks, break this up into smaller functions for better readability if you wish to override this
         public static void InitBlocks()
         {
             BlockLoader.RegisterAirBlock("Air");

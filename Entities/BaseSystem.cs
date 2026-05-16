@@ -32,11 +32,11 @@ namespace OurCraft.Entities
         }
 
         //update all components
-        public static void Update(ChunkManager world, double deltaTime, KeyboardState kb, MouseState ms)
+        public static void Update(ChunkManager world, KeyboardState kb, MouseState ms)
         {
             foreach (T component in Components)
             {
-                component.OnUpdate(world, deltaTime, kb, ms);
+                component.OnUpdate(world, kb, ms);
             }
         }
 

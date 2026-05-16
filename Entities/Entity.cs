@@ -71,5 +71,15 @@ namespace OurCraft.Entities
 
             Components.Clear();
         }
+
+        //debug
+        public override string ToString()
+        {
+            string str = "";
+
+            str += $"Components: {Components.Count}, ";
+            str += $"Transform: {Transform.ToString()}";
+            return str;
+        }
     }
 }

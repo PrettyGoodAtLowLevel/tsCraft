@@ -2,6 +2,7 @@
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.Meshing;
+using OurCraft.Utility;
 using System.Text.Json;
 
 namespace OurCraft.Blocks.Block_Info
@@ -9,9 +10,11 @@ namespace OurCraft.Blocks.Block_Info
     //provides helpers for loading in blocks, most code is extremely similar so no documentation needed
     public static class BlockLoader
     {
+        private readonly static string blockFilePath = FileConstants.BLOCK_DATA_PATH;
+
         public static FullBlock RegisterFullBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -41,7 +44,7 @@ namespace OurCraft.Blocks.Block_Info
 
         public static WaterBlock RegisterWaterBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -71,7 +74,7 @@ namespace OurCraft.Blocks.Block_Info
 
         public static FullLightBlock RegisterFullLightBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -101,7 +104,7 @@ namespace OurCraft.Blocks.Block_Info
 
         public static CrossQuadBlock RegisterCrossBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -129,7 +132,7 @@ namespace OurCraft.Blocks.Block_Info
 
         public static LeavesBlock RegisterLeavesBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -159,7 +162,7 @@ namespace OurCraft.Blocks.Block_Info
 
         public static GlassBlock RegisterGlassBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -189,7 +192,7 @@ namespace OurCraft.Blocks.Block_Info
 
         public static BlockLog RegisterLogBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -221,7 +224,7 @@ namespace OurCraft.Blocks.Block_Info
 
         public static SlabBlock RegisterSlabBlock(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Data/Blocks/{fileName}";
+            string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

@@ -1,5 +1,4 @@
-﻿//contains systems for managing voxel data memory usage
-namespace OurCraft.Blocks.Block_Properties
+﻿namespace OurCraft.Blocks.Block_Properties
 {
     //holds only the unique block states in a subchunk
     public class BlockPalette
@@ -23,6 +22,15 @@ namespace OurCraft.Blocks.Block_Properties
         //getters
         public BlockState GetState(int index) => entries[index];
         public int Count => entries.Count;
+
+        //debug
+        public override string ToString()
+        {
+            string str = "";
+            str += $"Entry Count: {entryMap.Count}";
+
+            return str;
+        }
     }
 
     //allows to dynamically change the amount of data needed to represent block states

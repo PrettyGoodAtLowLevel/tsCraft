@@ -1,3 +1,4 @@
+using OurCraft.Utility;
 using System.Text.Json;
 
 namespace OurCraft.Blocks
@@ -5,14 +6,13 @@ namespace OurCraft.Blocks
     //represents block model json format to c#
     public class BlockModel
     {
+        private readonly static string blockModelFilePath = FileConstants.BLOCK_MODEL_PATH;
+
         //not important
         public string Name { get; set; } = "";
 
         //determines which render pass it goes to
         public bool IsTranslucent { get; set; } = false;
-
-        //usually blocks will use ambient occlusion
-        public bool AOSupport { get; set; } = true;
 
         //which axis matches to which face culling type
         public Dictionary<string, string> FaceCull { get; set; } = [];
@@ -55,7 +55,7 @@ namespace OurCraft.Blocks
         //actually load the thing
         public static BlockModel Load(string fileName)
         {
-            string path = $"C:/Users/alial/OneDrive/Desktop/OurCraft/Resources/BlockModels/{fileName}";
+            string path = blockModelFilePath + fileName;
             string json = File.ReadAllText(path);
 
             //allow case-insensitive JSON property matching
@@ -73,6 +73,18 @@ namespace OurCraft.Blocks
             }
 
             return result;
+        }
+
+        //debug
+        public override string ToString()
+        {
+            string str = "";
+
+            str += $"Name: '{Name}', ";
+            str += $"Is Translucent: {IsTranslucent}, ";
+            str += $"Cuboids: {Elements.Count}";
+
+            return str;
         }
     }
 }

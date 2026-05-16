@@ -1,4 +1,7 @@
 ﻿using OpenTK.Mathematics;
+using OurCraft.World;
+using OurCraft.World.Helpers;
+using System.Runtime.CompilerServices;
 
 namespace OurCraft.Utility
 {
@@ -6,11 +9,18 @@ namespace OurCraft.Utility
     public static class VoxelMath
     {
         //math helpers
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Lerp(float a, float b, float t)
         {
             return a + (b - a) * t;
         }
 
+        public static double Lerp(double a, double b, double t)
+        {
+            return a + (b - a) * t;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float SmoothStep(float t)
         {
             //smooth interpolation: 3t^2 - 2t^3
@@ -18,6 +28,7 @@ namespace OurCraft.Utility
         }
 
         //does modulus, with the size needing to be a power of 2
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ModPow2(int value, int size)
         {
             int mask = size - 1;
@@ -77,38 +88,18 @@ namespace OurCraft.Utility
             return (byte)((light >> 12) & 0xF);
         }
 
-        //upscales n by n by n grid to m by x by x grid
-        public static float TrilinearSample(float[,,] grid, int x, int y, int z, int interpStep)
+       
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GridIndex(int x, int y, int z)
         {
-            int gx0 = x / interpStep;
-            int gy0 = y / interpStep;
-            int gz0 = z / interpStep;
-            int gx1 = gx0 + 1;
-            int gy1 = gy0 + 1;
-            int gz1 = gz0 + 1;
+            const int GRID = ChunkGenerator.INTERP_GRID;
+            return x + y * GRID + z * GRID * GRID;
+        }
 
-            float tx = (x % interpStep) / (float)interpStep;
-            float ty = (y % interpStep) / (float)interpStep;
-            float tz = (z % interpStep) / (float)interpStep;
-
-            float c000 = grid[gx0, gy0, gz0];
-            float c100 = grid[gx1, gy0, gz0];
-            float c010 = grid[gx0, gy1, gz0];
-            float c110 = grid[gx1, gy1, gz0];
-            float c001 = grid[gx0, gy0, gz1];
-            float c101 = grid[gx1, gy0, gz1];
-            float c011 = grid[gx0, gy1, gz1];
-            float c111 = grid[gx1, gy1, gz1];
-
-            float x00 = Lerp(c000, c100, tx);
-            float x10 = Lerp(c010, c110, tx);
-            float x01 = Lerp(c001, c101, tx);
-            float x11 = Lerp(c011, c111, tx);
-
-            float y0 = Lerp(x00, x10, ty);
-            float y1 = Lerp(x01, x11, ty);
-
-            return Lerp(y0, y1, tz);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int SubChunkFlatten(int x, int y, int z)
+        {
+            return x + SubChunk.SUBCHUNK_SIZE * (y + SubChunk.SUBCHUNK_SIZE * z);
         }
 
         //not my code - this thing i found online idk

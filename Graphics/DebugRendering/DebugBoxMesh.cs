@@ -110,9 +110,9 @@ namespace OurCraft.Graphics.DebugRendering
         {
             //create & set uniform model matrix for vshader
             Matrix4 model =
-            Matrix4.CreateScale(transform.scale) * //scale obj in local space
+            //skip scaling
             //skip rotation
-            Matrix4.CreateTranslation((Vector3)(transform.position - camPos)); //move to global space relative to camera
+            Matrix4.CreateTranslation((Vector3)(transform.localPosition - camPos)); //move to global space relative to camera
 
             shader.SetMatrix4("model", ref model);
 
