@@ -43,7 +43,7 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //get the AABB if slab was placed in world spot
-        public override AABB GetPredictedAABB(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        public override CollisionShape GetPredictedCollisionShape(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
         {
             SlabType thisBlockState = thisBlock.GetProperty(SLAB_TYPE);
             SlabType stateToPlace = SlabType.Bottom;
@@ -55,8 +55,10 @@ namespace OurCraft.Blocks.Block_Implementations
 
             BlockState state = DefaultState.With(SLAB_TYPE, stateToPlace);
 
-            if (stateToPlace == SlabType.Double) return state.GetAABB(globalPos);
-            else return state.GetAABB(globalPos + hitNormal);
+            //move down double slab by hit normal since double slab will be in old slab place, not offset by hitnormal
+            if (stateToPlace == SlabType.Double) return new CollisionShape(boxes: [new AABB(Vector3d.Zero - hitNormal, Vector3d.One - hitNormal)]);
+            //just give back regular old collision shape then
+            else return state.GetCollisionShape();
         }
 
         //if double slab, then is opaque, if single slab then light can pass through
@@ -77,6 +79,15 @@ namespace OurCraft.Blocks.Block_Implementations
             return LightConstants.NO_ATTENUATION;
         }
 
+        //only solid if full slab
+        public override bool AOSolid(BlockState state)
+        {
+            SlabType thisState = state.GetProperty(SLAB_TYPE);
+
+            if (thisState == SlabType.Double) return true;
+            return false;
+        }
+
         //finds the slab state
         public override void DebugState(BlockState thisBlock)
         {
@@ -86,18 +97,14 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //constructs an AABB based on state + world position
-        public override AABB GetAABB(Vector3d worldPos, BlockState state)
+        public override CollisionShape GetCollisionShape(BlockState state)
         {           
             SlabType thisState = state.GetProperty(SLAB_TYPE);
 
-            if (thisState == SlabType.Double) return new AABB { min = worldPos, max = worldPos + Vector3d.One };
-            if (thisState == SlabType.Bottom) return new AABB { min = worldPos, max = worldPos + new Vector3d(1.0, 0.5, 1.0) };
+            if (thisState == SlabType.Double) return CollisionShapeData.FullBlock;
+            if (thisState == SlabType.Bottom) return CollisionShapeData.BottomHalfSlab;
             
-            return new AABB
-            {
-                min = worldPos + new Vector3d(0.0, 0.5, 0.0),
-                max = worldPos + new Vector3d(1.0, 1.0, 1.0)
-            };
+            return CollisionShapeData.TopHalfSlab;
         }
 
         public override bool DetectsCollision(BlockState state)

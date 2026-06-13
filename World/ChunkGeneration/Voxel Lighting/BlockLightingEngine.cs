@@ -10,7 +10,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
     public static class BlockLightingEngine
     {
         const int CHUNK_SIZE = WorldConstants.CHUNK_WIDTH; //32
-        const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
+        const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE_IN_BLOCKS;
         const int MAX_HEIGHT = WorldConstants.CHUNK_HEIGHT;
 
         const int MIN_LIGHT = LightConstants.MIN_LIGHT;
@@ -36,7 +36,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //finds all of the light sources in the chunk and seeds them
         public static void SeedCenterChunk(Chunk chunk, ConcurrentQueue<LightNode> blockLights)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted()) return;
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted()) return;
 
             for (int x = 0; x < Chunk.WIDTH_IN_SUBCHUNKS; x++)
             {
@@ -67,7 +67,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //finds any unpropogated lights in the corner of chunks
         public static void SeedCornerChunk(Chunk? chunk, ConcurrentQueue<LightNode> blockLights, bool posX, bool posZ)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted())
                 return;
 
             int x = posX ? 0 : CHUNK_SIZE - 1;
@@ -91,7 +91,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //scans the bordering lights on the x neighbors of a chunk
         public static void SeedNeighborX(Chunk? chunk, ConcurrentQueue<LightNode> blockLights, bool posX)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted())
                 return;
 
             int x = posX ? 0 : CHUNK_SIZE - 1;
@@ -117,7 +117,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //scans border lights on z neighbors of a chunk
         public static void SeedNeighborZ(Chunk? chunk, ConcurrentQueue<LightNode> blockLights, bool posZ)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted())
                 return;
 
             int z = posZ ? 0 : CHUNK_SIZE - 1;
@@ -173,7 +173,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
 
                     //get current chunk
                     Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
-                    if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
+                    if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted())
                         continue; //dont propagate if chunk doesnt have block data                
 
                     //convert to chunk-local coordinates
@@ -233,7 +233,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     int cx = VoxelMath.FloorDivPow2(wx, CHUNK_SIZE);
                     int cz = VoxelMath.FloorDivPow2(wz, CHUNK_SIZE);
                     Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
-                    if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted()) continue;
+                    if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted()) continue;
 
                     //get chunk local coords
                     int lx = VoxelMath.ModPow2(wx, CHUNK_SIZE);

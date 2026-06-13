@@ -27,6 +27,7 @@ namespace OurCraft.Blocks
 
         //physics
         public float friction = 10.0f;
+        public float wallFriction = 0.0f;
         public float bounce = 0.0f;
 
         //visuals
@@ -61,8 +62,8 @@ namespace OurCraft.Blocks
         //determines each block's way of changing the chunk block state data when placed
         public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) { }
         //determines which block state will be placed in the world if block was placed by player
-        public virtual AABB GetPredictedAABB(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) 
-        { return DefaultState.GetAABB(globalPos + hitNormal); }
+        public virtual CollisionShape GetPredictedCollisionShape(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) 
+        { return DefaultState.GetCollisionShape(); }
 
         //determines each block's way of updating
         public virtual void UpdateBlockState(Vector3 globalPos, BlockState thisBlock, ChunkManager world) { }
@@ -78,14 +79,15 @@ namespace OurCraft.Blocks
         public virtual bool IsLightPassable(BlockState state) => false;
         public virtual Vector3i GetLightSourceLevel(BlockState state) => Vector3i.Zero;
         public virtual int GetSkyLightAttenuation(BlockState state) => 15;
+        public virtual bool AOSolid(BlockState state) => false;
 
         public virtual bool DetectsCollision(BlockState state) => false; //detects collisions
         public virtual bool IsPhysicsSolid(BlockState state) => false; //cant walk past
         public virtual bool IsFluid(BlockState state) => false;
-        public virtual AABB GetAABB(Vector3d worldPos, BlockState state) => new AABB();
+        public virtual CollisionShape GetCollisionShape(BlockState state) => CollisionShapeData.Empty;
         public virtual BlockPhysics GetBlockPhysics(BlockState state)
         {
-            BlockPhysics physics = new() { friction = this.friction, bounce = this.bounce };
+            BlockPhysics physics = new() { friction = this.friction, bounce = this.bounce, wallFriction = this.wallFriction };
             return physics;
         }
     }

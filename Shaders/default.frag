@@ -5,6 +5,7 @@ in vec2 TexCoords;
 in vec3 FragPos;
 in vec3 lightColor;
 in float skyLight;
+in float Ao;
 flat in int NormalID;
 
 //output fragment color
@@ -42,10 +43,13 @@ void main()
     vec3 blockLighting = pow(lightColor, vec3(2.0));
     vec3 lightFinal = max(blockLighting, skyLighting);   
     
-    //combine texture, lighting, and block light
+    //combine texture, lighting, ambient occlusion, and block light
+    float aoFactor = Ao;
     vec3 ambience = vec3(0.01);
+
     vec3 litColor = texColor.rgb  * (lightFinal + ambience); // ADDITIVE
     litColor *= faceLight[NormalID];
+    litColor *= aoFactor;
     
     //compute distance to camera
     float dist = length(FragPos - cameraPos);

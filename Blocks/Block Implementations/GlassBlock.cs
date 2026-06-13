@@ -19,5 +19,10 @@ namespace OurCraft.Blocks.Block_Implementations
         {
             return LightConstants.NO_ATTENUATION;
         }
+
+        public override bool AOSolid(BlockState state)
+        {
+            return false;
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace OurCraft.World
     //subchunks are utilized to split up meshing jobs and compress block state data
     public class SubChunk
     {
-        public const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
+        public const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE_IN_BLOCKS;
         public const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
         public bool isAllAir = true;
 
@@ -69,7 +69,7 @@ namespace OurCraft.World
             //auto-upgrade to ushort
             if (paletteIndex > byte.MaxValue && blockIndices is ByteBlockStorage) UpgradeStorage();
 
-            if (state != WorldGenerator.EmptyBlock) isAllAir = false;
+            if (state != OverworldGenerator.EmptyBlock) isAllAir = false;
 
             blockIndices.Set(index, paletteIndex);
         }
@@ -97,10 +97,7 @@ namespace OurCraft.World
             var oldStorage = (ByteBlockStorage)blockIndices;
             var newStorage = new UShortBlockStorage(oldStorage.Length);
 
-            for (int i = 0; i < oldStorage.Length; i++)
-            {
-                newStorage.Set(i, oldStorage.Get(i));
-            }
+            for (int i = 0; i < oldStorage.Length; i++) newStorage.Set(i, oldStorage.Get(i));            
             blockIndices = newStorage;
         }
 

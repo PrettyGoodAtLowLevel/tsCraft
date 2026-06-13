@@ -5,15 +5,9 @@ using System.Runtime.InteropServices;
 namespace OurCraft.Graphics
 { 
 
-    //holds mesh data and gl objects in one place for a chunk
-    public class ChunkMesh
+    //holds combined chunk mesh data in one draw call for optmization
+    public class BatchedChunkMesh
     {
-        //---explanation---
-
-        //acts as a regular openGL mesh, but with helpers for adding voxel data
-        //only loads in block textures to optimize mesh building since this mesh is only for blocks
-        //each chunk has one of these that combines all subchunk mesh data for one combined mesh
-
         //gl objects
         private readonly BlockVAO vao;
         private readonly BlockVBO vbo;
@@ -26,14 +20,14 @@ namespace OurCraft.Graphics
         private uint vertexCount = 0;
 
         //initialize everything
-        public ChunkMesh()
+        public BatchedChunkMesh()
         {
             vao = new BlockVAO();
             vbo = new BlockVBO();
             ebo = new EBO();
         }
 
-        ~ChunkMesh()
+        ~BatchedChunkMesh()
         {
             vertexCount = 0;
             indexCount = 0;
@@ -104,6 +98,7 @@ namespace OurCraft.Graphics
             IntPtr uvOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.texUV));
             IntPtr lightingOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.lighting));
             IntPtr normalOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.normal));
+            IntPtr aoOffset = Marshal.OffsetOf <BlockVertex>(nameof(BlockVertex.ao));
 
             vao.LinkAttrib(vbo, 0, 1, VertexAttribPointerType.Short, false, stride, xPosOffset);
             vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.Float, false, stride, yPosOffset);
@@ -111,6 +106,7 @@ namespace OurCraft.Graphics
             vao.LinkAttrib(vbo, 3, 2, VertexAttribPointerType.HalfFloat, false, stride, uvOffset);
             vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedShort, stride, lightingOffset); 
             vao.LinkAttribInt(vbo, 5, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
+            vao.LinkAttribInt(vbo, 6, 1, VertexAttribIntegerType.UnsignedByte, stride, aoOffset);
 
             vao.Unbind();
             vbo.Unbind();

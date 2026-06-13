@@ -1,7 +1,6 @@
-﻿//contains all constant and widely used values
+﻿using OpenTK.Mathematics;
 
-using OpenTK.Graphics.ES20;
-
+//contains all constant and widely used values
 namespace OurCraft.Utility
 {
     public static class RenderingConstants
@@ -31,28 +30,29 @@ namespace OurCraft.Utility
 
     public static class WorldConstants
     {
+        public const int REGION_SIZE = REGION_SIZE_IN_CHUNKS * CHUNK_WIDTH;
+        public const int REGION_SIZE_IN_CHUNKS = 8;
+
         public const int CHUNK_HEIGHT_IN_SUBCHUNKS = 24;
         public const int CHUNK_WIDTH_IN_SUBCHUNKS = 2;
-        public const int SUBCHUNK_SIZE = 16;
+        public const int SUBCHUNK_SIZE_IN_BLOCKS = 16;
 
-        public const int CHUNK_HEIGHT = SUBCHUNK_SIZE * CHUNK_HEIGHT_IN_SUBCHUNKS;
-        public const int CHUNK_WIDTH = SUBCHUNK_SIZE * CHUNK_WIDTH_IN_SUBCHUNKS;       
+        public const int CHUNK_HEIGHT = SUBCHUNK_SIZE_IN_BLOCKS * CHUNK_HEIGHT_IN_SUBCHUNKS;
+        public const int CHUNK_WIDTH = SUBCHUNK_SIZE_IN_BLOCKS * CHUNK_WIDTH_IN_SUBCHUNKS;       
     }
 
     public static class PhysicsConstants
     {
         public const double DEFAULT_TIME_SCALE = 1.0;      
         public const double MAX_ACCUM = 0.08;
-
         public const double PHYSICS_TICK = 0.02;
-        public const double BLOCK_TICK = 0.05;
 
         public const double MAX_VEL_Y = 100.0;
         public const double MAX_VEL_XZ = 100.0;
 
         public const float DEFAULT_FRICTION = 10.0f;
         public const float DEFAULT_BOUNCE = 0.0f;
-        public const double GRAVITY = 9.8;
+        public static readonly Vector3d GRAVITY = new(0, 9.8, 0);
     }
 
     public static class LightConstants
@@ -80,8 +80,9 @@ namespace OurCraft.Utility
     public static class WorldGenConstants
     {
         public const int DEFAULT_SEA_LEVEL = 126;
-        public const int DEFAULT_MIN_HEIGHT = 90;
+        public const int DEFAULT_MIN_HEIGHT = 80;
         public const int DEFAULT_MAX_HEIGHT = 320;
+        public const int DEFAULT_MAX_CAVE_HEIGHT = 256;
     }
 
     public static class FileConstants

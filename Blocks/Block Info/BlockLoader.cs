@@ -12,6 +12,7 @@ namespace OurCraft.Blocks.Block_Info
     {
         private readonly static string blockFilePath = FileConstants.BLOCK_DATA_PATH;
 
+        //example of loading a default cube block into game
         public static FullBlock RegisterFullBlock(string fileName)
         {
             string path = blockFilePath + fileName;
@@ -34,8 +35,10 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+
             block.friction = result.Friction;
-            block.bounce = result.Bounce;
+            block.bounce = result.Bounce;           
+            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -66,6 +69,7 @@ namespace OurCraft.Blocks.Block_Info
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
             block.friction = result.Friction;
             block.bounce = result.Bounce;
+            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -94,8 +98,10 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+
             block.bounce = result.Bounce;
             block.friction = result.Friction;
+            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -152,8 +158,10 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+
             block.friction = result.Friction;
             block.bounce = result.Bounce;
+            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -182,8 +190,10 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+
             block.friction = result.Friction;
             block.bounce = result.Bounce;
+            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -214,8 +224,10 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+
             block.friction = result.Friction;
             block.bounce = result.Bounce;
+            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -246,8 +258,10 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+
             block.friction = result.Friction;
             block.bounce = result.Bounce;
+            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);

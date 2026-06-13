@@ -1,0 +1,19 @@
+﻿{
+  "Name": "Gravel Ore",
+  "Block": "Gravel Block",
+
+  "MinY": 16,
+  "MaxY": 128,
+
+  "SpawnChance": 2,
+  "SpawnAttempts": 2,
+
+  "MinSize": 8,
+  "MaxSize": 12,
+
+  "PlacementType": "PATCH",
+
+  "ReplacementBlocks": [
+    "Stone"
+  ]
+}

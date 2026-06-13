@@ -1,7 +1,7 @@
 ﻿using OurCraft.Entities.Components;
 using OurCraft.Graphics;
 
-namespace OurCraft.World.Helpers
+namespace OurCraft.World.ChunkGeneration
 {
     //helps render and create openGL buffers of chunks
     public static class ChunkRenderer
@@ -10,13 +10,12 @@ namespace OurCraft.World.Helpers
         public static void GLUploadChunk(Chunk chunk)
         {
             ChunkState state = chunk.GetState();
-            if (state == ChunkState.Deleted || state == ChunkState.StructureReady || state == ChunkState.Initialized || chunk.IsMeshing())
-                return;
+            if (state == ChunkState.Deleted || state == ChunkState.Terrain_Set || state == ChunkState.Initialized || chunk.IsMeshing())  return;
 
             UploadBatchedMesh(chunk, chunk.batchedMesh, transparent: false);
             UploadBatchedMesh(chunk, chunk.transparentMesh, transparent: true);
-            
-            chunk.SetState(ChunkState.Built);
+
+            chunk.SetState(ChunkState.Render_Ready);
         }
 
         //draws solid geometry of chunk relative to cam
@@ -32,7 +31,7 @@ namespace OurCraft.World.Helpers
         }
 
         //combines vertex data of subchunks into one big openGL mesh
-        private static void UploadBatchedMesh(Chunk chunk, ChunkMesh mesh, bool transparent = false)
+        private static void UploadBatchedMesh(Chunk chunk, BatchedChunkMesh mesh, bool transparent = false)
         {
             //compute size upfront
             mesh.Delete();
@@ -40,14 +39,8 @@ namespace OurCraft.World.Helpers
 
             foreach (var subChunk in chunk.SubChunks)
             {
-                if (transparent)
-                {
-                    totalVertexCount += subChunk.TransparentGeo.vertices.Count;
-                }
-                else
-                {
-                    totalVertexCount += subChunk.SolidGeo.vertices.Count;
-                }
+                if (transparent) totalVertexCount += subChunk.TransparentGeo.vertices.Count;               
+                else totalVertexCount += subChunk.SolidGeo.vertices.Count;            
             }
 
             chunk.batchedMesh.SetupIndices(totalVertexCount);

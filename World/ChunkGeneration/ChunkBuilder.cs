@@ -2,10 +2,9 @@
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
-using OurCraft.Graphics.Voxel_Lighting;
 using OurCraft.Utility;
 
-namespace OurCraft.World.Helpers
+namespace OurCraft.World.ChunkGeneration
 {
     //helps build mesh data of chunk/subchunks
     public static class ChunkBuilder
@@ -13,7 +12,7 @@ namespace OurCraft.World.Helpers
         const int HEIGHT_IN_SUBCHUNKS = WorldConstants.CHUNK_HEIGHT_IN_SUBCHUNKS;
         const int WIDTH_IN_SUBCHUNKS = WorldConstants.CHUNK_WIDTH_IN_SUBCHUNKS;
         const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
-        const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE;
+        const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE_IN_BLOCKS;
 
         //creates the cpu side mesh of each subchunk in a chunk
         public static void CreateChunkMesh(Chunk chunk, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
@@ -21,6 +20,16 @@ namespace OurCraft.World.Helpers
         {
             if (!chunk.IsLit()) return;
             chunk.generating = true;
+
+            ChunkSectionNeighbors neighbors = new(chunk)
+            {
+                leftC = leftC, rightC = rightC,
+                frontC = frontC, backC = backC,
+
+                c1 = c1, c2 = c2,
+                c3 = c3, c4 = c4,
+            };
+
             foreach (var subChunk in chunk.SubChunks)
             {
                 subChunk.ClearMesh();
@@ -28,7 +37,7 @@ namespace OurCraft.World.Helpers
 
             foreach (var subChunk in chunk.SubChunks)
             {
-                MeshSubChunk(subChunk, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+                MeshSubChunk(subChunk, neighbors);
             }
 
             foreach (var subChunk in chunk.SubChunks)
@@ -37,7 +46,7 @@ namespace OurCraft.World.Helpers
                 subChunk.TransparentGeo.vertices.TrimExcess();
             }
 
-            if (chunk.GetState() == ChunkState.Lit) chunk.SetState(ChunkState.Meshed);
+            if (chunk.GetState() == ChunkState.Lit) chunk.SetState(ChunkState.Mesh_Built);
             chunk.generating = false;       
         }
 
@@ -59,6 +68,15 @@ namespace OurCraft.World.Helpers
         {
             MarkSubChunksDirty(chunk);
 
+            ChunkSectionNeighbors neighbors = new(chunk)
+            {
+                leftC = leftC, rightC = rightC,
+                frontC = frontC, backC = backC,
+
+                c1 = c1, c2 = c2,
+                c3 = c3, c4 = c4,
+            };
+
             //remesh dirty subchunks only once and reupload mesh
             for (int x = 0; x < WIDTH_IN_SUBCHUNKS; x++)
             {
@@ -68,11 +86,12 @@ namespace OurCraft.World.Helpers
                     {
                         if (!chunk.DirtySubChunks[x, y, z]) continue;
                         SubChunk sub = chunk.SubChunks[x, y, z];
-                        RemeshSubChunk(sub, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+                        RemeshSubChunk(sub, neighbors);
                         chunk.DirtySubChunks[x, y, z] = false;
                     }
                 }
             }
+
             chunk.changes.Clear();
             ChunkRenderer.GLUploadChunk(chunk);
         }
@@ -110,41 +129,42 @@ namespace OurCraft.World.Helpers
 
         //subchunk meshing
         //creates cpu side subchunk mesh data
-        static void MeshSubChunk(SubChunk sub, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        static void MeshSubChunk(SubChunk sub, ChunkSectionNeighbors nc)
         {
             if (sub.IsAllAir()) return; //dont create mesh if chunk is completely air
+
             int cxp = sub.ChunkXPos * SUBCHUNK_SIZE;
             int cyp = sub.ChunkYPos * SUBCHUNK_SIZE;
             int czp = sub.ChunkZPos * SUBCHUNK_SIZE;
+
             for (int y = SUBCHUNK_SIZE - 1; y >= 0; y--)
             {
                 for (int x = SUBCHUNK_SIZE - 1; x >= 0; x--)
                 {
                     for (int z = SUBCHUNK_SIZE - 1; z >= 0; z--)
                     {
-                        AddMeshDataToChunk(sub, pos:new Vector3i(x, y, z), meshPos:new Vector3(cxp + x, cyp + y, czp + z),
-                        leftC, rightC, frontC, backC, c1, c2, c3, c4);
+                        AddMeshDataToChunk(sub, pos:new Vector3i(x, y, z), meshPos:new Vector3(cxp + x, cyp + y, czp + z), nc);
                     }
                 }
             }
         }
 
         //clears subchunk cpu side mesh and recreates it
-        static void RemeshSubChunk(SubChunk sub, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        static void RemeshSubChunk(SubChunk sub, ChunkSectionNeighbors nc)
         {
             sub.ClearMesh();
-            MeshSubChunk(sub, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            MeshSubChunk(sub, nc);
         }
 
         //tries to add face data to a chunk mesh based on a bitmask of the adjacent blocks also samples lighting values for blocks exposed to light
-        static void AddMeshDataToChunk(SubChunk sub, Vector3i pos, Vector3 meshPos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        static void AddMeshDataToChunk(SubChunk sub, Vector3i pos, Vector3 meshPos, ChunkSectionNeighbors nc)
         {
             BlockState state = sub.GetBlockState(pos.X, pos.Y, pos.Z);
             if (state == Block.AIR) return;
             Block block = BlockRegistry.GetBlock(state.BlockID);
 
             //get neighbor blocks
-            NeighborBlocks nb = GetNeighborsSafe(sub, pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            NeighborBlocks nb = GetNeighborsSafe(sub, pos, nc);
             nb.thisState = state;
 
             //if surrounding blocks are all full solid cubes, and the current block is also full solid, then skip meshing entirely
@@ -153,14 +173,12 @@ namespace OurCraft.World.Helpers
             nb.left.BlockShape.IsFullOpaqueBlock && nb.right.BlockShape.IsFullOpaqueBlock
             && block.blockShape.IsFullOpaqueBlock) return;
 
-            LightingData lightData = GetLightData(sub,pos, leftC, rightC, frontC, backC, c1, c2, c3, c4);
             ChunkMeshData meshRef = block.blockShape.IsTranslucent ? sub.TransparentGeo : sub.SolidGeo;
-            block.blockShape.AddBlockMesh(meshPos, nb, meshRef, lightData);
+            block.blockShape.AddBlockMesh(meshPos, nb, meshRef, nc);
         }
 
         //get all neighbor blocks in a safe fashion
-        static NeighborBlocks GetNeighborsSafe(SubChunk sub, Vector3i pos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
-        Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        static NeighborBlocks GetNeighborsSafe(SubChunk sub, Vector3i pos, ChunkSectionNeighbors nc)
         {
             NeighborBlocks nb = new();
             int x = pos.X;
@@ -168,7 +186,7 @@ namespace OurCraft.World.Helpers
             int z = pos.Z;
 
             //helper to get neighbor block safely
-            BlockState N(int ox, int oy, int oz) => GetNeighborBlockSafe(sub, x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
+            BlockState N(int ox, int oy, int oz) => GetNeighborBlockSafe(sub, x, y, z, ox, oy, oz, nc);
 
             //top face + top corners
             nb.top = N(0, +1, 0);
@@ -180,33 +198,9 @@ namespace OurCraft.World.Helpers
             return nb;
         }
 
-        //returns light values necessary for computing smooth lighting data when meshing
-        static LightingData GetLightData(SubChunk sub, Vector3i pos, Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC,
-        Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
-        {
-            LightingData ld = new();
-            int x = pos.X;
-            int y = pos.Y;
-            int z = pos.Z;
-
-            //helper to get neighbor block safely
-            ushort L(int ox, int oy, int oz) => GetLightSafe(sub, x, y, z, ox, oy, oz, leftC, rightC, frontC, backC, c1, c2, c3, c4);
-
-            //face neighbors and current
-            ld.thisLight = L(0, 0, 0);
-            ld.topLight = L(0, +1, 0);
-            ld.bottomLight = L(0, -1, 0);
-            ld.frontLight = L(0, 0, +1);
-            ld.backLight = L(0, 0, -1);
-            ld.rightLight = L(+1, 0, 0);
-            ld.leftLight = L(-1, 0, 0);
-
-            return ld;
-        }
-
         //helper to fetch neighbor types safely
         static BlockState GetNeighborBlockSafe(SubChunk sub, int x, int y, int z, int offsetX, int offsetY, int offsetZ,
-        Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        ChunkSectionNeighbors nc)
         {
             const int cs = CHUNK_WIDTH - 1;
 
@@ -227,21 +221,21 @@ namespace OurCraft.World.Helpers
             bool nzFront = nz >= CHUNK_WIDTH;
 
             //if diagonal: prefer corner chunks
-            if (nxLeft && nzBack) targetChunk = c1; //back-left           
-            else if (nxRight && nzBack) targetChunk = c2; //back-right           
-            else if (nxLeft && nzFront) targetChunk = c3; //front-right        
-            else if (nxRight && nzFront) targetChunk = c4; //front-left           
+            if (nxLeft && nzBack) targetChunk = nc.c1; //back-left           
+            else if (nxRight && nzBack) targetChunk = nc.c2; //back-right           
+            else if (nxLeft && nzFront) targetChunk = nc.c3; //front-right        
+            else if (nxRight && nzFront) targetChunk = nc.c4; //front-left           
             else
             {
                 //non-diagonal: choose along X or Z
-                if (nxLeft) targetChunk = leftC;
-                else if (nxRight) targetChunk = rightC;
+                if (nxLeft) targetChunk = nc.leftC;
+                else if (nxRight) targetChunk = nc.rightC;
 
-                if (nzBack) targetChunk = backC;
-                else if (nzFront) targetChunk = frontC;
+                if (nzBack) targetChunk = nc.backC;
+                else if (nzFront) targetChunk = nc.frontC;
             }
 
-            if (targetChunk == null || !targetChunk.HasAllVoxelData()) return Block.AIR;
+            if (targetChunk == null || !targetChunk.HasAllBlocks()) return Block.AIR;
 
             //convert to local coordinates inside target chunk
             int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
@@ -251,50 +245,101 @@ namespace OurCraft.World.Helpers
         }
 
         //gets the lighting value of a block safely
-        static ushort GetLightSafe(SubChunk sub, int x, int y, int z, int offsetX, int offsetY, int offsetZ,
-        Chunk? leftC, Chunk? rightC, Chunk? frontC, Chunk? backC, Chunk? c1, Chunk? c2, Chunk? c3, Chunk? c4)
+        public static ushort GetLightSafe(int x, int y, int z, int offsetX, int offsetY, int offsetZ, ChunkSectionNeighbors nc)
         {
             const ushort defaultLight = ((0 & 0xF) | ((0 & 0xF) << 4) | ((0 & 0xF) << 8) | ((15 & 0xF) << 12));
             const int cs = CHUNK_WIDTH - 1;
 
-            int nx = (sub.ChunkXPos * SUBCHUNK_SIZE) + x + offsetX;
-            int ny = (sub.ChunkYPos * SUBCHUNK_SIZE) + y + offsetY; //global Y
-            int nz = (sub.ChunkZPos * SUBCHUNK_SIZE) + z + offsetZ;
+            int nx = x + offsetX;
+            int ny = y + offsetY;
+            int nz = z + offsetZ;
 
-            //out of world bounds (vertical)
+            //vertical world bounds or inside center chunk
             if (ny < 0 || ny >= Chunk.CHUNK_HEIGHT) return defaultLight;
-            if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH) return sub.parent.GetLight(nx, ny, nz);
+            if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH) return nc.center.GetLight(nx, ny, nz);
 
-            //start with this chunk as default
-            Chunk? targetChunk = sub.parent;
+            //start with center
+            Chunk? targetChunk = nc.center;
 
             bool nxLeft = nx < 0;
             bool nxRight = nx >= CHUNK_WIDTH;
             bool nzBack = nz < 0;
             bool nzFront = nz >= CHUNK_WIDTH;
 
-            //if diagonal: prefer corner chunks
-            if (nxLeft && nzBack) targetChunk = c1; //back-left           
-            else if (nxRight && nzBack) targetChunk = c2; //back-right           
-            else if (nxLeft && nzFront) targetChunk = c3; //front-right        
-            else if (nxRight && nzFront) targetChunk = c4; //front-left           
+            //diagonal neighbors
+            if (nxLeft && nzBack) targetChunk = nc.c1;
+            else if (nxRight && nzBack) targetChunk = nc.c2;
+            else if (nxLeft && nzFront) targetChunk = nc.c3;
+            else if (nxRight && nzFront) targetChunk = nc.c4;
             else
             {
-                //non-diagonal: choose along X or Z
-                if (nxLeft) targetChunk = leftC;
-                else if (nxRight) targetChunk = rightC;
+                //straight neighbors
+                if (nxLeft) targetChunk = nc.leftC;
+                else if (nxRight) targetChunk = nc.rightC;
 
-                if (nzBack) targetChunk = backC;
-                else if (nzFront) targetChunk = frontC;
+                if (nzBack) targetChunk = nc.backC;
+                else if (nzFront) targetChunk = nc.frontC;
             }
 
-            if (targetChunk == null || !targetChunk.HasAllVoxelData()) return defaultLight;
+            if (targetChunk == null || !targetChunk.HasAllBlocks()) return defaultLight;
 
-            //convert to local coordinates inside target chunk
+            //wrap coordinates into neighbor chunk local space
             int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
             int localZ = ((nz & cs) + CHUNK_WIDTH) & cs;
 
             return targetChunk.GetLight(localX, ny, localZ);
+        }
+
+        //helper to check if a neighboring block is solid safely
+        public static bool IsNeighborSolidSafe(int x, int y, int z, int offsetX, int offsetY, int offsetZ, ChunkSectionNeighbors nc)
+        {
+            const int cs = CHUNK_WIDTH - 1;
+
+            int nx = x + offsetX;
+            int ny = y + offsetY;
+            int nz = z + offsetZ;
+
+            //vertical world bounds
+            if (ny < 0 || ny >= Chunk.CHUNK_HEIGHT) return false;
+
+            //inside center chunk
+            if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH)
+            {
+                BlockState bstate = nc.center.GetBlockUnsafe(nx, ny, nz);
+                return bstate.AOSolid;
+            }
+
+            //choose neighbor chunk
+            Chunk? targetChunk = nc.center;
+
+            bool nxLeft = nx < 0;
+            bool nxRight = nx >= CHUNK_WIDTH;
+
+            bool nzBack = nz < 0;
+            bool nzFront = nz >= CHUNK_WIDTH;
+
+            //diagonal neighbors
+            if (nxLeft && nzBack) targetChunk = nc.c1;
+            else if (nxRight && nzBack) targetChunk = nc.c2;
+            else if (nxLeft && nzFront) targetChunk = nc.c3;
+            else if (nxRight && nzFront) targetChunk = nc.c4;
+            else
+            {
+                //straight neighbors
+                if (nxLeft) targetChunk = nc.leftC;
+                else if (nxRight) targetChunk = nc.rightC;
+
+                if (nzBack) targetChunk = nc.backC;
+                else if (nzFront) targetChunk = nc.frontC;
+            }
+
+            if (targetChunk == null || !targetChunk.HasAllBlocks()) return false;
+
+            //wrap coordinates into neighbor chunk local space
+            int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
+            int localZ = ((nz & cs) + CHUNK_WIDTH) & cs;
+            BlockState state = targetChunk.GetBlockUnsafe(localX, ny, localZ);
+            return state.AOSolid;
         }
     }
 }

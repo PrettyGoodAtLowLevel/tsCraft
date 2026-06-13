@@ -1,7 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Entities;
-using OurCraft.Entities.Components;
 using OurCraft.Utility;
 using OurCraft.World;
 
@@ -11,7 +10,8 @@ namespace OurCraft.Physics
     public class PhysicsSystem : BaseSystem<PhysicsObj>
     {
         static readonly double FixedTimestep = PhysicsConstants.PHYSICS_TICK;
-        static readonly double Gravity = PhysicsConstants.GRAVITY;
+        static readonly double BounceThreshold = -0.5f;
+        static readonly Vector3d Gravity = PhysicsConstants.GRAVITY;
 
         //go through each body and run a physics frame
         public static void StepPhysics(ChunkManager world)
@@ -23,22 +23,25 @@ namespace OurCraft.Physics
 
                 //air drag, and friction               
                 ResolveAirDrag(body);
-                ResolveGroundDrag(body, world);
+                if (!body.noClip) //cant have friction if not colliding
+                {
+                    ResolveGroundDrag(body, world);
+                    ResolveWallDrag(body, world);
+                }               
 
                 //add acceleration and velocity, then reset accel
                 body.velocity += body.acceleration * FixedTimestep;
                 body.acceleration = Vector3d.Zero;
 
                 //clamp vel and do collision detections
-                ClampVelocity(body);
+                PhysicsHelpers.ClampVelocity(body);
                 ResolveCollisions(world, body);
 
-                //apply gravity
-                body.acceleration.Y -= Gravity * body.gravityModifer;
+                body.acceleration -= Gravity * body.gravityModifer;
             }
         }
 
-        //adds drag you skibidi
+        //adds air friction you skibidi
         public static void ResolveAirDrag(PhysicsObj body)
         {
             body.acceleration.X -= body.velocity.X * body.dragX;
@@ -49,9 +52,22 @@ namespace OurCraft.Physics
         //adds extra drag when grounded and not in water you skibidi
         private static void ResolveGroundDrag(PhysicsObj body, ChunkManager world)
         {
-            if (!body.grounded || body.inFluid || !body.useFriction) return;
+            if (!body.grounded || body.inFluid || !body.physicsMaterial.useFriction) return;
 
-            double friction = GetGroundFriction(world, body);
+            double friction = PhysicsHelpers.GetGroundFriction(world, body);
+            if (friction <= 0.01) return;
+            body.acceleration.X -= body.velocity.X * friction;
+            body.acceleration.Z -= body.velocity.Z * friction;
+        }
+
+        //adds extra drag when coasting along walls, and not in water you skibidi
+        private static void ResolveWallDrag(PhysicsObj body, ChunkManager world)
+        {
+            if (!body.physicsMaterial.useWallFriction || body.inFluid) return;
+
+            double friction = PhysicsHelpers.GetWallFriction(world, body);
+            if (friction <= 0.01) return;
+            body.acceleration.Y -= body.velocity.Y * friction;
             body.acceleration.X -= body.velocity.X * friction;
             body.acceleration.Z -= body.velocity.Z * friction;
         }
@@ -59,197 +75,168 @@ namespace OurCraft.Physics
         //solves for position on each axis for a rigid body after applying forces
         public static void ResolveCollisions(ChunkManager world, PhysicsObj body)
         {
-            if (body.velocity == Vector3d.Zero) return;
-
             double dt = FixedTimestep;
+
             Vector3d pos = body.position;
             Vector3d vel = body.velocity;
             Vector3d move = vel * dt;
+
             body.inFluid = false;
             body.underWater = false;
+            if (body.noClip) { body.position += move;  body.velocity = vel;  return; }
 
-            //inlined - no overhead
-            void ResolveX() { move.X = ResolvePosition(world, body.bounds, pos, new Vector3d(move.X, 0, 0), body); pos.X += move.X; }
-            void ResolveY() { move.Y = ResolvePosition(world, body.bounds, pos, new Vector3d(0, move.Y, 0), body); pos.Y += move.Y; }
-            void ResolveZ() { move.Z = ResolvePosition(world, body.bounds, pos, new Vector3d(0, 0, move.Z), body); pos.Z += move.Z; }
+            //y axis
+            double origMoveY = move.Y;
+            move.Y = ResolveAxis(world, body.boundsMin, body.boundsMax, pos, new Vector3d(0, move.Y, 0), body);
+            pos.Y += move.Y;
 
-            double ax = Math.Abs(move.X), ay = Math.Abs(move.Y), az = Math.Abs(move.Z);
-
-            //resolve smallest axis first to eliminate corner bias
-            if (ax <= ay && ax <= az) { ResolveX(); if (ay <= az) { ResolveY(); ResolveZ(); } else { ResolveZ(); ResolveY(); } }
-            else if (ay <= ax && ay <= az) { ResolveY(); if (ax <= az) { ResolveX(); ResolveZ(); } else { ResolveZ(); ResolveX(); } }
-            else { ResolveZ(); if (ax <= ay) { ResolveX(); ResolveY(); } else { ResolveY(); ResolveX(); } }
-
-            //set body as grounded if y velocity was negative and colliding
-            body.grounded = (vel.Y < 0 && move.Y != vel.Y * dt);
-
-            if (move.X != vel.X * dt) vel.X = 0;
-            if (move.Y != vel.Y * dt)
+            //set grounded state before horizontal so step-up can read it
+            bool collidedY = move.Y != origMoveY;
+            body.grounded = false;  
+            if (collidedY)
             {
-                double bounciness = GetGroundBounciness(world, body, pos);
-                if (bounciness > 0.1 && vel.Y < -0.5) vel.Y = -vel.Y * bounciness * (1.0 + body.dragY * FixedTimestep);
-                else vel.Y = 0;
+                if (vel.Y < 0)
+                {
+                    double b = PhysicsHelpers.GetGroundBounciness(world, body, pos);
+                    bool bounced = b > 0.1 && vel.Y < BounceThreshold;
+                    if (bounced) vel.Y = -vel.Y * b;
+                    else { vel.Y = 0; body.grounded = true; }
+                }
+                else if (vel.Y > 0) vel.Y = 0;
             }
-            if (move.Z != vel.Z * dt) vel.Z = 0;
+
+            //xz axis, sorted by collision depth, step aware
+            double ax = Math.Abs(move.X), az = Math.Abs(move.Z);
+
+            if (ax <= az)
+            {
+                ResolveAxisWithStep(world, body, ref pos, ref vel, ref move, isX: true);
+                ResolveAxisWithStep(world, body, ref pos, ref vel, ref move, isX: false);
+            }
+            else
+            {
+                ResolveAxisWithStep(world, body, ref pos, ref vel, ref move, isX: false);
+                ResolveAxisWithStep(world, body, ref pos, ref vel, ref move, isX: true);
+            }
 
             body.position = pos;
             body.velocity = vel;
         }
 
         //computes how much in one axis we can move based on movement line and future collisions
-        static double ResolvePosition(ChunkManager world, Vector3d bounds, Vector3d pos, Vector3d move, PhysicsObj body)
+        static double ResolveAxis(ChunkManager world, Vector3d boundsMin, Vector3d boundsMax, Vector3d pos, Vector3d move, PhysicsObj body)
         {
-            AABB box = VoxelPhysics.GetAABB(pos, bounds);
+            AABB rbBox = AABBMath.GetAABB(pos, boundsMin, boundsMax);
+            AABB expanded = rbBox.Expand(move);
             double allowed = move.X + move.Y + move.Z;
 
             //sweep aabb collision bounds based on speed
-            int minX = (int)Math.Floor(box.min.X + Math.Min(move.X, 0));
-            int maxX = (int)Math.Floor(box.max.X + Math.Max(move.X, 0));
+            int minX = (int)Math.Floor(expanded.min.X);
+            int maxX = (int)Math.Floor(expanded.max.X);
 
-            int minY = (int)Math.Floor(box.min.Y + Math.Min(move.Y, 0));
-            int maxY = (int)Math.Floor(box.max.Y + Math.Max(move.Y, 0));
+            int minY = (int)Math.Floor(expanded.min.Y);
+            int maxY = (int)Math.Floor(expanded.max.Y);
 
-            int minZ = (int)Math.Floor(box.min.Z + Math.Min(move.Z, 0));
-            int maxZ = (int)Math.Floor(box.max.Z + Math.Max(move.Z, 0));
+            int minZ = (int)Math.Floor(expanded.min.Z);
+            int maxZ = (int)Math.Floor(expanded.max.Z);
 
             //go through each box and find contact distance
             for (int x = minX; x <= maxX; x++)
+            for (int y = minY; y <= maxY; y++)
+            for (int z = minZ; z <= maxZ; z++)
             {
-                for (int y = minY; y <= maxY; y++)
-                {
-                    for (int z = minZ; z <= maxZ; z++)
-                    {
-                        BlockState block = world.GetBlockState(new Vector3(x, y, z));
-                        if (!block.IsPhysicsSolid)
-                        {
-                            if (!block.DetectsCollision) continue;
-                          
-                            AABB bBox = block.GetAABB(new Vector3d(x, y, z));
-                            BlockPhysics blockPhysics = block.GetBlockPhysics();
+                 BlockState block = world.GetBlockState(new Vector3(x, y, z));
+                 CollisionShape colShape = block.GetCollisionShape();
 
-                            if (blockPhysics.isFluid && AABB.Intersects(bBox, box))
-                            {
-                                if (AABB.PointIntersects(body.HeadPosition, bBox)) body.underWater = true;
-                                body.inFluid = true;
-                                continue;
-                            }
+                 foreach (var aabb in colShape.aabbs)
+                 {
+                    if (!block.DetectsCollision) continue;
+
+                    if (!block.IsPhysicsSolid)
+                    {
+                        BlockPhysics blockPhysics = block.GetBlockPhysics();
+
+                        if (blockPhysics.isFluid && AABBMath.IntersectsLocal(aabb, rbBox, new Vector3d(x, y, z), Vector3d.Zero))
+                        if (blockPhysics.isFluid && AABBMath.IntersectsLocal(aabb, rbBox, new Vector3d(x, y, z), Vector3d.Zero))
+                        {
+                            if (AABBMath.PointIntersectsLocal(body.HeadPosition, aabb, new Vector3d(x, y, z))) body.underWater = true;
+                            body.inFluid = true;
                             continue;
                         }
-                        AABB blockBox = block.GetAABB(new Vector3d(x, y, z));
-
-                        //find axis and calculate max move
-                        if (move.X != 0) allowed = VoxelPhysics.ClipAxis(box, blockBox, move.X, CollisionAxis.X, allowed);
-                        if (move.Y != 0) allowed = VoxelPhysics.ClipAxis(box, blockBox, move.Y, CollisionAxis.Y, allowed);
-                        if (move.Z != 0) allowed = VoxelPhysics.ClipAxis(box, blockBox, move.Z, CollisionAxis.Z, allowed);
+                        continue;
                     }
-                }
-            }
 
+                    //find axis and calculate max move
+                    allowed = AABBMath.ClipAxisLocal(rbBox, aabb, new Vector3d(x, y, z), move.X, CollisionAxis.X, allowed);
+                    allowed = AABBMath.ClipAxisLocal(rbBox, aabb, new Vector3d(x, y, z), move.Y, CollisionAxis.Y, allowed);
+                    allowed = AABBMath.ClipAxisLocal(rbBox, aabb, new Vector3d(x, y, z), move.Z, CollisionAxis.Z, allowed);
+                 }
+            }
+                
             return allowed;
         }
 
-        //finds all the bottom blocks relative to an AABB and averages their friction
-        public static double GetGroundFriction(ChunkManager world, PhysicsObj body)
+        //resolves position, but with ability to step
+        static void ResolveAxisWithStep(ChunkManager world, PhysicsObj body, ref Vector3d pos, ref Vector3d vel, ref Vector3d move, bool isX)
         {
-            AABB box = VoxelPhysics.GetAABB(body.position, body.bounds);
+            //get axis direction from move vector
+            double desired = isX ? move.X : move.Z;
+            Vector3d axisVec = isX ? new Vector3d(desired, 0, 0) : new Vector3d(0, 0, desired);
 
-            int minX = (int)Math.Floor(box.min.X);
-            int maxX = (int)Math.Floor(box.max.X - 0.001);
-            int minZ = (int)Math.Floor(box.min.Z);
-            int maxZ = (int)Math.Floor(box.max.Z - 0.001);
+            //check if colliding
+            double resolved = ResolveAxis(world, body.boundsMin, body.boundsMax, pos, axisVec, body);
+            bool blocked = resolved != desired;
 
-            //check the two block rows below the body's feet to catch slabs and other partial blocks
-            int minY = (int)Math.Floor(box.min.Y - 1.01);
-            int maxY = (int)Math.Floor(box.min.Y);
+            double stepHeight = body.grounded ? body.groundStepHeight : body.airStepHeight;
+            double yVelThreshold = body.grounded ? 0.1 : -0.1;
 
-            float totalWeight = 0f;
-            float weightedFriction = 0f;
-
-            for (int x = minX; x <= maxX; x++)
+            //check if body is on ground, not in fluid, colliding with something, and not falling up
+            if (blocked && !body.inFluid && stepHeight > 0.005 && vel.Y < yVelThreshold)
             {
-                for (int z = minZ; z <= maxZ; z++)
+                //get how far up can we actually lift based on step height
+                double stepUp = ResolveAxis(world, body.boundsMin, body.boundsMax, pos, new Vector3d(0, stepHeight, 0), body);
+                
+                if (stepUp > 1e-6)  //slight epsilon
                 {
-                    for (int y = minY; y <= maxY; y++)
+                    //retry horizontal movement from lifted position
+                    Vector3d lifted = new(pos.X, pos.Y + stepUp, pos.Z);
+                    double resolvedLifted = ResolveAxis(world, body.boundsMin, body.boundsMax,  lifted, axisVec, body);
+
+                    if (resolvedLifted == desired) //obstacle fully cleared
                     {
-                        BlockState block = world.GetBlockState(new Vector3(x, y, z));
-                        if (!block.IsPhysicsSolid) continue;
+                        //apply horizontal move at lifted position
+                        if (isX) lifted.X += resolvedLifted;
+                        else lifted.Z += resolvedLifted;
 
-                        AABB blockBox = block.GetAABB(new Vector3d(x, y, z));
+                        //snap back down and land on top of stepped block
+                        double snapDown = ResolveAxis(world, body.boundsMin, body.boundsMax, lifted, new Vector3d(0, -stepUp, 0), body);
+                        lifted.Y += snapDown;                    
 
-                        //block must actually be touching the bottom of our AABB
-                        if (blockBox.max.Y < box.min.Y - 0.01) continue;
-
-                        double overlapX = Math.Min(box.max.X, blockBox.max.X) - Math.Max(box.min.X, blockBox.min.X);
-                        double overlapZ = Math.Min(box.max.Z, blockBox.max.Z) - Math.Max(box.min.Z, blockBox.min.Z);
-
-                        if (overlapX <= 0 || overlapZ <= 0) continue;
-
-                        float weight = (float)(overlapX * overlapZ);
-                        weightedFriction += block.GetBlockPhysics().friction * weight;
-                        totalWeight += weight;
+                        pos = lifted;
+                        if (isX) move.X = resolvedLifted;
+                        else move.Z = resolvedLifted;
+                        return;
                     }
                 }
             }
 
-            return totalWeight == 0f ? 0 : weightedFriction / totalWeight;
-        }
-
-        //finds all the bottom blocks relative to an AABB and averages their bounce
-        public static double GetGroundBounciness(ChunkManager world, PhysicsObj body, Vector3d pos)
-        {
-            if (!body.bounce) return 0;
-            AABB box = VoxelPhysics.GetAABB(pos, body.bounds);
-
-            int minX = (int)Math.Floor(box.min.X);
-            int maxX = (int)Math.Floor(box.max.X - 0.001);
-            int minZ = (int)Math.Floor(box.min.Z);
-            int maxZ = (int)Math.Floor(box.max.Z - 0.001);
-
-            int minY = (int)Math.Floor(box.min.Y - 1.01);
-            int maxY = (int)Math.Floor(box.min.Y);
-
-            float totalWeight = 0f;
-            float weightedBounciness = 0f;
-
-            for (int x = minX; x <= maxX; x++)
+            if (body.sneaking && body.grounded && !body.inFluid && resolved != 0)
             {
-                for (int z = minZ; z <= maxZ; z++)
+                Vector3d testPos = pos;
+                if (isX) testPos.X += resolved;
+                else testPos.Z += resolved;
+
+                AABB testBox = AABBMath.GetAABB(testPos, body.boundsMin, body.boundsMax);
+                if (!PhysicsHelpers.AABBHasGroundBelow(world, testBox))
                 {
-                    for (int y = minY; y <= maxY; y++)
-                    {
-                        BlockState block = world.GetBlockState(new Vector3(x, y, z));
-                        if (!block.IsPhysicsSolid) continue;
-
-                        AABB blockBox = block.GetAABB(new Vector3d(x, y, z));
-                        if (blockBox.max.Y < box.min.Y - 0.01) continue;
-
-                        double overlapX = Math.Min(box.max.X, blockBox.max.X) - Math.Max(box.min.X, blockBox.min.X);
-                        double overlapZ = Math.Min(box.max.Z, blockBox.max.Z) - Math.Max(box.min.Z, blockBox.min.Z);
-                        if (overlapX <= 0 || overlapZ <= 0) continue;
-
-                        float weight = (float)(overlapX * overlapZ);
-                        weightedBounciness += block.GetBlockPhysics().bounce * weight;
-                        totalWeight += weight;
-                    }
+                    resolved = 0;
+                    blocked = true;
                 }
             }
 
-            return totalWeight == 0f ? 0 : weightedBounciness / totalWeight;
-        }
-
-        //quake style clamp
-        public static void ClampVelocity(PhysicsObj body)
-        {
-            float xzSpeedSq = (float)(body.velocity.X * body.velocity.X + body.velocity.Z * body.velocity.Z);
-            float maxSq = body.maxVelXZ * body.maxVelXZ;
-            if (xzSpeedSq > maxSq)
-            {
-                float scale = VoxelMath.InvSqrt(xzSpeedSq) * body.maxVelXZ;
-                body.velocity.X *= scale;
-                body.velocity.Z *= scale;
-            }
-
-            body.velocity.Y = Math.Clamp(body.velocity.Y, -body.maxVelY, body.maxVelY);
+            //no step, apply and zero velocity if blocked
+            if (isX) { move.X = resolved; pos.X += move.X; if (blocked) vel.X = 0; }
+            else { move.Z = resolved; pos.Z += move.Z; if (blocked) vel.Z = 0; }
         }
     }
 }

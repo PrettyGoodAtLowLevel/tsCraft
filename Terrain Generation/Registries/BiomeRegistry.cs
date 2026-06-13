@@ -1,49 +1,12 @@
-﻿namespace OurCraft.Terrain_Generation
+﻿namespace OurCraft.Terrain_Generation.Registries
 {
-    //these enums are soley used for a lookup chart and dont effect the behavior of the biome, only the placement
-    //measures overall temperature
-    public enum TemperatureIndex
-    { 
-        FREEZING,   //tundras, cold oceans
-        COLD,       //taigas
-        TEMPERATE,  //gravelly hills
-        WARM,       //plains, forests
-        HOT,        //savannas, deserts
-    }
-
-    //measures rainfall level
-    public enum HumidityIndex
-    {
-        ARID,       //deserts, icelands
-        DRY,        //savanna
-        NORMAL,     //plains, forests
-        HUMID,      //jungle
-        WET         //swamps, mangroves
-    }
-
-    //measures plant count
-    public enum VegetationIndex
-    {
-        BARREN,     //desert, plains
-        SPARSE,     //sparse forest, gravelly hills
-        DENSE       //forest
-    }
-
     //the biome data class holds all of the biomes and initializes them
     //it also provides a fast lookup table for searching through and finding biomes
     //the lookup table uses the temperature, humidity, and vegetation, to index into an array
     //this array provides as a quick way to search for biomes with o(1) time, and being clean,
     //rather than use a million -if statements
-    public static class BiomeData
+    public static class BiomeRegistry
     {
-        public static Biome Tundra { get; private set; } = new Biome();
-        public static Biome FrozenPeaks { get; private set; } = new Biome();
-        public static Biome Taiga { get; private set; } = new Biome();
-        public static Biome Forest { get; private set; } = new Biome();
-        public static Biome WeirdForest { get; private set; } = new Biome();
-        public static Biome Plains { get; private set; } = new Biome();
-        public static Biome Desert { get; private set; } = new Biome();
-
         //for superflat worlds
         public static Biome EmptyBiome { get; private set; } = new Biome();
 
@@ -55,13 +18,13 @@
         {
             EmptyBiome = LoadBiomeQuick("EmptyBiome.json", addToWorldGen:false);
 
-            Forest = LoadBiomeQuick("Forest.json");
-            Tundra = LoadBiomeQuick("Tundra.json");
-            FrozenPeaks = LoadBiomeQuick("FrozenPeaks.json");
-            Taiga = LoadBiomeQuick("Taiga.json");        
-            WeirdForest = LoadBiomeQuick("WeirdForest.json");
-            Plains = LoadBiomeQuick("Plains.json");
-            Desert = LoadBiomeQuick("Desert.json");
+            LoadBiomeQuick("Forest.json");
+            LoadBiomeQuick("Tundra.json");
+            LoadBiomeQuick("FrozenPeaks.json");
+            LoadBiomeQuick("Taiga.json");        
+            LoadBiomeQuick("WeirdForest.json");
+            LoadBiomeQuick("Plains.json");
+            LoadBiomeQuick("Desert.json");
 
             LoadBiomeTable();
         }
@@ -78,21 +41,17 @@
             biomeMap = new Biome[(int)TemperatureIndex.HOT + 1, (int)HumidityIndex.WET + 1, (int)VegetationIndex.DENSE + 1];
 
             for(int x = 0; x <= (int)TemperatureIndex.HOT; x++)
+            for (int y = 0; y <= (int)HumidityIndex.WET; y++)
+            for (int z = 0; z <= (int)VegetationIndex.DENSE; z++)
             {
-                for (int y = 0; y <= (int)HumidityIndex.WET; y++)
-                {
-                    for (int z = 0; z <= (int)VegetationIndex.DENSE; z++)
-                    {
-                        biomeMap[x, y, z] = FindBiome(x, y, z);
-                    }
-                }
-            }
+                biomeMap[x, y, z] = FindBiome(x, y, z);
+            }                                         
         }
 
         //finds a biome based on distance lookup table
         private static Biome FindBiome(int temp, int humid, int veg)
         {
-            Biome closest = Tundra;
+            Biome closest = EmptyBiome;
             float minDist = float.PositiveInfinity;
 
             foreach (Biome biome in worldGenBiomes)

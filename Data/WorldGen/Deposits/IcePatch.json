@@ -1,0 +1,19 @@
+﻿{
+  "Name": "Ice Patch",
+  "Block": "Ice Block",
+
+  "MinY": 126,
+  "MaxY": 128,
+
+  "SpawnChance": 4,
+  "SpawnAttempts": 1,
+
+  "MinSize": 8,
+  "MaxSize": 12,
+
+  "PlacementType": "VEIN",
+
+  "ReplacementBlocks": [
+    "Water"
+  ]
+}

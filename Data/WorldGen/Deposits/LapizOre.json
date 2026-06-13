@@ -1,0 +1,19 @@
+﻿{
+  "Name": "Lapiz Ore",
+  "Block": "Lapiz Block",
+
+  "MinY": 0,
+  "MaxY": 128,
+
+  "SpawnChance": 8,
+  "SpawnAttempts": 10,
+
+  "MinSize": 1,
+  "MaxSize": 4,
+
+  "PlacementType": "VEIN",
+
+  "ReplacementBlocks": [
+    "Stone"
+  ]
+}

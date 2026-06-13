@@ -1,9 +1,8 @@
-﻿
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
-using OurCraft.Graphics.Voxel_Lighting;
+using OurCraft.World;
 
 namespace OurCraft.Blocks.Meshing
 {
@@ -20,15 +19,15 @@ namespace OurCraft.Blocks.Meshing
         }
 
         //add log type mesh
-        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)
+        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, ChunkSectionNeighbors nc)
         {
             Axis axis = nb.thisState.GetProperty(BlockLog.AXIS);
 
             switch (axis)
             {
-                case Axis.X: BlockMeshBuilder.BuildFromCachedModel(cachedModelX, pos, nb, mesh, lightData); break;
-                case Axis.Y: BlockMeshBuilder.BuildFromCachedModel(cachedModelY, pos, nb, mesh, lightData); break;
-                default: BlockMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, nb, mesh, lightData); break;
+                case Axis.X: BlockMeshBuilder.BuildFromCachedModel(cachedModelX, pos, nb, mesh, nc); break;
+                case Axis.Y: BlockMeshBuilder.BuildFromCachedModel(cachedModelY, pos, nb, mesh, nc); break;
+                default: BlockMeshBuilder.BuildFromCachedModel(cachedModelZ, pos, nb, mesh, nc); break;
             }
         }
 

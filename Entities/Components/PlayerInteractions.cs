@@ -2,7 +2,7 @@
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Blocks;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.Terrain_Generation;
+using OurCraft.Terrain_Generation.Noise;
 using OurCraft.Utility;
 using OurCraft.World;
 using System.Security.Cryptography;
@@ -39,6 +39,7 @@ namespace OurCraft.Entities.Components
         public override void OnUpdate(ChunkManager world, KeyboardState kb, MouseState ms)
         {
             if (orientation == null) return;
+
             ScrollBlocks(ms);
             HandleBlockInteractions(world, ms, orientation);
             DebugInteractions(world, kb, orientation);
@@ -46,17 +47,14 @@ namespace OurCraft.Entities.Components
 
         void HandleBlockInteractions(ChunkManager world, MouseState ms, Transform orientation)
         {
-            bool hitBlock = VoxelPhysics.RaycastVoxel(orientation.WorldPosition, orientation.Forward, reach,
+            bool hitBlock = AABBMath.RaycastVoxel(orientation.WorldPosition, orientation.Forward, reach,
             (x, y, z) => world.GetBlockState(new Vector3(x, y, z)) != Block.AIR && world.GetBlockState(new Vector3(x, y, z)) != waterBlock,
             out VoxelRaycastHit hit);
 
             //gameplay
             if (ms.IsButtonPressed(MouseButton.Left))
             {
-                if (hitBlock)
-                {
-                    world.SetBlock(hit.blockPos, Block.AIR);
-                }
+                if (hitBlock) world.SetBlock(hit.blockPos, Block.AIR);              
             }
             if (ms.IsButtonPressed(MouseButton.Right))
             {
@@ -75,11 +73,12 @@ namespace OurCraft.Entities.Components
                     right = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(1, 0, 0));
                     left = world.GetBlockState(hit.blockPos + hit.faceNormal + new Vector3(-1, 0, 0));
 
-                    AABB predictedAABB = BlockRegistry.GetBlock(currentBlockID).GetPredictedAABB(hit.blockPos, hit.faceNormal,
+                    CollisionShape predictedShape = BlockRegistry.GetBlock(currentBlockID).GetPredictedCollisionShape(hit.blockPos, hit.faceNormal,
                     bottom, top, front, back, right, left,
                     world.GetBlockState(hit.blockPos), world);
 
-                    if (AABB.Intersects(predictedAABB, VoxelPhysics.GetAABB(rb.position, rb.bounds))) return;
+                    foreach(var aabb in predictedShape.aabbs)
+                    if (AABBMath.IntersectsLocal(aabb, AABBMath.GetAABB(rb.position, rb.boundsMin, rb.boundsMax), hit.blockPos + hit.faceNormal, Vector3d.Zero)) return;
 
                     //try to add block
                     BlockRegistry.GetBlock(currentBlockID).PlaceBlockState(hit.blockPos, hit.faceNormal,
@@ -133,6 +132,8 @@ namespace OurCraft.Entities.Components
         {
             DebugChunkState(world, ks);
 
+            if (ks.IsKeyPressed(Keys.D5)) DebugProfiling();
+
             if (ks.IsKeyPressed(Keys.R))
             {
                 Console.Clear();
@@ -147,7 +148,7 @@ namespace OurCraft.Entities.Components
             ManageTime(ks);
         }
 
-        void SpawnTestEntity(KeyboardState ks, Transform orientation)
+        static void SpawnTestEntity(KeyboardState ks, Transform orientation)
         {
             if (ks.IsKeyPressed(Keys.Y))
             {
@@ -155,6 +156,7 @@ namespace OurCraft.Entities.Components
 
                 Entity entCenter = EntityManager.AddEntity("phys " + rand);
                 entCenter.Transform.localPosition = orientation.WorldPosition;
+                /*
                 EntityRender model = entCenter.AddComponent<EntityRender>();
 
                 if (rand % 12 == 0) model.LoadModel("horse.json", "Textures/Mc Skins/horseBlack.png");
@@ -172,15 +174,21 @@ namespace OurCraft.Entities.Components
 
                 model.model.root.localScale *= (Vector3.One * (1.8f / 2));
                 model.model.root.localPosition += Vector3d.UnitY * -(1.8f / 2);
+                */
 
                 //physics
                 PhysicsObj rb = entCenter.AddComponent<PhysicsObj>();
-                rb.bounds = new Vector3d(0.6, 1.8, 0.6);
+
+                Vector3d boundsMin = new Vector3d(-0.3, -0.9, -0.3);
+                Vector3d boundsMax = new Vector3d(0.3, 0.5, 0.3);
+
+                rb.boundsMin = boundsMin;
+                rb.boundsMax = boundsMax;
                 rb.AddImpulse(orientation.Forward * 25);
 
                 DebugRenderBox aabbbox = entCenter.AddComponent<DebugRenderBox>();
-                aabbbox.max = new Vector3(0.3f, 0.9f, 0.3f);
-                aabbbox.min = new Vector3(-0.3f, -0.9f, -0.3f);
+                aabbbox.min = (Vector3)boundsMin;
+                aabbbox.max = (Vector3)boundsMax;
                 aabbbox.SetUpRenderBox(orientation.Forward);
             }
         }
@@ -199,6 +207,8 @@ namespace OurCraft.Entities.Components
                 Console.WriteLine("Rigid Body Grounded: " + rb.grounded);
                 Console.WriteLine("Rigid Body in fluid: " + rb.inFluid);
                 Console.WriteLine("Rigid Body Underwater: " + rb.underWater);
+                Console.WriteLine("Rigid Body Sneaking: " + rb.sneaking);
+                Console.WriteLine("Rigid Body In Noclip: " + rb.noClip);
             }
         }
 
@@ -207,7 +217,7 @@ namespace OurCraft.Entities.Components
             if (ks.IsKeyPressed(Keys.X))
             {
                 slowTime = !slowTime;
-                if (slowTime) Time.TimeScale = 0.25;
+                if (slowTime) Time.TimeScale = 0.05;
                 else Time.TimeScale = 1.0;
             }
         }
@@ -219,12 +229,33 @@ namespace OurCraft.Entities.Components
                 Console.Clear();
                 ChunkCoord coord = world.GetPlayerChunk();
                 Chunk? chunk = world.GetChunk(coord);
-                if (chunk != null)
-                {
-                    Console.WriteLine(chunk.GetState());
-                }
+
+                if (chunk != null) Console.WriteLine("Current Player Chunk State: " + chunk.GetState());                
                 world.Debug();
             }
+        }
+
+        //log a message on how much on average each "expensive" task takes
+        static void DebugProfiling()
+        {
+            Console.Clear();
+            Console.WriteLine("--------Chunk Generation--------");
+            Console.WriteLine("Average Terrain Gen Time: " + (int)Profiler.GetProfileEntry("Terrain Gen").AverageMs + " ms");
+            Console.WriteLine("Average Structure Gen Time: " + (int)Profiler.GetProfileEntry("Structure Gen").AverageMs + " ms");
+            Console.WriteLine("Average Lighting Time: " + (int)Profiler.GetProfileEntry("Lighting").AverageMs + " ms");
+            Console.WriteLine("Average Mesh Gen Time: " + (int)Profiler.GetProfileEntry("Mesh Gen").AverageMs + " ms");
+            Console.WriteLine("Average GL Upload Time: " + (float)Profiler.GetProfileEntry("GL Upload").AverageMs + " ms");
+
+            Console.WriteLine();
+            Console.WriteLine("--------Game Logic--------");
+            Console.WriteLine("Average World Update Time: " + (float)Profiler.GetProfileEntry("World Update").AverageMs + " ms");
+            Console.WriteLine("Average Physics Update Time: " + (float)Profiler.GetProfileEntry("Fixed Update").AverageMs + " ms");
+            Console.WriteLine("Average Entity Update Time: " + (float)Profiler.GetProfileEntry("Update").AverageMs + " ms");
+
+            Console.WriteLine();
+            Console.WriteLine("--------Rendering--------");
+            Console.WriteLine("Average Chunk Render Time: " + (float)Profiler.GetProfileEntry("Chunk Rendering").AverageMs + " ms");
+            Console.WriteLine("Average Entity Render Time: " + (float)Profiler.GetProfileEntry("Entity Rendering").AverageMs + " ms");
         }
     }
 }

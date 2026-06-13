@@ -3,6 +3,8 @@ using OurCraft.Graphics;
 using OurCraft.Graphics.Voxel_Lighting;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
+using OurCraft.World;
+using OurCraft.World.ChunkGeneration;
 
 namespace OurCraft.Blocks
 {
@@ -95,11 +97,10 @@ namespace OurCraft.Blocks
     {
         //builds geometry from cached block model uses ao helper methods and uv sampling helpers
         public static void BuildFromCachedModel(CachedBlockModel model, Vector3 pos, NeighborBlocks nb,
-        ChunkMeshData mesh, LightingData ld)
+        ChunkMeshData mesh, ChunkSectionNeighbors nc)
         {
             //neighbors array indexed by CubeFaces order used across your code
             BlockState[] neighbors = [nb.bottom, nb.top, nb.front, nb.back, nb.right, nb.left];
-            ushort[] lights = [ld.bottomLight, ld.topLight, ld.frontLight, ld.backLight, ld.rightLight, ld.leftLight];
 
             //iterate cuboids and faces
             foreach (var cuboid in model.Cuboids)
@@ -116,9 +117,9 @@ namespace OurCraft.Blocks
                         BlockState neighborState = neighbors[f];
                         if (!BlockMeshHelper.IsFaceVisible(nb.thisState, neighborState, faceDir)) continue;
                     }
-                    ushort lighting = face.Cullable ? lights[f] : ld.thisLight;                   
+                    bool sampleInner = !face.Cullable;                
                     //add the face: this will compute v0->v3 positions per-face and call the AddQuadUV overload.
-                    AddModelFace(pos, cuboid, faceDir, face.UV.X, face.UV.Y, face.UV.Z, face.UV.W, mesh, lighting);
+                    AddModelFace(pos, cuboid, faceDir, face.UV.X, face.UV.Y, face.UV.Z, face.UV.W, mesh, sampleInner, nc);
                 }
             }
         }
@@ -126,70 +127,106 @@ namespace OurCraft.Blocks
         //adds a model face based on cuboid from/to and atlas uv rectangle (u0,v0,u1,v1).
         //uses the same AO corner ordering as blockmeshbuilder AddFullFace/AddSlab methods.        
         private static void AddModelFace(Vector3 blockPos, CachedCuboid cuboid, CubeFaces face, float u0, float v0, float u1, float v1,
-        ChunkMeshData mesh, ushort light)
+        ChunkMeshData mesh, bool sampleInner, ChunkSectionNeighbors nc)
         {
             CachedCuboid c = cuboid;
 
             switch (face)
             {
                 case CubeFaces.BOTTOM:
-                    AddQuadUV(blockPos, c.bv0p, c.bv1p, c.bv2p, c.bv3p, u0, v0, u1, v1, mesh, light, normal: 0);
+                    AddQuadUV(blockPos, c.bv0p, c.bv1p, c.bv2p, c.bv3p, u0, v0, u1, v1, mesh, sampleInner, face, nc);
                     break;
 
                 case CubeFaces.TOP:
-                    AddQuadUV(blockPos, c.tv0p, c.tv1p, c.tv2p, c.tv3p, u0, v0, u1, v1, mesh, light, normal: 1);
+                    AddQuadUV(blockPos, c.tv0p, c.tv1p, c.tv2p, c.tv3p, u0, v0, u1, v1, mesh, sampleInner, face, nc);
                     break;
 
                 case CubeFaces.FRONT:
-                    AddQuadUV(blockPos, c.fv0p, c.fv1p, c.fv2p, c.fv3p, u0, v0, u1, v1, mesh, light, normal: 2);
+                    AddQuadUV(blockPos, c.fv0p, c.fv1p, c.fv2p, c.fv3p, u0, v0, u1, v1, mesh, sampleInner, face, nc);
                     break;
 
                 case CubeFaces.BACK:
-                    AddQuadUV(blockPos, c.bcv0p, c.bcv1p, c.bcv2p, c.bcv3p, u0, v0, u1, v1, mesh, light, normal: 3);
+                    AddQuadUV(blockPos, c.bcv0p, c.bcv1p, c.bcv2p, c.bcv3p, u0, v0, u1, v1, mesh, sampleInner, face, nc);
                     break;
 
                 case CubeFaces.RIGHT:
-                    AddQuadUV(blockPos, c.rv0p, c.rv1p, c.rv2p, c.rv3p, u0, v0, u1, v1, mesh, light, normal: 4);
+                    AddQuadUV(blockPos, c.rv0p, c.rv1p, c.rv2p, c.rv3p, u0, v0, u1, v1, mesh, sampleInner, face, nc);
                     break;
 
                 case CubeFaces.LEFT:
-                    AddQuadUV(blockPos, c.lv0p, c.lv1p, c.lv2p, c.lv3p, u0, v0, u1, v1, mesh, light, normal: 5);
+                    AddQuadUV(blockPos, c.lv0p, c.lv1p, c.lv2p, c.lv3p, u0, v0, u1, v1, mesh, sampleInner, face, nc);
                     break;
             }       
         }
 
         //addQuad that uses explicit atlas-normalized u/v rectangle (u0,v0,u1,v1).
         private static void AddQuadUV(Vector3 pos, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3,
-        float u0, float v0, float u1, float v1, ChunkMeshData mesh, ushort lightValue, byte normal)
+        float u0, float v0, float u1, float v1, ChunkMeshData mesh, bool sampleInner, CubeFaces face, ChunkSectionNeighbors nc)
         {
-            mesh.AddChunkMeshData(new BlockVertex(pos + p0, new Vector2(u0, v0), lightValue, normal));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p1, new Vector2(u1, v0), lightValue, normal));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p2, new Vector2(u1, v1), lightValue, normal));
-            mesh.AddChunkMeshData(new BlockVertex(pos + p3, new Vector2(u0, v1), lightValue, normal));
+            //get ao and smooth lighting offsets
+            int oX = face == CubeFaces.LEFT ? -1 : face == CubeFaces.RIGHT ? 1 : 0;
+            int oY = face == CubeFaces.BOTTOM ? -1 : face == CubeFaces.TOP ? 1 : 0;
+            int oZ = face == CubeFaces.BACK ? -1 : face == CubeFaces.FRONT ? 1 : 0;
+
+            //get vertex index order for smooth lighting and ao
+            int vi0, vi1, vi2, vi3;
+            if (face == CubeFaces.TOP || face == CubeFaces.BOTTOM) { vi0 = 3; vi1 = 2; vi2 = 1; vi3 = 0; }
+            else { vi0 = 0; vi1 = 1; vi2 = 2; vi3 = 3; }
+
+            //get smooth lighting
+            ushort v0Light = SmoothLightingHelpers.SampleVertexLight((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi0, nc, sampleInner);
+            ushort v1Light = SmoothLightingHelpers.SampleVertexLight((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi1, nc, sampleInner);
+            ushort v2Light = SmoothLightingHelpers.SampleVertexLight((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi2, nc, sampleInner);
+            ushort v3Light = SmoothLightingHelpers.SampleVertexLight((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi3, nc, sampleInner);
+
+            //get ao
+            byte v0Ao = SmoothLightingHelpers.SampleAO((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi0, nc);
+            byte v1Ao = SmoothLightingHelpers.SampleAO((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi1, nc);
+            byte v2Ao = SmoothLightingHelpers.SampleAO((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi2, nc);
+            byte v3Ao = SmoothLightingHelpers.SampleAO((int)pos.X, (int)pos.Y, (int)pos.Z, oX, oY, oZ, face, vi3, nc);
+
+            bool useDiagonal02 = (v0Ao + v2Ao + v0Light + v2Light) > (v1Ao + v3Ao + v1Light + v3Light);
+
+            //add chunk mesh data
+            if (!useDiagonal02)
+            {
+                mesh.AddChunkMeshData(new BlockVertex(pos + p0, new Vector2(u0, v0), v0Light, (byte)face, v0Ao));
+                mesh.AddChunkMeshData(new BlockVertex(pos + p1, new Vector2(u1, v0), v1Light, (byte)face, v1Ao));
+                mesh.AddChunkMeshData(new BlockVertex(pos + p2, new Vector2(u1, v1), v2Light, (byte)face, v2Ao));
+                mesh.AddChunkMeshData(new BlockVertex(pos + p3, new Vector2(u0, v1), v3Light, (byte)face, v3Ao));
+            }
+            else
+            {            
+                mesh.AddChunkMeshData(new BlockVertex(pos + p1, new Vector2(u1, v0), v1Light, (byte)face, v1Ao));
+                mesh.AddChunkMeshData(new BlockVertex(pos + p2, new Vector2(u1, v1), v2Light, (byte)face, v2Ao));
+                mesh.AddChunkMeshData(new BlockVertex(pos + p3, new Vector2(u0, v1), v3Light, (byte)face, v3Ao));
+                mesh.AddChunkMeshData(new BlockVertex(pos + p0, new Vector2(u0, v0), v0Light, (byte)face, v0Ao));
+            } 
         }
 
         //x shaped blocks are hard to represent in cuboids so this is a sole helper method for adding them
-        public static void BuildXShapeBlock(Vector3 pos, int texID, ChunkMeshData mesh, ushort thisLight)
+        public static void BuildXShapeBlock(Vector3 pos, int texID, ChunkMeshData mesh, ChunkSectionNeighbors nc)
         {
             float eps = 0.001f; //small inset to avoid z-fighting
+            ushort light = ChunkBuilder.GetLightSafe((int)pos.X, (int)pos.Y, (int)pos.Z, 0, 0, 0, nc);
 
             //first diagonal (\)
             AddQuad(pos, new Vector3(0.0f + eps, 0.0f, 0.0f + eps), new Vector3(1.0f - eps, 0.0f, 1.0f - eps),
             new Vector3(1.0f - eps, 1.0f, 1.0f - eps), new Vector3(0.0f + eps, 1.0f, 0.0f + eps),
-            texID, mesh, thisLight, (byte)CubeFaces.LEFT);
+            texID, mesh, light, (byte)CubeFaces.LEFT);
 
             AddQuad(pos, new Vector3(1.0f - eps, 0.0f, 1.0f - eps), new Vector3(0.0f + eps, 0.0f, 0.0f + eps),
             new Vector3(0.0f + eps, 1.0f, 0.0f + eps), new Vector3(1.0f - eps, 1.0f, 1.0f - eps),
-            texID, mesh, thisLight, (byte)CubeFaces.RIGHT);
+            texID, mesh, light, (byte)CubeFaces.RIGHT);
 
             //second diagonal (/)
             AddQuad(pos, new Vector3(1.0f - eps, 0.0f, 0.0f + eps), new Vector3(0.0f + eps, 0.0f, 1.0f - eps),
             new Vector3(0.0f + eps, 1.0f, 1.0f - eps), new Vector3(1.0f - eps, 1.0f, 0.0f + eps),
-            texID, mesh, thisLight, (byte)CubeFaces.FRONT);
+            texID, mesh, light, (byte)CubeFaces.FRONT);
 
             AddQuad(pos, new Vector3(0.0f + eps, 0.0f, 1.0f - eps), new Vector3(1.0f - eps, 0.0f, 0.0f + eps),
             new Vector3(1.0f - eps, 1.0f, 0.0f + eps), new Vector3(0.0f + eps, 1.0f, 1.0f - eps),
-            texID, mesh, thisLight, (byte)CubeFaces.BACK);
+            texID, mesh, light, (byte)CubeFaces.BACK);
         }
 
         //add quad from raw vertices

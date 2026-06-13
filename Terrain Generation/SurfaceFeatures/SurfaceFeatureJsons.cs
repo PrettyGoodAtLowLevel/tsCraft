@@ -2,6 +2,7 @@ using OurCraft.Blocks;
 using OurCraft.Terrain_Generation.SurfaceFeatures;
 using OurCraft.Utility;
 using System.Text.Json;
+using OurCraft.Terrain_Generation.Registries;
 
 //contains all json configs of surface features
 namespace OurCraft.Terrain_Generation

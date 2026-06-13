@@ -84,21 +84,18 @@ namespace OurCraft.Entities
             player.AddComponent<DayNightCycle>();
 
             camera.AddComponent<CameraRender>();
-            EntityRender playerHand = viewModel.AddComponent<EntityRender>();
             viewModel.AddComponent<ViewModelSway>();
-            ViewBobbing camViewBobbing = camera.AddComponent<ViewBobbing>();
+            EntityRender playerHand = viewModel.AddComponent<EntityRender>();          
             ViewBobbing viewBobbing = viewModel.AddComponent<ViewBobbing>();
-
-            c.OnStart();           
-            c.orientation = camera.Transform;
+                   
             i.orientation = camera.Transform;
+            c.OnStart();
 
-            playerHand.LoadModel("playerSkin.json", "Textures/Mc Skins/Wither_Skeleten.png");
+            playerHand.LoadModel("playerSkin.json", "Textures/Mc Skins/timeBoss.png");
             playerHand.model.root.localScale *= (Vector3.One * 0.65f);
             viewModel.Transform.localPosition = new Vector3d(0.125, -0.6, -0.115);
             viewBobbing.OnStart();
-            camViewBobbing.intensity *= 5;
-            camViewBobbing.OnStart();
+
             SetPlayerEntity("Player");
         }
 
@@ -107,9 +104,12 @@ namespace OurCraft.Entities
         {
             PlayerControllerSystem.Update(world, kb, ms);
             PlayerInteractionSystem.Update(world, kb, ms);
+
             ConstantMovementSystem.Update(world, kb, ms);
             PhysicsSystem.Update(world, kb, ms);
+
             DayNightCycleSystem.Update(world, kb, ms);
+
             ViewModelSwaySystem.Update(world, kb, ms);
             ViewBobbingSystem.Update(world, kb, ms);
         }
@@ -148,14 +148,9 @@ namespace OurCraft.Entities
     }
 
     public class PlayerControllerSystem : BaseSystem<PlayerController> { }
-
     public class PlayerInteractionSystem : BaseSystem<PlayerInteractions> { }
-
     public class ConstantMovementSystem : BaseSystem<ConstantMovement> { }
-
     public class DayNightCycleSystem : BaseSystem<DayNightCycle> { }
-
     public class ViewModelSwaySystem : BaseSystem<ViewModelSway> { }
-
     public class ViewBobbingSystem : BaseSystem<ViewBobbing> { }
 }

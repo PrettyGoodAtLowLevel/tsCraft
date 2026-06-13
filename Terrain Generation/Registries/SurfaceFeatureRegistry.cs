@@ -1,13 +1,14 @@
 ﻿using OurCraft.Blocks;
 using OurCraft.Terrain_Generation.SurfaceFeatures;
 
-namespace OurCraft.Terrain_Generation
+namespace OurCraft.Terrain_Generation.Registries
 {
     //contains all surface features in a feature map
     public static class SurfaceFeatureRegistry
     {
         static readonly Dictionary<string, SurfaceFeature> featureMap = [];      
 
+        //loads all surface features, put surface features you want in game here
         public static void InitSurfaceFeatures()
         {
             OakTreeJson.LoadJsonConfig("OakTree.json");
@@ -15,6 +16,7 @@ namespace OurCraft.Terrain_Generation
             OakTreeJson.LoadJsonConfig("BirchOakTree.json");
             OakTreeJson.LoadJsonConfig("SpruceOakTree.json");
             OakTreeJson.LoadJsonConfig("AutumnOakTree.json");
+            OakTreeJson.LoadJsonConfig("CrimsonOakTree.json");
 
             SpruceTreeJson.LoadJsonConfig("SpruceTree.json");
             SpruceTreeJson.LoadJsonConfig("FrozenSpruceTree.json");
@@ -27,7 +29,7 @@ namespace OurCraft.Terrain_Generation
             MegaSpruceTreeJson.LoadJsonConfig("CrimsonMegaSpruceTree.json");
 
             JungleTreeJson.LoadJsonConfig("JungleTree.json");
-
+            
             FallenLogJson.LoadJsonConfig("FallenOakLog.json");
             FallenLogJson.LoadJsonConfig("FallenJungleLog.json");
 
@@ -41,6 +43,7 @@ namespace OurCraft.Terrain_Generation
             BoulderJson.LoadJsonConfig("IceBoulder.json");
         }
 
+        //tries to get a feature, if not found returns empty feature
         public static SurfaceFeature GetFeature(string name)
         {
             if (featureMap.TryGetValue(name, out var feature)) return feature;
@@ -49,6 +52,7 @@ namespace OurCraft.Terrain_Generation
             return new Plant(Block.AIR, Block.AIR, Block.AIR); //empty surface feature
         }
 
+        //adds a new feature to the feature map
         public static void AddFeature(SurfaceFeature feature, string name)
         {
             featureMap.TryAdd(name, feature);

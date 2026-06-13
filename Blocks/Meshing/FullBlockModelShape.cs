@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
-using OurCraft.Graphics.Voxel_Lighting;
+using OurCraft.World;
 
 namespace OurCraft.Blocks.Meshing
 {
@@ -16,9 +16,9 @@ namespace OurCraft.Blocks.Meshing
         }      
 
         //just build a full cube block, nothing crazy
-        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)
+        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, ChunkSectionNeighbors nc)
         {           
-            BlockMeshBuilder.BuildFromCachedModel(cachedModel, pos, nb, mesh, lightData);
+            BlockMeshBuilder.BuildFromCachedModel(cachedModel, pos, nb, mesh, nc);
         }
 
         //full block face getting is simple

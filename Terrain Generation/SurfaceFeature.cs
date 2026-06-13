@@ -25,7 +25,7 @@ namespace OurCraft.Terrain_Generation
         public virtual void PlaceFeature(Vector3i startPos, Chunk target, ChunkManager world){ }
 
         //sets blocks only in a target chunk
-        protected static void TrySetBlock(Vector3i worldPos, BlockState block, Chunk target, bool replaceBlock = true)
+        public static void TrySetBlock(Vector3i worldPos, BlockState block, Chunk target, bool replaceBlock = true)
         {
             int minX = target.ChunkPos.X * Chunk.CHUNK_WIDTH;
             int minZ = target.ChunkPos.Z * Chunk.CHUNK_WIDTH;

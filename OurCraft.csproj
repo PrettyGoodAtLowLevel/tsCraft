@@ -32,4 +32,8 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Terrain Generation\Structures\" />
+  </ItemGroup>
+
 </Project>

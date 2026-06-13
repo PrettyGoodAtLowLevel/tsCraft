@@ -6,18 +6,29 @@ layout(location = 2) in float aZPos; //short mapped to float
 layout(location = 3) in vec2 aUV;
 layout(location = 4) in int aLighting;
 layout(location = 5) in int aNormal;
+layout(location = 6) in int aAO;
 
 //output variables to frag shader
 out vec2 TexCoords;
-flat out int NormalID;
 out vec3 FragPos;
 out vec3 lightColor;
 out float skyLight;
+out float Ao;
+flat out int NormalID;
 
 //positioning and transformations
 uniform mat4 camMatrix;
 uniform mat4 model;
 uniform float uChunkSize = 32.0;
+
+
+const float AO_TABLE[4] = float[]
+(
+    1.0,  //no occlusion
+    0.85, //light occlusion
+    0.7,  //medium occlusion
+    0.55  //corner heavy occlusion
+);
 
 void main()
 {
@@ -43,4 +54,5 @@ void main()
     lightColor = vec3(lightR, lightG, lightB);
     skyLight = lightS;
     NormalID = aNormal;
+    Ao = AO_TABLE[clamp(aAO, 0, 3)];
 }

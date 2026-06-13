@@ -37,5 +37,17 @@
       "Name": "Cactus",
       "Chance": 1000
     }
+  ],
+
+  "Deposits": [
+    "Dirt Ore",
+    "Gravel Ore",
+
+    "Redstone Ore",
+    "Lapiz Ore",
+    "Emerald Ore",
+
+    "Surface Dirt",
+    "Surface Gravel"
   ]
 }

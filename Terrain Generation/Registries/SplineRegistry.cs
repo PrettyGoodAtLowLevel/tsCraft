@@ -1,10 +1,10 @@
 ﻿using OurCraft.Utility;
 using System.Text.Json;
 
-namespace OurCraft.Terrain_Generation
+namespace OurCraft.Terrain_Generation.Registries
 {
     //contains all the spline data information for world gen
-    public static class TerrainSplines
+    public static class SplineRegistry
     {
         //determines land vs ocean
         public static readonly SplineGraph regionSpline = SplineJson.LoadSpline("RegionSpline.json");
@@ -20,6 +20,12 @@ namespace OurCraft.Terrain_Generation
 
         //extra amplifier for really weird fantasy terrain
         public static readonly SplineGraph fractureSpline = SplineJson.LoadSpline("FractureSpline.json");
+
+        //decides what amplification are given to caves based on 2d noise
+        public static readonly SplineGraph caveSizeSpline = SplineJson.LoadSpline("CaveSizeSpline.json");
+
+        //decides how big caves are based on y position, higher = smaller caves
+        public static readonly SplineGraph caveOpenSpline = SplineJson.LoadSpline("CaveOpenSpline.json");
 
         //extra amplifier for high erosion areas
         public static readonly SplineGraph erosionAmplificationSpline = SplineJson.LoadSpline("ErosionAmplificationSpline.json");
@@ -37,7 +43,7 @@ namespace OurCraft.Terrain_Generation
         public static readonly SplineGraph vegetationSpline = SplineJson.LoadSpline("VegetationSpline.json");
     }
 
-    //json representation of spline
+    //json representation of spline graph
     public class SplineJson
     {
         private static readonly string splinesFilePath = FileConstants.WORLD_GEN_DATA_PATH + "Splines/";
@@ -62,6 +68,7 @@ namespace OurCraft.Terrain_Generation
         }
     }
 
+    //represents json version of a 2d point on a spline graph
     public class SplinePointJson
     { 
         public float X { get; set; }

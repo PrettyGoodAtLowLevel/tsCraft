@@ -1,0 +1,8 @@
+﻿{
+  "NoiseType": "OpenSimplex2",
+  "FractalType": "Ridged",
+  "DomainWarpType": "OpenSimplex2",
+  "Frequency": 0.0125,
+  "Octaves": 2,
+  "Warp": 0
+}

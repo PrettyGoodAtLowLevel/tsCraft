@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
-using OurCraft.Graphics.Voxel_Lighting;
+using OurCraft.World;
 
 namespace OurCraft.Blocks.Meshing
 {
@@ -19,15 +19,15 @@ namespace OurCraft.Blocks.Meshing
         }
 
         //add slab type mesh
-        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData lightData)
+        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, ChunkSectionNeighbors nc)
         {
             SlabType type = nb.thisState.GetProperty(SlabBlock.SLAB_TYPE);
 
             switch (type)
             {
-                case SlabType.Double: BlockMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, nb, mesh, lightData); break;
-                case SlabType.Top: BlockMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, nb, mesh, lightData); break;
-                default: BlockMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, nb, mesh, lightData); break;
+                case SlabType.Double: BlockMeshBuilder.BuildFromCachedModel(cachedModelDouble, pos, nb, mesh, nc); break;
+                case SlabType.Top: BlockMeshBuilder.BuildFromCachedModel(cachedModelTop, pos, nb, mesh, nc); break;
+                default: BlockMeshBuilder.BuildFromCachedModel(cachedModelBottom, pos, nb, mesh, nc); break;
             }
         }
 

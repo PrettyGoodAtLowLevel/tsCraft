@@ -1,8 +1,7 @@
-﻿using OpenTK.Graphics.ES11;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
-using OurCraft.Graphics.Voxel_Lighting;
+using OurCraft.World;
 
 namespace OurCraft.Blocks
 {
@@ -39,7 +38,7 @@ namespace OurCraft.Blocks
         public bool IsTranslucent { get; set; } = false;
 
         //how does this block shape get added to the world based on state
-        public virtual void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData aoData) { }
+        public virtual void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, ChunkSectionNeighbors nc) { }
 
         //gets the face type from a specified block state
         public virtual FaceType GetBlockFace(CubeFaces faceSide, BlockState state) { return FaceType.FULLBLOCK; }

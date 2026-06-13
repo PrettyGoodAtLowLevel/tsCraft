@@ -16,13 +16,9 @@ namespace OurCraft.Blocks.Block_Implementations
             world.SetBlock(globalPos + hitNormal, DefaultState);
         }
 
-        public override AABB GetAABB(Vector3d worldPos, BlockState state)
+        public override CollisionShape GetCollisionShape(BlockState state)
         {
-            return new AABB()
-            {
-                min = worldPos,
-                max = worldPos + Vector3d.One
-            };
+            return CollisionShapeData.FullBlock;
         }
 
         public override bool DetectsCollision(BlockState state)
@@ -31,6 +27,11 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         public override bool IsPhysicsSolid(BlockState state)
+        {
+            return true;
+        }
+
+        public override bool AOSolid(BlockState state)
         {
             return true;
         }

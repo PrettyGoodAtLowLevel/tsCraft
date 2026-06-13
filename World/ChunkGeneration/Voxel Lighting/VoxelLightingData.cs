@@ -2,16 +2,6 @@
 
 namespace OurCraft.Graphics.Voxel_Lighting
 {
-    //contains data of all the surrounding blocks for light baking
-    public struct LightingData
-    {
-        public ushort thisLight, bottomLight, topLight;
-        public ushort frontLight, backLight;
-        public ushort rightLight, leftLight;
-
-        public LightingData() { }
-    }
-
     //represents a block light position in the world, kept as struct for better performance
     public struct LightNode
     {
@@ -57,6 +47,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         }
     }
 
+    //represents a sky light to be removed from the world
     public struct RemoveSkyNode
     {
         public int x, y, z;

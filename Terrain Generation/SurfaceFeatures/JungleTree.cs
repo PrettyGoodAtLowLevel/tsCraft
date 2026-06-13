@@ -4,6 +4,7 @@ using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using OurCraft.World;
+using OurCraft.Terrain_Generation.Noise;
 
 namespace OurCraft.Terrain_Generation.SurfaceFeatures
 {

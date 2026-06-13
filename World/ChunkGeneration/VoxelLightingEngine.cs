@@ -1,10 +1,10 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.World;
 using System.Collections.Concurrent;
 using OurCraft.Utility;
+using OurCraft.Graphics.Voxel_Lighting;
 
-namespace OurCraft.Graphics.Voxel_Lighting
+namespace OurCraft.World.ChunkGeneration
 {
     //has helper methods to calculate block and sky lighting for the world
     public static class VoxelLightingEngine
@@ -31,6 +31,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
             BlockLightingEngine.PropagateBlockLights(world, blockLights);
 
             chunk.SetState(ChunkState.Lit);
+            chunk.generating = false;
         }
 
         //adds a block light into the world after inital load
@@ -97,14 +98,13 @@ namespace OurCraft.Graphics.Voxel_Lighting
 
             SkyLightingEngine.PropagateSkyLightRemoval(world, skyRemoveQueue, reSkyQueue);
             SkyLightingEngine.PropagateSkyLights(world, reSkyQueue, dirty: true);
-
         }
 
         //allows for light values to repropagate through old solid block
         public static void RemoveLightBlocker(ChunkManager world, Vector3i globalPos)
         {            
-            ConcurrentQueue<LightNode> lights = new ConcurrentQueue<LightNode>();
-            ConcurrentQueue<SkyLightNode> skyLights = new ConcurrentQueue<SkyLightNode>();
+            ConcurrentQueue<LightNode> lights = new();
+            ConcurrentQueue<SkyLightNode> skyLights = new();
 
             Span<(int dx, int dy, int dz)> dirs =
             [
@@ -122,7 +122,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                 int cx = VoxelMath.FloorDivPow2(wx, CHUNK_SIZE);
                 int cz = VoxelMath.FloorDivPow2(wz, CHUNK_SIZE);
                 Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
-                if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted()) continue;
+                if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted()) continue;
 
                 int lx = VoxelMath.ModPow2(wx, CHUNK_SIZE);
                 int lz = VoxelMath.ModPow2(wz, CHUNK_SIZE);

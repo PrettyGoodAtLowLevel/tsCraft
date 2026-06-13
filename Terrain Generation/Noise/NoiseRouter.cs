@@ -1,9 +1,8 @@
-﻿using System.Security.Cryptography;
-using System.Text.Json;
-using FastNoiseLiteRef;
-using OurCraft.Utility;
+﻿using FastNoiseLiteRef;
+using OurCraft.Terrain_Generation.Registries;
+using System.Security.Cryptography;
 
-namespace OurCraft.Terrain_Generation
+namespace OurCraft.Terrain_Generation.Noise
 {
     //provides methods to get noise values for terrain generation
     //allows to customize the noise map values to your desire 
@@ -15,11 +14,17 @@ namespace OurCraft.Terrain_Generation
         static readonly FastNoiseLite regionalNoise;
         static readonly FastNoiseLite erosionNoise;
         static readonly FastNoiseLite riverNoise;
+
+        //3d noise controller
         static readonly FastNoiseLite weirdnessNoise;
         static readonly FastNoiseLite fractureNoise;
 
-        //creates the detailed terrain shape
+        //cave noise controllers
+        static readonly FastNoiseLite caveSizeNoise;
+
+        //creates the detailed terrain shape & caves
         static readonly FastNoiseLite detailNoise;
+        static readonly FastNoiseLite caveNoise;
 
         //biome noise
         static readonly FastNoiseLite temperatureNoise;
@@ -35,7 +40,7 @@ namespace OurCraft.Terrain_Generation
         static NoiseRouter()
         {
             //make seed gen
-            seed = RandomNumberGenerator.GetInt32(int.MaxValue);
+            seed = RandomNumberGenerator.GetInt32(int.MaxValue - 100);
             Random rand = new(seed);
             offsetX = rand.Next(10000);
             offsetZ = rand.Next(10000);
@@ -46,6 +51,7 @@ namespace OurCraft.Terrain_Generation
             int riverSeed = rand.Next();
             int weirdSeed = rand.Next();
             int fractureSeed = rand.Next();
+            int caveSizeSeed = rand.Next();
             int temperatureSeed = rand.Next();
             int humiditySeed = rand.Next();
             int vegetationSeed = rand.Next();
@@ -54,15 +60,18 @@ namespace OurCraft.Terrain_Generation
             regionalNoise = NoiseJson.JsonToFastNoise("RegionalNoise.json", regionalSeed);
             erosionNoise = NoiseJson.JsonToFastNoise("ErosionNoise.json", erosionSeed);
             riverNoise = NoiseJson.JsonToFastNoise("RiverNoise.json", riverSeed);
+            caveSizeNoise = NoiseJson.JsonToFastNoise("CaveSizeNoise.json", caveSizeSeed);
+
             weirdnessNoise = NoiseJson.JsonToFastNoise("WeirdnessNoise.json", weirdSeed);
             fractureNoise = NoiseJson.JsonToFastNoise("FractureNoise.json", fractureSeed);
+
             detailNoise = NoiseJson.JsonToFastNoise("DetailNoise.json", seed);
+            caveNoise = NoiseJson.JsonToFastNoise("CaveNoise.json", seed + 1);
+
             temperatureNoise = NoiseJson.JsonToFastNoise("TemperatureNoise.Json", temperatureSeed);
             humidityNoise = NoiseJson.JsonToFastNoise("HumidityNoise.json", humiditySeed);
             vegetationNoise = NoiseJson.JsonToFastNoise("VegetationNoise.json", vegetationSeed);
         }
-
-        //--noise functions--
 
         //get the regional noise (2d heightmap)
         public static float GetRegionalNoise(int x, int z)
@@ -104,11 +113,26 @@ namespace OurCraft.Terrain_Generation
             return fractureNoise.GetNoise(wx, wz);
         }
 
+        //gets multiplier for cave size
+        public static float GetCaveSizeNoise(int x, int z)
+        {
+            float wx = x + offsetX, wz = z + offsetZ;
+            caveSizeNoise.DomainWarp(ref wx, ref wz);
+            return caveSizeNoise.GetNoise(wx, wz);
+        }
+
         //get detail nose (3d density map)
         public static float GetDetailNoise(int x, int y, int z)
         {
             float wx = x + offsetX, wz = z + offsetZ;
             return detailNoise.GetNoise(wx, y * 1.25f, wz);
+        }
+
+        //get cave noise
+        public static float GetCaveNoise(int x, int y, int z)
+        {
+            float wx = x + offsetX, wz = z + offsetZ;
+            return caveNoise.GetNoise(wx, y * 1.75f, wz);
         }
 
         //get heat of world
@@ -176,6 +200,7 @@ namespace OurCraft.Terrain_Generation
             float riv = GetRiverNoise(x, z);
             float w = GetWeirdnessNoise(x, z);
             float fracture = GetFractureNoise(x, z);
+            float ca = GetCaveSizeNoise(x, z);
 
             //find biome noise values
             float temp = GetTemperatureNoise(x, z);
@@ -183,21 +208,23 @@ namespace OurCraft.Terrain_Generation
             float veg = GetVegetationNoise(x, z);
 
             float amp =
-            TerrainSplines.weirdnessSpline.Evaluate(w) +
-            TerrainSplines.fractureSpline.Evaluate(fracture) +
-            TerrainSplines.erosionAmplificationSpline.Evaluate(ero);
+            SplineRegistry.weirdnessSpline.Evaluate(w) +
+            SplineRegistry.fractureSpline.Evaluate(fracture) +
+            SplineRegistry.erosionAmplificationSpline.Evaluate(ero);
+            float caveAmp = SplineRegistry.caveSizeSpline.Evaluate(ca);
 
             //convert into a less messy float format
             string formattedReg = DebugRegionalNoise(reg);
             string formattedEro = DebugErosionNoise(ero);
             string formattedRiv = DebugRiverNoise(riv);
             string formattedAmp = DebugAmplification(amp);
+            string formattedCA = DebugCaveAmplification(caveAmp);
 
             //find the current biome based on noisemap values
-            float ft = TerrainSplines.temperatureSpline.Evaluate(temp);
-            float fh = TerrainSplines.humiditySpline.Evaluate(humid);
-            float fv = TerrainSplines.vegetationSpline.Evaluate(veg);
-            Biome biome = WorldGenerator.GetBiome((int)ft, (int)fh, (int)fv);
+            float ft = SplineRegistry.temperatureSpline.Evaluate(temp);
+            float fh = SplineRegistry.humiditySpline.Evaluate(humid);
+            float fv = SplineRegistry.vegetationSpline.Evaluate(veg);          
+            Biome biome = OverworldGenerator.GetBiome((int)ft, (int)fh, (int)fv);        
 
             //print
             Console.WriteLine("========Terrain Builder========");
@@ -211,154 +238,48 @@ namespace OurCraft.Terrain_Generation
             Console.WriteLine("Humidity: " + (HumidityIndex)fh);
             Console.WriteLine("Vegetation: " + (VegetationIndex)fv);
             Console.WriteLine("Biome: " + biome.Name);
+
+            Console.WriteLine("========Cave Builder========");
+            Console.WriteLine("Cave Amplification: " + formattedCA);
         }
 
         public static string DebugRegionalNoise(float r)
         {
-            if (r <= -0.4f)
-                return "Off Mainland";
-            else if (r <= -0.25f)
-                return "Coastal";
-            else if (r <= 0.5)
-                return "In Mainland";
-            else
-                return "Far Mainland";
+            if (r <= -0.4f)       return "Off Mainland";
+            else if (r <= -0.25f) return "Coastal";
+            else if (r <= 0.5)    return "In Mainland";
+            else                  return "Far Mainland";
         }
 
         public static string DebugErosionNoise(float e)
         {
-            if (e <= -0.35f)
-                return "Highland";
-            else if  (e >= 0.2f)
-                return "Meadowland";
+            if (e <= -0.35f)     return "Highland";
+            else if  (e >= 0.2f) return "Meadowland";
             return "Lowland";
         }
 
         public static string DebugRiverNoise(float r)
         {
-            if (r <= 0.2f && r >= 0)
-                return "River";
+            if (r <= 0.2f && r >= 0) return "River";
             return "None";
         }
 
         public static string DebugAmplification(float a)
         {
-            if (a <= 10.5f)
-                return "Flat";
-            else if (a <= 25)
-                return "Bumpy";
-            else if (a <= 50)
-                return "Amplified";
-            else if (a <= 100)
-                return "Crazy";
-            else
-                return "Fractured";
+            if (a <= 10.5f)   return "Flat";
+            else if (a <= 25) return "Bumpy";
+            else if (a <= 50) return "Amplified";
+            else if (a <= 100)return "Crazy";
+            else              return "Fractured";
+        }
+
+        public static string DebugCaveAmplification(float a)
+        {
+            if (a <= 0.25f) return "No Caves";
+            else if (a <= 0.5) return "Small Tunnels";
+            else if (a <= 1.5) return "Regular Caves";
+            else if (a <= 2.5) return "Larger Caves";
+            else return "Massive Caverns";
         }
     }    
-
-    //represents a section of noise in the world
-    public readonly struct NoiseRegion
-    {
-        //height offset = base height of terrain
-        public readonly float heightOffset;
-
-        //amplification = how much the terrain can vary from base height
-        public readonly float amplification;
-
-        //how much this can displace terrain hard cap
-        public readonly int maxDepth;
-
-        //what region of the world you are in
-        public readonly Biome biome;
-
-        //dflt constructor
-        public NoiseRegion(float heightOffset, float amplification, Biome biome, int maxDepth) : this()
-        {
-            this.heightOffset = heightOffset;
-            this.amplification = amplification;
-            this.biome = biome;
-            this.maxDepth = maxDepth;
-        }
-    }
-
-    //noise file represented in json
-    public class NoiseJson
-    {
-        private static readonly string noiseFilePath = FileConstants.WORLD_GEN_DATA_PATH + "Noises/";
-
-        public string NoiseType { get; set; } = "";
-        public string FractalType { get; set; } = "";
-        public string DomainWarpType { get; set; } = "";
-        public float Frequency { get; set; } = 0;
-        public int Octaves { get; set; } = 0;
-        public float Warp { get; set; } = 0;
-
-        public static NoiseJson Load(string fileName, bool debug = false)
-        {
-            string path = noiseFilePath + fileName;
-            string json = File.ReadAllText(path);
-
-            //allow case-insensitive JSON property matching
-            var options = new JsonSerializerOptions
-            {  PropertyNameCaseInsensitive = true };
-
-            var result = JsonSerializer.Deserialize<NoiseJson>(json, options);
-
-            if (debug)
-            {
-                if (result == null) Console.WriteLine("Deserialization failed!");
-                else Console.WriteLine("Loaded noise config successfully!");
-            }
-
-            //if thing is null return default noise json fast noise lite
-            if (result == null)
-            {
-                NoiseJson temp = new()
-                {
-                    NoiseType = "OpenSimplex2",
-                    FractalType = "FBm",
-                    DomainWarpType = "OpenSimplex2",
-                    Frequency = 0.01f,
-                    Octaves = 0,
-                    Warp = 0
-                };
-                return temp;
-            }
-
-            return result;
-        }
-
-        //grab json file and cast it to regular fast noise lite
-        public static FastNoiseLite JsonToFastNoise(string fileName, int seed)
-        {
-            NoiseJson json = Load(fileName);
-            FastNoiseLite noise = new();
-            noise.SetSeed(seed);
-            noise.SetNoiseType(NoiseTypeFromString(json.NoiseType));
-            noise.SetFractalType(FractalTypeFromString(json.FractalType));
-            noise.SetDomainWarpType(DomainWarpTypeFromString(json.DomainWarpType));
-            noise.SetFrequency(json.Frequency);
-            noise.SetFractalOctaves(json.Octaves);
-            noise.SetDomainWarpAmp(json.Warp);
-            return noise;
-        }
-
-        //get the current fractal type from json string value
-        public static FastNoiseLite.FractalType FractalTypeFromString(string name)
-        {
-            return (FastNoiseLite.FractalType)Enum.Parse(typeof(FastNoiseLite.FractalType), name);
-        }
-
-        //same thing but for the regular noise type
-        public static FastNoiseLite.NoiseType NoiseTypeFromString(string name)
-        {
-            return (FastNoiseLite.NoiseType)Enum.Parse(typeof(FastNoiseLite.NoiseType), name);
-        }
-
-        //same thing but for domain warp type
-        public static FastNoiseLite.DomainWarpType DomainWarpTypeFromString(string name)
-        {
-            return (FastNoiseLite.DomainWarpType)Enum.Parse(typeof(FastNoiseLite.DomainWarpType), name);
-        }
-    }
 }

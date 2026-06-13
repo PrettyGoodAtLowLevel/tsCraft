@@ -22,7 +22,7 @@ namespace OurCraft.World
             return !(one == other);
         }
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return $"X: {X}, Z: {Z}";
         }
@@ -54,11 +54,24 @@ namespace OurCraft.World
     public enum ChunkState
     {
         Initialized,
-        StructureReady,
-        StructuresPlaced,
+        Terrain_Set,
+        Structures_Placed,
         Lit,
-        Meshed,
-        Built,
+        Mesh_Built,
+        Render_Ready,
         Deleted
+    }
+
+    //holds chunk neighbors, initialize once, pass refrence around during whole mesh operation
+    public class ChunkSectionNeighbors
+    {
+        public Chunk center;
+        public Chunk? leftC, rightC, frontC, backC;
+        public Chunk? c1, c2, c3, c4;
+
+        public ChunkSectionNeighbors(Chunk center)
+        {
+            this.center = center;
+        }
     }
 }

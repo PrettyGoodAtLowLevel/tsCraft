@@ -8,6 +8,7 @@ namespace OurCraft.Blocks.Block_Info
         public string Name { get; set; } = "";
         public string ModelPath { get; set; } = "";
         public float Friction { get; set; } = PhysicsConstants.DEFAULT_FRICTION;
+        public float WallFriction { get; set; } = 0;
         public float Bounce { get; set; } = PhysicsConstants.DEFAULT_BOUNCE;
     }
 
@@ -25,6 +26,7 @@ namespace OurCraft.Blocks.Block_Info
         public int LightG { get; set; } = 0;
         public int LightB { get; set; } = 0;
         public float Friction { get; set; } = PhysicsConstants.DEFAULT_FRICTION;
+        public float WallFriction { get; set; } = 0;
         public float Bounce { get; set; } = PhysicsConstants.DEFAULT_BOUNCE;
     }
 
@@ -35,6 +37,7 @@ namespace OurCraft.Blocks.Block_Info
         public string ModelY { get; set; } = "";
         public string ModelZ { get; set; } = "";
         public float Friction { get; set; } = PhysicsConstants.DEFAULT_FRICTION;
+        public float WallFriction { get; set; } = 0;
         public float Bounce { get; set; } = PhysicsConstants.DEFAULT_BOUNCE;
     }
 
@@ -45,6 +48,7 @@ namespace OurCraft.Blocks.Block_Info
         public string ModelTop { get; set; } = "";
         public string ModelDouble { get; set; } = "";
         public float Friction { get; set; } = PhysicsConstants.DEFAULT_FRICTION;
+        public float WallFriction { get; set; } = 0;
         public float Bounce { get; set; } = PhysicsConstants.DEFAULT_BOUNCE;
     }
 }

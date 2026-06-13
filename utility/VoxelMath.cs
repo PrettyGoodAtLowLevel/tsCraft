@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.World;
-using OurCraft.World.Helpers;
+using OurCraft.World.ChunkGeneration;
 using System.Runtime.CompilerServices;
 
 namespace OurCraft.Utility
@@ -36,6 +36,7 @@ namespace OurCraft.Utility
         }
 
         //does floor division with the divisor needing to be a power of 2
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int FloorDivPow2(int a, int b)
         {
             int div = a / b;
@@ -45,7 +46,17 @@ namespace OurCraft.Utility
             return div;
         }
 
+        //quick floor division
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int FloorDiv(int value, int divisor)
+        {
+            int result = value / divisor;
+            if ((value ^ divisor) < 0 && value % divisor != 0) result--;
+            return result;
+        }
+
         //pack subchunk local coords into a ushort
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort PackPos32(int x, int y, int z)
         {
             return (ushort)
@@ -55,6 +66,7 @@ namespace OurCraft.Utility
         }
 
         //unpacks values from a ushort, mainly for lighting positions
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UnpackPos32(ushort packed, ref ushort x, ref ushort y, ref ushort z)
         {
             x = (ushort)(packed & 0x1F);
@@ -63,6 +75,7 @@ namespace OurCraft.Utility
         }
 
         //packs a lighting value into a ushort
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort PackLight16(Vector3i light, ushort sky)
         {
             return (ushort)((light.X & 0xF) | ((light.Y & 0xF) << 4) |
@@ -70,6 +83,7 @@ namespace OurCraft.Utility
         }
 
         //unpacks a full lighting value
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UnpackLight16(ushort light, ref byte r, ref byte g, ref byte b, ref byte s)
         {
             r = (byte)((light >> 0) & 0xF); g = (byte)((light >> 4) & 0xF);
@@ -77,12 +91,14 @@ namespace OurCraft.Utility
         }
 
         //same thing but for vector3i and only for the block light
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i UnpackLight16Block(ushort light)
         {
             return new Vector3i((light >> 0) & 0xF, (light >> 4) & 0xF, (light >> 8) & 0xF);
         }
-         
+
         //get skylight from packed light
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static byte UnpackLight16Sky(ushort light)
         {
             return (byte)((light >> 12) & 0xF);
@@ -92,7 +108,14 @@ namespace OurCraft.Utility
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GridIndex(int x, int y, int z)
         {
-            const int GRID = ChunkGenerator.INTERP_GRID;
+            const int GRID = ChunkGenerator.INTERP_GRID_DENSITY;
+            return x + y * GRID + z * GRID * GRID;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GridIndexCave(int x, int y, int z)
+        {
+            const int GRID = ChunkGenerator.INTERP_GRID_CAVE;
             return x + y * GRID + z * GRID * GRID;
         }
 
@@ -112,6 +135,46 @@ namespace OurCraft.Utility
             x = x * (1.5f - xhalf * x * x);
             return x;
         }
+
+        //create hash from deposit cell coordinates
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int HashCellCoords(int cellX, int cellZ)
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 31 + cellX;
+                hash = hash * 31 + cellZ;
+
+                hash ^= (hash << 13);
+                hash ^= (hash >> 17);
+                hash ^= (hash << 5);
+
+                return hash;
+            }
+        }
+
+        //hashing i found online
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float HashToUnitFloat(int seed, int x, int y, int z)
+        {
+            unchecked
+            {
+                uint h = 2166136261u;
+                h = (h ^ (uint)seed) * 16777619u;
+                h = (h ^ (uint)x) * 16777619u;
+                h = (h ^ (uint)y) * 16777619u;
+                h = (h ^ (uint)z) * 16777619u;
+
+                h ^= h >> 15;
+                h *= 2246822519u;
+                h ^= h >> 13;
+                h *= 3266489917u;
+                h ^= h >> 16;
+
+                return (h & 0x00FFFFFFu) / 16777216f;
+            }
+        }
     }
 
     //collection of points used for remapping x values to y values
@@ -125,6 +188,7 @@ namespace OurCraft.Utility
             this.points = points;
         }
 
+        //finds two points that x is inbetween and interpolates between points
         public float Evaluate(float x, bool smooth = false)
         {
             if (points == null || points.Count == 0) return 0f;

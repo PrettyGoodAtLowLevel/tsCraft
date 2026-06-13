@@ -12,26 +12,35 @@ namespace OurCraft.Entities.Components
     {
         //collisions
         public float playerHeight = 1.8f;
+        public float playerCrouchHeight = 1.0f;
         public float playerWidth = 0.6f;
         public Vector3 headOffset = Vector3.UnitY * RenderingConstants.CAM_HEIGHT_OFFSET;
 
         //basic controls
-        public readonly float airAccel = 15f;
-        public readonly float groundAccel = 100f;
         public readonly float jumpForce = 8.0f;
         public readonly double Sensitivity = 0.02f;
+
+        //stepping
+        public readonly float stepHeight = 0.6f;        //can step over slabs easily
+        public readonly float airStepHeight = 0.03125f; //can run around corners, but not one block gaps
 
         //gravity
         public readonly float fluidGravity = 0.25f;
         public readonly float regularGravity = 2.25f;
+        public readonly float flyingGravity = 0.0f;
 
         //speed control
-        public readonly float maxSpeedXZ = 6.5f;
+        public readonly float flyingAccel = 110.0f;
+        public readonly float sprintAccel = 70.0f;
+        public readonly float walkAccel = 55.0f;
+        public readonly float crouchAccel = 15f;
         public readonly float maxSpeedY = 100.0f;
 
+        public readonly float flyingDragXZ = 4.0f;
         public readonly float fluidDragXZ = 2.5f;
         public readonly float regularDragXZ = 1.5f;
 
+        public readonly float flyingDragY = 3.0f;
         public readonly float fluidDragY = 1.5f;
         public readonly float regularDragY = 0.1f;
 
@@ -43,15 +52,19 @@ namespace OurCraft.Entities.Components
         public readonly float jumpBufferTime = 0.15f;
 
         //debug
+        private bool flying = false;
+        private bool crouching = false;
+        private bool sprinting = false;
         private bool wasGrounded = false;
-        private float curSpeed = 0.0f;
+        private float curAccel = 0.0f;
         private float jumpBufferTimer = 0f;
         private float coyoteTimer = 0f; //for when being able to jump
 
         Vector2 lookVector;
         Vector3d moveDir;
-        public PhysicsObj? rb;
-        public Transform? orientation;
+        Vector3d orientationOrigin = Vector3d.Zero;
+        PhysicsObj? rb;
+        Transform? orientation;
 
         internal override void Register()
         {
@@ -67,12 +80,19 @@ namespace OurCraft.Entities.Components
         public override void OnStart()
         {
             rb = GameObject.GetComponent<PhysicsObj>();
-            if (rb == null) return;
+            orientation = EntityManager.GetEntity("Camera")?.Transform;
 
-            rb.bounds = new(playerWidth, playerHeight, playerWidth);
+            if (rb == null || orientation == null) return;
+            if (orientation != null) orientationOrigin = orientation.localPosition;
+
+            rb.boundsMin = new(-playerWidth / 2, -playerHeight / 2, -playerWidth / 2);
+            rb.boundsMax = new(playerWidth / 2, playerHeight / 2, playerWidth / 2);
+
             rb.headOffset = headOffset;
-            rb.maxVelY = maxSpeedY;
-            rb.maxVelXZ = maxSpeedXZ;
+            rb.maxVelY = maxSpeedY;     
+            
+            rb.airStepHeight = airStepHeight;
+            rb.groundStepHeight = stepHeight;
         }
 
         //manage speed, input, and look direction of player
@@ -82,18 +102,21 @@ namespace OurCraft.Entities.Components
 
             UpdateRotation(ms, orientation);
             UpdateDir(kb, orientation);
-
-            ManageCoyoteTime((float)Time.DeltaTime, rb);                    
-            JumpInput(kb, (float)Time.DeltaTime, rb);
             ManageSpeed(rb);
+            ManageCoyoteTime((float)Time.DeltaTime, rb);
 
-            PostProcessEffects(rb);
+            FlyingInput(kb, rb);
+            SprintInput(kb, rb);
+            JumpInput(kb, (float)Time.DeltaTime, rb);
+            CrouchInput(kb, rb, world);
+            
+            PostProcessEffects(rb);       
         }
 
         //simply move player in look direction
         public override void OnFixedUpdate(ChunkManager world)
         {
-            if (moveDir != Vector3d.Zero) rb?.AddForce(moveDir.Normalized() * curSpeed);
+            if (moveDir != Vector3d.Zero) rb?.AddForce(moveDir.Normalized() * curAccel);
         }
 
         //update look rotation based on mouse input
@@ -142,12 +165,15 @@ namespace OurCraft.Entities.Components
         //update player speed based on in air, grounded, or in fluid
         void ManageSpeed(PhysicsObj rb)
         {
-            curSpeed = (rb.grounded && !rb.inFluid) ? groundAccel : airAccel;
-            rb.gravityModifer = rb.inFluid ? fluidGravity : regularGravity;
+            curAccel = flying ? flyingAccel : crouching ? crouchAccel : sprinting ? sprintAccel : walkAccel;
+            float airModifier = flying ? 1f : rb.grounded && !rb.inFluid ? 1f : rb.inFluid ? 0.15f : 0.1f;
+            curAccel *= airModifier;
 
-            rb.dragX = rb.inFluid ? fluidDragXZ : regularDragXZ;
-            rb.dragZ = rb.inFluid ? fluidDragXZ : regularDragXZ;
-            rb.dragY = rb.inFluid ? fluidDragY : regularDragY;
+            rb.gravityModifer = flying ? flyingGravity : rb.inFluid ? fluidGravity : regularGravity;
+
+            rb.dragX = flying ? flyingDragXZ : rb.inFluid ? fluidDragXZ : regularDragXZ;
+            rb.dragZ = flying ? flyingDragXZ : rb.inFluid ? fluidDragXZ : regularDragXZ;
+            rb.dragY = flying ? flyingDragY : rb.inFluid ? fluidDragY : regularDragY;
         }
 
         //do post process fx when underwater
@@ -156,7 +182,7 @@ namespace OurCraft.Entities.Components
             if (rb.underWater)
             {
                 Renderer.postShader.SetVector3("tintColor", new Vector3(0.01f, 0.0f, 0.5f));
-                Renderer.postShader.SetFloat("tintIntensity", 0.8f);
+                Renderer.postShader.SetFloat("tintIntensity", 0.5f);
             }
             else
             {
@@ -165,12 +191,18 @@ namespace OurCraft.Entities.Components
             }
         }
 
+        //allows player to sprint if pressing left shift and not in water
+        void SprintInput(KeyboardState kb, PhysicsObj rb)
+        {
+            sprinting = kb.IsKeyDown(Keys.LeftControl) && !rb.inFluid;
+        }
+
         //jumping input, jump buffering, reg jump, or coyote time jump
         void JumpInput(KeyboardState kb, float deltaTime, PhysicsObj rb)
         {
             if (rb == null) return;
             if (kb.IsKeyPressed(Keys.D3)) rb.AddImpulse(Vector3d.UnitY * 120);
-            if (rb.inFluid)
+            if (rb.inFluid || flying)
             {
                 if (kb.IsKeyDown(Keys.Space)) moveDir += Vector3.UnitY;
                 if (kb.IsKeyDown(Keys.LeftShift)) moveDir -= Vector3.UnitY;
@@ -182,13 +214,65 @@ namespace OurCraft.Entities.Components
             else jumpBufferTimer = Math.Max(0f, jumpBufferTimer - deltaTime);
 
             //jump if able to and reset jump buffer + coyote time
-            bool canJump = (rb.grounded || coyoteTimer > 0f) && rb.velocity.Y < 0.1f;
-            if (jumpBufferTimer > 0f && canJump)
+            bool canJump = ((coyoteTimer > 0f) && rb.velocity.Y < 0.1f) || rb.grounded;
+            if (jumpBufferTimer > 0f && canJump && !flying)
             {
+                rb.velocity.Y = 0;
                 rb.AddImpulse(Vector3d.UnitY * jumpForce);
+                if (moveDir != Vector3d.Zero && sprinting) rb.AddImpulse(moveDir * 2);
                 jumpBufferTimer = 0f;
                 coyoteTimer = 0f;
             }
+        }
+
+        //allows to toggle flying and noclip
+        void FlyingInput(KeyboardState kb, PhysicsObj rb)
+        {
+            if (kb.IsKeyPressed(Keys.D7)) flying = !flying;
+            if (kb.IsKeyPressed(Keys.D6)) rb.noClip = !rb.noClip;
+        }
+
+        //crouches and uncrouches the player based on shift key
+        void CrouchInput(KeyboardState kb, PhysicsObj rb, ChunkManager world)
+        {
+            if (orientation == null) return;
+            if (kb.IsKeyDown(Keys.LeftShift) && !crouching && !flying) Crouch(rb, orientation);        
+            else if (!kb.IsKeyDown(Keys.LeftShift) && crouching || flying) TryUncrouch(rb, world, orientation);           
+        }
+
+        //changes aabb size of player
+        void Crouch(PhysicsObj rb, Transform orientation)
+        {
+            rb.boundsMin = new(-playerWidth / 2, -playerHeight / 2, -playerWidth / 2);
+            rb.boundsMax = new(playerWidth / 2, playerCrouchHeight / 2, playerWidth / 2);
+
+            crouching = true;
+            rb.sneaking = true;
+
+            orientation.localPosition = new Vector3d(0, 0.4, 0);
+            rb.headOffset = new Vector3d(0, 0.4, 0);        
+        }
+
+        //tries to unchange aabb size if room available
+        void TryUncrouch(PhysicsObj rb, ChunkManager world, Transform orientation)
+        {
+            AABB newBox = new()
+            {min = new(-playerWidth / 2, -playerHeight / 2, -playerWidth / 2),
+            max = new(playerWidth / 2, playerHeight / 2, playerWidth / 2)};
+
+            newBox.min += rb.position; 
+            newBox.max += rb.position;
+
+            if (PhysicsHelpers.BoxCollidesWorld(world, newBox)) return;
+
+            rb.boundsMin = new(-playerWidth / 2, -playerHeight / 2, -playerWidth / 2);
+            rb.boundsMax = new(playerWidth / 2, playerHeight / 2, playerWidth / 2);
+
+            crouching = false;
+            rb.sneaking = false;
+
+            orientation.localPosition = orientationOrigin;
+            rb.headOffset = new Vector3d(0, RenderingConstants.CAM_HEIGHT_OFFSET, 0);   
         }
     }
 }

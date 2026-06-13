@@ -30,11 +30,12 @@ namespace OurCraft.Blocks.Block_Properties
         public bool LightPassable => GetBlock.IsLightPassable(this);
         public Vector3i LightLevel => GetBlock.GetLightSourceLevel(this);
         public int SkyLightAttenuation => GetBlock.GetSkyLightAttenuation(this);
+        public bool AOSolid => GetBlock.AOSolid(this);
         
         public bool DetectsCollision => GetBlock.DetectsCollision(this);
         public bool IsPhysicsSolid => GetBlock.IsPhysicsSolid(this);
         public bool IsFluid => GetBlock.IsFluid(this);
-        public AABB GetAABB(Vector3d worldPos) => GetBlock.GetAABB(worldPos, this);
+        public CollisionShape GetCollisionShape() => GetBlock.GetCollisionShape(this);
         public BlockPhysics GetBlockPhysics() => GetBlock.GetBlockPhysics(this);
 
         public void DebugState() => GetBlock.DebugState(this);       

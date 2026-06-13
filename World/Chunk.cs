@@ -4,7 +4,6 @@ using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
-using OurCraft.World.Helpers;
 
 namespace OurCraft.World
 {
@@ -19,8 +18,8 @@ namespace OurCraft.World
         public const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
 
         //rendering
-        public readonly ChunkMesh batchedMesh;
-        public readonly ChunkMesh transparentMesh;
+        public readonly BatchedChunkMesh batchedMesh;
+        public readonly BatchedChunkMesh transparentMesh;
 
         //positioning
         public ChunkCoord ChunkPos { get; private set; }
@@ -44,8 +43,8 @@ namespace OurCraft.World
         {
             ChunkPos = coord;
             state = ChunkState.Initialized;
-            batchedMesh = new ChunkMesh();
-            transparentMesh = new ChunkMesh();
+            batchedMesh = new BatchedChunkMesh();
+            transparentMesh = new BatchedChunkMesh();
 
             RenderWorldPos = new Vector3d(ChunkPos.X * CHUNK_WIDTH, 0, ChunkPos.Z * CHUNK_WIDTH);
             ChunkMin = new Vector3d(ChunkPos.X * CHUNK_WIDTH, 0, ChunkPos.Z * CHUNK_WIDTH);
@@ -61,18 +60,18 @@ namespace OurCraft.World
         public void MarkForDeletion() => state = ChunkState.Deleted;
         public ChunkState GetState() => state;
         public void SetState(ChunkState state) => this.state = state;
-        public bool HasVoxelData() => state != ChunkState.Deleted && state != ChunkState.Initialized; //terrain is built
-        public bool HasAllVoxelData() => state != ChunkState.Deleted && state != ChunkState.Initialized && state != ChunkState.StructureReady; //structures are placed
+        public bool HasBlocks() => state != ChunkState.Deleted && state != ChunkState.Initialized; //terrain is built
+        public bool HasAllBlocks() => state != ChunkState.Deleted && state != ChunkState.Initialized && state != ChunkState.Terrain_Set; //structures are placed
         public bool IsMeshing() => generating;
-        public bool IsLit() => state == ChunkState.Lit || state == ChunkState.Meshed  || state == ChunkState.Built;
-        public bool Modifiyable() => state == ChunkState.Built;
+        public bool IsLit() => state == ChunkState.Lit || state == ChunkState.Mesh_Built  || state == ChunkState.Render_Ready;
+        public bool Modifiyable() => state == ChunkState.Render_Ready;
         public bool Deleted() => state == ChunkState.Deleted;       
 
         public BlockState GetBlockSafe(int x, int globalY, int z)
         {
             //fast modulus math
             const int sb = SubChunk.SUBCHUNK_SIZE - 1;
-            if (HasVoxelData() == false || globalY < 0 || globalY >= CHUNK_HEIGHT) return Block.AIR;           
+            if (HasBlocks() == false || globalY < 0 || globalY >= CHUNK_HEIGHT) return Block.AIR;           
 
             //get subchunk position
             int subChunkY = globalY / SubChunk.SUBCHUNK_SIZE;
@@ -112,7 +111,7 @@ namespace OurCraft.World
         {
             //fast modulus math
             const int sb = SubChunk.SUBCHUNK_SIZE - 1;
-            if (HasAllVoxelData() == false || globalY < 0 || globalY > CHUNK_HEIGHT - 1) return;
+            if (HasAllBlocks() == false || globalY < 0 || globalY > CHUNK_HEIGHT - 1) return;
             changes.Add(new Vector3i(x, globalY, z));
 
             //get subchunk position
@@ -149,13 +148,13 @@ namespace OurCraft.World
 
         public ushort GetLight(int x, int y, int z)
         {            
-            if (HasAllVoxelData() == false || !PosValid(x, y, z)) return 0;       
+            if (HasAllBlocks() == false || !PosValid(x, y, z)) return 0;       
             return lightMap[x, y, z];
         }
 
         public void SetBlockLight(int x, int y, int z, Vector3i value)
         {
-            if (HasAllVoxelData() == false || !PosValid(x, y, z)) return;
+            if (HasAllBlocks() == false || !PosValid(x, y, z)) return;
 
             //preserve the upper 4 bits for skylight
             ushort current = lightMap[x, y, z];    
@@ -169,7 +168,7 @@ namespace OurCraft.World
 
         public void SetSkyLight(int x, int y, int z, int value)
         {
-            if (HasAllVoxelData() == false || !PosValid(x, y, z)) return;
+            if (HasAllBlocks() == false || !PosValid(x, y, z)) return;
 
             //read the current light value
             ushort current = lightMap[x, y, z];

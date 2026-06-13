@@ -2,9 +2,39 @@
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using System.Text.Json;
+using OurCraft.Terrain_Generation.Registries;
 
 namespace OurCraft.Terrain_Generation
 {
+    //these enums are soley used for a lookup chart and dont effect the behavior of the biome, only the placement
+    //measures overall temperature
+    public enum TemperatureIndex
+    {
+        FREEZING,   //tundras, cold oceans
+        COLD,       //taigas
+        TEMPERATE,  //gravelly hills
+        WARM,       //plains, forests
+        HOT,        //savannas, deserts
+    }
+
+    //measures rainfall level
+    public enum HumidityIndex
+    {
+        ARID,       //deserts, icelands
+        DRY,        //savanna
+        NORMAL,     //plains, forests
+        HUMID,      //jungle
+        WET         //swamps, mangroves
+    }
+
+    //measures plant count
+    public enum VegetationIndex
+    {
+        BARREN,     //desert, plains
+        SPARSE,     //sparse forest, gravelly hills
+        DENSE       //forest
+    }
+
     //represents a section of the worlds vegetation and temperature
     public class Biome
     {
@@ -38,6 +68,7 @@ namespace OurCraft.Terrain_Generation
         public BlockState OceanSubSurfaceBlock { get; set; }
 
         public List<BiomeSurfaceFeature> features = [];
+        public List<Deposit> deposits = [];
     }
 
     //json representation of biome
@@ -57,6 +88,9 @@ namespace OurCraft.Terrain_Generation
 
         //features like trees, flowers, grass
         public List<BiomeFeatureConfig> SurfaceFeatures { get; set; } = new();
+
+        //deposits, like ores and gravel patches
+        public List<string> Deposits { get; set; } = new();
     }
 
     //what block height is configured to what blocks
@@ -103,54 +137,60 @@ namespace OurCraft.Terrain_Generation
             return JsonSerializer.Deserialize<BiomeJson>(json)!;
         }
 
-        //converts json c# implementation of biome to cached blockstate info
-        public static Biome ToRuntimeBiome(BiomeJson config)
+        //converts json c# implementation of biome to cached blockstate info and structure + deposit info
+        public static Biome ToRuntimeBiome(BiomeJson jsonConfig)
         {
             var biome = new Biome
             {
-                Name = config.Name,
-                TempIndex = TemperatureIndexFromName(config.Temperature),
-                HumidIndex = HumidityIndexFromName(config.Humidity),
-                VegetationIndex = VegetationIndexFromName(config.Vegetation),
+                Name = jsonConfig.Name,
+                TempIndex = TemperatureIndexFromName(jsonConfig.Temperature),
+                HumidIndex = HumidityIndexFromName(jsonConfig.Humidity),
+                VegetationIndex = VegetationIndexFromName(jsonConfig.Vegetation),
 
-                RegularHeight = config.Heights.Regular,
-                OceanHeight = config.Heights.Ocean,
-                ShoreHeight = config.Heights.Shore,
-                PeakHeight = config.Heights.Peak,
+                RegularHeight = jsonConfig.Heights.Regular,
+                OceanHeight = jsonConfig.Heights.Ocean,
+                ShoreHeight = jsonConfig.Heights.Shore,
+                PeakHeight = jsonConfig.Heights.Peak,
 
-                WaterBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.Water),
-                WaterSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.WaterSurface),
-                SurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.Surface),
-                SubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.SubSurface),
-                PeakSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.PeakSurface),
-                PeakSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.PeakSubSurface),
-                ShoreSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.ShoreSurface),
-                ShoreSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.ShoreSubSurface),
-                OceanSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.OceanSurface),
-                OceanSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(config.Blocks.OceanSubSurface),
+                WaterBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.Water),
+                WaterSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.WaterSurface),
+                SurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.Surface),
+                SubSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.SubSurface),
+                PeakSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.PeakSurface),
+                PeakSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.PeakSubSurface),
+                ShoreSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.ShoreSurface),
+                ShoreSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.ShoreSubSurface),
+                OceanSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.OceanSurface),
+                OceanSubSurfaceBlock = BlockRegistry.GetDefaultBlockState(jsonConfig.Blocks.OceanSubSurface),
             };
 
-            foreach (var surface in config.SurfaceFeatures)
+            foreach (var surface in jsonConfig.SurfaceFeatures)
             {
                 SurfaceFeature feature = SurfaceFeatureRegistry.GetFeature(surface.Name);
                 biome.features.Add(new BiomeSurfaceFeature(feature, surface.Chance));
+            }
+
+            foreach(var deposit in jsonConfig.Deposits)
+            {
+                Deposit dep = DepositRegistry.GetDeposit(deposit);
+                biome.deposits.Add(dep);
             }
 
             return biome;
         }
 
         //parsing biome data enums
-        public static int TemperatureIndexFromName(string temp)
+        static int TemperatureIndexFromName(string temp)
         {
             return (int)((TemperatureIndex)Enum.Parse(typeof(TemperatureIndex), temp.ToUpper()));
         }
 
-        public static int HumidityIndexFromName(string humid)
+        static int HumidityIndexFromName(string humid)
         {
             return (int)((HumidityIndex)Enum.Parse(typeof(HumidityIndex), humid.ToUpper()));
         }
 
-        public static int VegetationIndexFromName(string humid)
+        static int VegetationIndexFromName(string humid)
         {
             return (int)((VegetationIndex)Enum.Parse(typeof(VegetationIndex), humid.ToUpper()));
         }

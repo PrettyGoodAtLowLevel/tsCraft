@@ -1,7 +1,7 @@
 ﻿using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
-using OurCraft.Graphics.Voxel_Lighting;
 using OpenTK.Mathematics;
+using OurCraft.World;
 
 namespace OurCraft.Blocks.Meshing
 {
@@ -18,9 +18,9 @@ namespace OurCraft.Blocks.Meshing
         }
 
         //add block shape
-        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, LightingData aOData)
+        public override void AddBlockMesh(Vector3 pos, NeighborBlocks nb, ChunkMeshData mesh, ChunkSectionNeighbors nc)
         {
-            BlockMeshBuilder.BuildXShapeBlock(pos, Tex, mesh, aOData.thisLight);
+            BlockMeshBuilder.BuildXShapeBlock(pos, Tex, mesh, nc);
         }
     }
 }

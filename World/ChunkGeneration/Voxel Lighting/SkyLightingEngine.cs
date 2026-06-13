@@ -36,7 +36,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //uses the top of the chunk as the start for skylight
         public static void SeedCenterChunk(Chunk chunk, ConcurrentQueue<SkyLightNode> skyLights)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted()) return;
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted()) return;
 
             for (int x = 0; x < CHUNK_SIZE; x++)
             {
@@ -56,8 +56,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //finds any unpropogated lights in the corner of chunks
         public static void SeedCornerChunk(Chunk? chunk, ConcurrentQueue<SkyLightNode> blockLights, bool posX, bool posZ)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
-                return;
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted())  return;
 
             int x = posX ? 0 : CHUNK_SIZE - 1;
             int z = posZ ? 0 : CHUNK_SIZE - 1;
@@ -79,8 +78,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //scans the bordering lights on the x neighbors of a chunk
         public static void SeedNeighborX(Chunk? chunk, ConcurrentQueue<SkyLightNode> blockLights, bool posX)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
-                return;
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted()) return;
 
             int x = posX ? 0 : CHUNK_SIZE - 1;
 
@@ -104,8 +102,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
         //scans border lights on z neighbors of a chunk
         public static void SeedNeighborZ(Chunk? chunk, ConcurrentQueue<SkyLightNode> blockLights, bool posZ)
         {
-            if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
-                return;
+            if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted()) return;
 
             int z = posZ ? 0 : CHUNK_SIZE - 1;
 
@@ -159,7 +156,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
 
                     //get current chunk
                     Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
-                    if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted())
+                    if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted())
                         continue;
                     
                     //convert to chunk-local coordinates
@@ -220,7 +217,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     int cx = VoxelMath.FloorDivPow2(wx, CHUNK_SIZE);
                     int cz = VoxelMath.FloorDivPow2(wz, CHUNK_SIZE);
                     Chunk? chunk = world.GetChunk(new ChunkCoord(cx, cz));
-                    if (chunk == null || !chunk.HasAllVoxelData() || chunk.Deleted()) continue;
+                    if (chunk == null || !chunk.HasAllBlocks() || chunk.Deleted()) continue;
 
                     int lx = VoxelMath.ModPow2(wx, CHUNK_SIZE);
                     int lz = VoxelMath.ModPow2(wz, CHUNK_SIZE);
@@ -230,16 +227,14 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     if (existing == MIN_SKY) continue;
 
                     //check if new light is equal when going down or less when going other directions
-                    if (existing <= light && dy < 0 || existing < light)
+                    bool shouldRemove = dy == -1 ? (existing <= light) : (existing < light);                
+                    if (shouldRemove)
                     {
                         chunk.SetSkyLight(lx, wy, lz, MIN_SKY);
                         world.MarkPosDirty(new Vector3i(wx, wy, wz), chunk);
                         removeQueue.Enqueue(new RemoveSkyNode(wx, wy, wz, existing));
                     }
-                    else
-                    {
-                        reAddQueue.Enqueue(new SkyLightNode(wx, wy, wz, existing));
-                    }
+                    else reAddQueue.Enqueue(new SkyLightNode(wx, wy, wz, existing));                    
                 }
             }
         }

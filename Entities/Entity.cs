@@ -40,9 +40,7 @@ namespace OurCraft.Entities
         //attempts to retrieve a component from the entity
         public T? GetComponent<T>() where T : Component
         {
-            foreach (var component in Components)
-                if (component is T t) return t;
-
+            foreach (var component in Components) if (component is T t) return t;
             return null;
         }
 

@@ -2,11 +2,13 @@
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using System.Runtime.CompilerServices;
+using OurCraft.Terrain_Generation.Noise;
+using OurCraft.Terrain_Generation.Registries;
 
 namespace OurCraft.Terrain_Generation
 {
     //creates the terrain of the world + where structures should start
-    public static class WorldGenerator
+    public static class OverworldGenerator
     {
         //terrain height values
         public const int SEA_LEVEL = WorldGenConstants.DEFAULT_SEA_LEVEL;
@@ -36,18 +38,20 @@ namespace OurCraft.Terrain_Generation
             float river = NoiseRouter.GetRiverNoise(x, z);
             float weirdness = NoiseRouter.GetWeirdnessNoise(x, z);
             float fracture = NoiseRouter.GetFractureNoise(x, z);
+            float caveSize = NoiseRouter.GetCaveSizeNoise(x, z);
 
             //evaluate splines for terrain offset
-            float conOffset = TerrainSplines.regionSpline.Evaluate(continentalness);
-            float eroOffset = TerrainSplines.erosionSpline.Evaluate(erosion);
-            float rivOffset = TerrainSplines.riverSpline.Evaluate(river);
-            float rivFactor = TerrainSplines.riverFactorSpline.Evaluate(erosion);
+            float conOffset = SplineRegistry.regionSpline.Evaluate(continentalness);
+            float eroOffset = SplineRegistry.erosionSpline.Evaluate(erosion);
+            float rivOffset = SplineRegistry.riverSpline.Evaluate(river);
+            float rivFactor = SplineRegistry.riverFactorSpline.Evaluate(erosion);
 
             //evaluate splines for terrain intensity
             float amplification =
-            TerrainSplines.weirdnessSpline.Evaluate(weirdness) +         //small bumps
-            TerrainSplines.fractureSpline.Evaluate(fracture) +           //rare fantasy terrain
-            TerrainSplines.erosionAmplificationSpline.Evaluate(erosion); //mountain roughness bias
+            SplineRegistry.weirdnessSpline.Evaluate(weirdness) +         //small bumps
+            SplineRegistry.fractureSpline.Evaluate(fracture) +           //rare fantasy terrain
+            SplineRegistry.erosionAmplificationSpline.Evaluate(erosion); //mountain roughness bias
+            float caveSizeFactor = SplineRegistry.caveSizeSpline.Evaluate(caveSize);
 
             //clamp amplification
             float finalAmp = Math.Min(amplification, MAX_AMP);
@@ -58,33 +62,66 @@ namespace OurCraft.Terrain_Generation
             float humid = NoiseRouter.GetHumidityNoise(x, z);
             float veg = NoiseRouter.GetVegetationNoise(x, z);
 
-            float ft = TerrainSplines.temperatureSpline.Evaluate(temp);
-            float fh = TerrainSplines.humiditySpline.Evaluate(humid);
-            float fv = TerrainSplines.vegetationSpline.Evaluate(veg);
+            float ft = SplineRegistry.temperatureSpline.Evaluate(temp);
+            float fh = SplineRegistry.humiditySpline.Evaluate(humid);
+            float fv = SplineRegistry.vegetationSpline.Evaluate(veg);
 
             //combine noise outputs
             float offset = conOffset + eroOffset + (rivOffset * rivFactor);
-            return new NoiseRegion(offset, finalAmp, GetBiome((int)ft, (int)fh, (int)fv), maxDepth);
+            return new NoiseRegion(offset, finalAmp, GetBiome((int)ft, (int)fh, (int)fv), maxDepth, caveSizeFactor);
         }
 
         //indexes into the biome table with the current temp, humidity, and vegetation
         public static Biome GetBiome(int temp, int humid, int veg)
         {
-            return BiomeData.GetBiome(temp, humid, veg);
+            return BiomeRegistry.GetBiome(temp, humid, veg);
+        }
+
+        //get biome from xz
+        public static Biome GetBiome(int x, int z)
+        {
+            float temp = NoiseRouter.GetTemperatureNoise(x, z);
+            float humid = NoiseRouter.GetHumidityNoise(x, z);
+            float veg = NoiseRouter.GetVegetationNoise(x, z);
+
+            float ft = SplineRegistry.temperatureSpline.Evaluate(temp);
+            float fh = SplineRegistry.humiditySpline.Evaluate(humid);
+            float fv = SplineRegistry.vegetationSpline.Evaluate(veg);
+
+            return BiomeRegistry.GetBiome((int)ft, (int)fh, (int)fv);
+        }
+
+        //checks if a biome has a deposit or not
+        public static bool ContainsDeposit(Biome biome, Deposit deposit)
+        {
+            foreach(var dep in biome.deposits)
+            {
+                if (dep == deposit) return true;              
+            }
+            return false;
         }
 
         //creates the detailed shape of terrain by adding 3d detail to the raw heightmap
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetDensity(int x, int y, int z, NoiseRegion control)
+        public static float GetDensity(int x, int y, int z, float heightOffset, float amplification)
         {
-            float rawDensity = control.heightOffset - y;
+            float rawDensity = heightOffset - y;
             float rawNoise = NoiseRouter.GetDetailNoise(x, y, z);
 
-            float density = rawDensity + rawNoise * control.amplification;
+            float density = rawDensity + rawNoise * amplification;
 
             if (density > 1f) return 1f;
             if (density < -1f) return -1f;
 
+            return density;
+        }
+
+        //calculates base cave density for world
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float GetCaveDensity(int x, int y, int z, float caveSize)
+        {
+            float rawNoise = NoiseRouter.GetCaveNoise(x, y, z);
+            float density = rawNoise * caveSize;
             return density;
         }
 

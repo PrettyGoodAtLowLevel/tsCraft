@@ -5,7 +5,7 @@ using OurCraft.Entities.Components;
 using OurCraft.openGL_objects;
 using OurCraft.Utility;
 using OurCraft.World;
-using OurCraft.World.Helpers;
+using OurCraft.World.ChunkGeneration;
 
 namespace OurCraft.Graphics
 {
@@ -44,7 +44,7 @@ namespace OurCraft.Graphics
             postProcessingQuad = new FullscreenQuad();
           
             //load textures get fog working, set shaders   
-            ChunkMesh.LoadChunkTextures();
+            BatchedChunkMesh.LoadChunkTextures();
             InitShaders();
         }
 
@@ -131,7 +131,7 @@ namespace OurCraft.Graphics
         private void DrawRawChunks(CameraRender sceneCamera)
         {
             //setup           
-            ChunkMesh.globalBlockTexture.Bind();
+            BatchedChunkMesh.globalBlockTexture.Bind();
 
             //get visible chunks
             chunkShader.Activate();
@@ -194,7 +194,7 @@ namespace OurCraft.Graphics
 
             return chunks.ChunkMap.Values.Where(c =>
             {
-                if (c.GetState() != ChunkState.Built) return false;
+                if (c.GetState() != ChunkState.Render_Ready) return false;
                 if (chunks.ChunkOutOfRenderDistance(c.ChunkPos)) return false;
 
                 //shift chunk bounds into camera-relative space

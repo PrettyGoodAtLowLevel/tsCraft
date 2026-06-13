@@ -1,37 +1,47 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using OurCraft.Entities;
 using OurCraft.World;
 
-namespace OurCraft.Entities.Components
+namespace OurCraft.Physics
 {
     //represents a physics object in our world
     public class PhysicsObj : Component
     {
-        //forces
+        //force data
         public Vector3d previousPosition;
-        public Vector3d position;
-        public Vector3d headOffset;
-        public Vector3d bounds;
+        public Vector3d position;     
         public Vector3d velocity;
         public Vector3d acceleration;
-        public Vector3d HeadPosition { get => position + headOffset; }
 
-        //settings
-        public bool useFriction = true;
-        public bool bounce = true;
+        //local collision shape
+        public Vector3d headOffset;
+        public Vector3d boundsMin;
+        public Vector3d boundsMax;      
 
+        //step settings
+        public double groundStepHeight = 0.5625; //step over slabs
+        public double airStepHeight = 0.03125; //1/32th of a block
+
+        //physics settings
+        public PhysicsMaterial physicsMaterial;
         public float gravityModifer = 2.25f;
-        public float maxVelXZ = 100.0f;
-        public float maxVelY = 100.0f;
 
-        //air drag coefficients
         public double dragX = 1.5;
         public double dragZ = 1.5;
         public double dragY = 0.1;
 
+        //clamp vel to not go out of hand
+        public float maxVelXZ = 100.0f;
+        public float maxVelY = 100.0f;
+
+        //debug
+        public bool noClip = false;
         public bool grounded = false;
+        public bool sneaking = false;
         public bool inFluid = false;
         public bool underWater = false;
+        public Vector3d HeadPosition { get => position + headOffset; }
 
         internal override void Register()
         {
@@ -47,11 +57,26 @@ namespace OurCraft.Entities.Components
         public override void OnCreation()
         {
             previousPosition = Transform.WorldPosition;
-            velocity = Vector3d.Zero;
-            headOffset = Vector3d.Zero;
-            acceleration = Vector3d.Zero;
             position = Transform.WorldPosition;
-            bounds = Vector3d.One;
+
+            velocity = Vector3d.Zero;          
+            acceleration = Vector3d.Zero;
+            
+            boundsMin = Vector3d.Zero;
+            boundsMax = Vector3d.One;
+            headOffset = Vector3d.Zero;
+
+            physicsMaterial = new()
+            {
+                bounceCombine = 1.0f,
+                useBounce = true,
+
+                frictionCombine = 1.0f,
+                useFriction = true,
+
+                wallFrictionCombine = 1.0f,
+                useWallFriction = true
+            };
         }
 
         //reset all forces
