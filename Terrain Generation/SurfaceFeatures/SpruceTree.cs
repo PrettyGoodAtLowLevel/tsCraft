@@ -28,7 +28,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
             if (!Chunk.PosValid(localX, startPos.Y + MAX_SPRUCE_HEIGHT, localZ)) return false;
             for (int i = 0; i < MAX_SPRUCE_HEIGHT; i++)
             {
-                if (target.GetBlockUnsafe(localX, startPos.Y + i, localZ) != Block.AIR) return false;
+                if (target.GetBlockStateUnsafe(localX, startPos.Y + i, localZ) != Block.AIR) return false;
             }
             return true;
         }

@@ -125,6 +125,29 @@ namespace OurCraft.Utility
             return x + SubChunk.SUBCHUNK_SIZE * (y + SubChunk.SUBCHUNK_SIZE * z);
         }
 
+        //allows to index into a chunks block entities with a vector3 coords
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int ToBlockEntityIndex(int localX, int localY, int localZ)
+        {
+            return localX + localZ * WorldConstants.CHUNK_WIDTH + localY * (WorldConstants.CHUNK_WIDTH * WorldConstants.CHUNK_WIDTH);
+        }
+
+        //allows to get back a vector3 from local chunk index
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3i FromBlockEntityIndex(int index)
+        {
+            const int CHUNK_AREA = (WorldConstants.CHUNK_WIDTH * WorldConstants.CHUNK_WIDTH);
+            const int CHUNK_WIDTH = (WorldConstants.CHUNK_WIDTH);
+
+            int y = index / CHUNK_AREA;
+            index -= y * CHUNK_AREA;
+
+            int z = index / CHUNK_WIDTH;
+            int x = index % CHUNK_WIDTH;
+
+            return new Vector3i(x, y, z);
+        }
+
         //not my code - this thing i found online idk
         public static unsafe float InvSqrt(float x)
         {

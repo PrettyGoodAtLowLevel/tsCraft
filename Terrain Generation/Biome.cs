@@ -1,8 +1,8 @@
 ﻿using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using System.Text.Json;
 using OurCraft.Terrain_Generation.Registries;
+using OpenTK.Mathematics;
 
 namespace OurCraft.Terrain_Generation
 {
@@ -40,6 +40,8 @@ namespace OurCraft.Terrain_Generation
     {
         //the name of the biome in data
         public string Name { get; set; } = "new biome";
+        public Vector3 Color = Vector3.Zero;
+        public BiomeSkyConfig Sky { get; set; } = new();
 
         //the temperature and humidity of the biome for the biome noise
         public int TempIndex { get; set; } = 0;
@@ -71,6 +73,15 @@ namespace OurCraft.Terrain_Generation
         public List<Deposit> deposits = [];
     }
 
+    public class BiomeSkyConfig
+    {
+        public Vector3 skyLightColor = Vector3.Zero;
+        public Vector3 zenithColor = Vector3.Zero;
+        public Vector3 midSkyColor = Vector3.Zero;
+        public Vector3 horizonColor = Vector3.Zero;
+        public Vector3 horizonHazeColor = Vector3.Zero;
+    }
+
     //json representation of biome
     public class BiomeJson
     {
@@ -79,6 +90,8 @@ namespace OurCraft.Terrain_Generation
         public string Temperature { get; set; } = "Temperate";
         public string Humidity { get; set; } = "Normal";
         public string Vegetation { get; set; } = "Normal";
+
+        public BiomeJsonSkyConfig SkyConfig { get; set; } = new();
 
         //height configuration
         public BiomeHeightConfig Heights { get; set; } = new();
@@ -122,6 +135,24 @@ namespace OurCraft.Terrain_Generation
     {
         public string Name { get; set; } = "Unknown Feature";
         public int Chance { get; set; } = 1000;
+    }
+
+    //colors of the sky for a biome
+    public class BiomeJsonSkyConfig
+    {
+        public BiomeJsonColorConfig SkyLightColor { get; set; } = new();
+        public BiomeJsonColorConfig ZenithColor { get; set; } = new();
+        public BiomeJsonColorConfig MidSkyColor { get; set; } = new();
+        public BiomeJsonColorConfig HorizonColor { get; set; } = new();
+        public BiomeJsonColorConfig HorizonHazeColor { get; set; } = new();
+    }
+
+    //vector 3 json representation
+    public class BiomeJsonColorConfig
+    {
+        public float R { get; set; } = 0.0f;
+        public float G { get; set; } = 0.0f;
+        public float B { get; set; } = 0.0f;
     }
 
     //helper for loading biome json and converting it to runtime biome data
@@ -176,7 +207,26 @@ namespace OurCraft.Terrain_Generation
                 biome.deposits.Add(dep);
             }
 
+            biome.Sky = new BiomeSkyConfig
+            { 
+                skyLightColor = new Vector3(jsonConfig.SkyConfig.SkyLightColor.R,
+                jsonConfig.SkyConfig.SkyLightColor.G, jsonConfig.SkyConfig.SkyLightColor.B),
+
+                midSkyColor = new Vector3(jsonConfig.SkyConfig.MidSkyColor.R,
+                jsonConfig.SkyConfig.MidSkyColor.G, jsonConfig.SkyConfig.MidSkyColor.B),
+
+                zenithColor = new Vector3(jsonConfig.SkyConfig.ZenithColor.R,
+                jsonConfig.SkyConfig.ZenithColor.G, jsonConfig.SkyConfig.ZenithColor.B),
+
+                horizonColor = new Vector3(jsonConfig.SkyConfig.HorizonColor.R,
+                jsonConfig.SkyConfig.HorizonColor.G, jsonConfig.SkyConfig.HorizonColor.B),
+
+                horizonHazeColor = new Vector3(jsonConfig.SkyConfig.HorizonHazeColor.R,
+                jsonConfig.SkyConfig.HorizonHazeColor.G, jsonConfig.SkyConfig.HorizonHazeColor.B),
+            };
+
             return biome;
+
         }
 
         //parsing biome data enums

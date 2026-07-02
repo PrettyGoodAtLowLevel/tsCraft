@@ -69,9 +69,9 @@
         //computes the distance between temperature values of the world and a biome
         private static float BiomeDistance(int t, int h, int v, Biome biome)
         {          
-            const float tempWeight = 1.75f;  //temp is the most powerful biome factor
-            const float humidWeight = 0.8f;  //humidity is a strong biome factor
-            const float vegWeight = 0.5f;    //vegetation to make small differences, (forest vs plains or snowy forest vs snowy plain)
+            const float tempWeight = 2.75f;   //temp is the most powerful biome factor
+            const float humidWeight = 0.75f;  //humidity is a strong biome factor
+            const float vegWeight = 0.25f;     //vegetation to make small differences, (forest vs plains or snowy forest vs snowy plain)
 
             float dt = t - biome.TempIndex;
             float dh = h - biome.HumidIndex;

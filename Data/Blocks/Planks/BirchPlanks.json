@@ -1,4 +1,22 @@
 {
   "Name": "Birch Planks",
-  "ModelPath": "Planks/BirchPlanks.json"
+  "ModelPath": "Planks/BirchPlanks.json",
+  "IsOpaque": true,
+  "IsTranslucent": false,
+
+  "DetectsCollision": true,
+  "PhysicsSolid": true,
+  "IsFluid": false,
+
+  "Friction": 10.0,
+  "Bounce": 0.0,
+  "WallFriction": 0.0,
+
+  "LightR": 0,
+  "LightB": 0,
+  "LightG": 0,
+  "SkyLightAttenuation": 0,
+
+  "IsLightSource": false,
+  "IsLightOpaque": true
 }

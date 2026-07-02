@@ -132,7 +132,7 @@ namespace OurCraft.Terrain_Generation.Noise
         public static float GetCaveNoise(int x, int y, int z)
         {
             float wx = x + offsetX, wz = z + offsetZ;
-            return caveNoise.GetNoise(wx, y * 1.75f, wz);
+            return caveNoise.GetNoise(wx, y * 1.25f, wz);
         }
 
         //get heat of world
@@ -218,7 +218,7 @@ namespace OurCraft.Terrain_Generation.Noise
             string formattedEro = DebugErosionNoise(ero);
             string formattedRiv = DebugRiverNoise(riv);
             string formattedAmp = DebugAmplification(amp);
-            string formattedCA = DebugCaveAmplification(caveAmp);
+            string formattedCA = DebugCaveSize(caveAmp);
 
             //find the current biome based on noisemap values
             float ft = SplineRegistry.temperatureSpline.Evaluate(temp);
@@ -228,25 +228,23 @@ namespace OurCraft.Terrain_Generation.Noise
 
             //print
             Console.WriteLine("========Terrain Builder========");
-            Console.WriteLine("regional: " + formattedReg);
-            Console.WriteLine("erosion: " + formattedEro);
-            Console.WriteLine("river: " + formattedRiv);
-            Console.WriteLine("amplification: " + formattedAmp + '\n');
+            Console.WriteLine("Regional: " + formattedReg);
+            Console.WriteLine("Erosion: " + formattedEro);
+            Console.WriteLine("River: " + formattedRiv);
+            Console.WriteLine("Terrain amplification: " + formattedAmp);
+            Console.WriteLine("Cave Amplification: " + formattedCA + '\n');
 
             Console.WriteLine("========Biome Builder========");
             Console.WriteLine("Temperature: " + (TemperatureIndex)ft);
             Console.WriteLine("Humidity: " + (HumidityIndex)fh);
             Console.WriteLine("Vegetation: " + (VegetationIndex)fv);
-            Console.WriteLine("Biome: " + biome.Name);
-
-            Console.WriteLine("========Cave Builder========");
-            Console.WriteLine("Cave Amplification: " + formattedCA);
+            Console.WriteLine("Biome: " + biome.Name);            
         }
 
         public static string DebugRegionalNoise(float r)
         {
             if (r <= -0.4f)       return "Off Mainland";
-            else if (r <= -0.25f) return "Coastal";
+            else if (r <= -0.185f)return "Coastal";
             else if (r <= 0.5)    return "In Mainland";
             else                  return "Far Mainland";
         }
@@ -273,13 +271,12 @@ namespace OurCraft.Terrain_Generation.Noise
             else              return "Fractured";
         }
 
-        public static string DebugCaveAmplification(float a)
+        public static string DebugCaveSize(float a)
         {
-            if (a <= 0.25f) return "No Caves";
-            else if (a <= 0.5) return "Small Tunnels";
-            else if (a <= 1.5) return "Regular Caves";
-            else if (a <= 2.5) return "Larger Caves";
-            else return "Massive Caverns";
+            if (a <= 1.25f) return "No Caves";            
+            else if (a <= 2.0) return "Small Caves";
+            else if (a <= 2.5) return "Regular Caves";
+            else return "Large Caves";
         }
     }    
 }

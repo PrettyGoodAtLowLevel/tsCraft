@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
@@ -8,7 +7,7 @@ using OurCraft.Utility;
 namespace OurCraft.World
 {
     //a Chunk is just a part of the world
-    //chunks contain a lightmap, placed structures, list of subchunks (which hold block & mesh data), and a batched openGL mesh
+    //chunks contain a lightmap, placed structures, block entities, list of subchunks (which hold block & mesh data), and a batched openGL mesh
     //the batched mesh allows for low draw calls and split subchunks allow for smaller remesh jobs & block storage
     public class Chunk
     {
@@ -29,15 +28,16 @@ namespace OurCraft.World
 
         //block and generation data
         public SubChunk[,,] SubChunks { get; set; } = new SubChunk[0, 0, 0];
-        public bool[,,] DirtySubChunks { get; set; } = new bool[0, 0, 0];
-        public ushort[,,] lightMap = new ushort[0, 0, 0];
-        public List<PlacedFeature> placedFeatures = []; //structure starts
-        public int MaxSolidY { get; set; } = CHUNK_HEIGHT - 1; //highest y layer of all air in a chunk
+        public readonly Dictionary<int, BlockEntity> BlockEntities = [];
+        public ushort[,,] lightMap = new ushort[0, 0, 0];       
+        public List<PlacedFeature> placedFeatures = [];
+        public int MaxSolidY { get; set; } = CHUNK_HEIGHT - 1;
 
-        //state tracking
+        //state data
         volatile ChunkState state;
         public volatile bool generating = false;
         public List<Vector3i> changes = [];
+        public bool[,,] DirtySubChunks { get; set; } = new bool[0, 0, 0];
 
         public Chunk(ChunkCoord coord)
         {
@@ -57,6 +57,7 @@ namespace OurCraft.World
             transparentMesh.Delete();
         }
 
+        //state tracking
         public void MarkForDeletion() => state = ChunkState.Deleted;
         public ChunkState GetState() => state;
         public void SetState(ChunkState state) => this.state = state;
@@ -65,9 +66,30 @@ namespace OurCraft.World
         public bool IsMeshing() => generating;
         public bool IsLit() => state == ChunkState.Lit || state == ChunkState.Mesh_Built  || state == ChunkState.Render_Ready;
         public bool Modifiyable() => state == ChunkState.Render_Ready;
-        public bool Deleted() => state == ChunkState.Deleted;       
+        public bool Deleted() => state == ChunkState.Deleted;
 
-        public BlockState GetBlockSafe(int x, int globalY, int z)
+        //block manipulation
+        public void SetBlock(Vector3i localPos, BlockState newState) //really slow, avoid in hot paths
+        {
+            BlockState oldState = GetBlockStateSafe(localPos.X, localPos.Y, localPos.Z);
+            int localBlockEntIndex = VoxelMath.ToBlockEntityIndex(localPos.X, localPos.Y, localPos.Z);
+
+            //remove old entity if needed.
+            if (oldState.HasBlockEntity) RemoveBlockEntity(localBlockEntIndex);
+
+            //set the actual voxel.
+            SetBlockState(localPos.X, localPos.Y, localPos.Z, newState);
+
+            //create new entity if needed.
+            if (newState.HasBlockEntity)
+            {
+                BlockEntity entity = newState.GetBlock.CreateBlockEntity(newState,
+                new Vector3i(localPos.X + (ChunkPos.X * CHUNK_WIDTH), localPos.Y, localPos.Z + (ChunkPos.Z * CHUNK_WIDTH)));
+                AddBlockEntity(localBlockEntIndex, entity);
+            }
+        }
+
+        public BlockState GetBlockStateSafe(int x, int globalY, int z) //not slow, but not fastest, avoid in really fast paths
         {
             //fast modulus math
             const int sb = SubChunk.SUBCHUNK_SIZE - 1;
@@ -86,7 +108,7 @@ namespace OurCraft.World
             return SubChunks[subChunkX, subChunkY, subChunkZ].GetBlockState(localX, localY, localZ);
         }
 
-        public BlockState GetBlockUnsafe(int x, int globalY, int z)
+        public BlockState GetBlockStateUnsafe(int x, int globalY, int z) //fastest, but not safe, be careful when using
         {
             //fast modulus math
             const int sb = SubChunk.SUBCHUNK_SIZE - 1;
@@ -107,7 +129,7 @@ namespace OurCraft.World
             return sub.GetBlockState(localX, localY, localZ);            
         }
 
-        public void SetBlock(int x, int globalY, int z, BlockState state)
+        public void SetBlockState(int x, int globalY, int z, BlockState state)
         {
             //fast modulus math
             const int sb = SubChunk.SUBCHUNK_SIZE - 1;
@@ -127,7 +149,7 @@ namespace OurCraft.World
             SubChunks[subChunkX, subChunkY, subChunkZ].SetBlock(localX, localY, localZ, state);
         }
 
-        public void SetBlockUnsafe(int x, int globalY, int z, BlockState state)
+        public void SetBlockStateUnsafe(int x, int globalY, int z, BlockState state)
         {
             //fast modulus math
             const int sb = SubChunk.SUBCHUNK_SIZE - 1;
@@ -146,6 +168,22 @@ namespace OurCraft.World
             SubChunks[subChunkX, subChunkY, subChunkZ].SetBlock(localX, localY, localZ, state);
         }
 
+        public bool TryGetBlockEntity(int localIndex, out BlockEntity? entity)
+        {
+            return BlockEntities.TryGetValue(localIndex, out entity);
+        }
+
+        public void AddBlockEntity(int localIndex, BlockEntity entity)
+        {        
+            BlockEntities.TryAdd(localIndex, entity);
+        }
+
+        public void RemoveBlockEntity(int localIndex)
+        {
+            BlockEntities.Remove(localIndex);
+        }
+
+        //lighting
         public ushort GetLight(int x, int y, int z)
         {            
             if (HasAllBlocks() == false || !PosValid(x, y, z)) return 0;       
@@ -181,6 +219,7 @@ namespace OurCraft.World
             lightMap[x, y, z] = (ushort)(preservedBlockLight | newSkyLight);
         }
 
+        //helpers
         public static bool PosValid(int x, int y, int z)
         {
             return x >= 0 && x < CHUNK_WIDTH

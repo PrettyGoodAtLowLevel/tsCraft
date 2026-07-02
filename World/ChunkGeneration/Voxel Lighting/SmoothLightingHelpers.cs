@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Blocks;
+using OurCraft.Blocks.Meshing;
 using OurCraft.World;
 using OurCraft.World.ChunkGeneration;
 

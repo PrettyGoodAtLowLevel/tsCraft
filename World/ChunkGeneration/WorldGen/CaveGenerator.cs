@@ -2,7 +2,6 @@
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
 using OurCraft.Terrain_Generation.Noise;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation.Registries;
 
 namespace OurCraft.World.ChunkGeneration.WorldGen

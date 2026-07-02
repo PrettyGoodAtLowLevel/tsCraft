@@ -1,8 +1,8 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.World;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.Meshing;
 using OurCraft.Physics;
+using OurCraft.World;
 
 namespace OurCraft.Blocks
 {
@@ -10,6 +10,11 @@ namespace OurCraft.Blocks
     public struct NeighborBlocks
     {
         public BlockState thisState, bottom, top, front, back, right, left;
+    }
+
+    public enum BlockEntityRenderType
+    {
+        ChunkMesh, SeparateRenderer, Dynamic
     }
 
     //this is the actual logic that we point to once we have a blockstate
@@ -20,7 +25,7 @@ namespace OurCraft.Blocks
         protected ushort id = 0;
 
         //properties
-        public BlockState DefaultState => StateContainer?.DefaultState ?? new BlockState(id, 0); //block with no meta
+        public BlockState DefaultState => StateContainer?.DefaultState ?? new BlockState(id, 0); //block id with no meta
         public List<IBlockProperty> Properties = [];
         public Dictionary<IBlockProperty, byte> PropertyLookup = [];
         public BlockStateContainer StateContainer = new();
@@ -32,11 +37,11 @@ namespace OurCraft.Blocks
 
         //visuals
         public BlockShape blockShape;
+        public BlockEntityRenderType blockEntityRenderType;
         public bool IsRenderSolid = true;
 
         //globals
         public static readonly BlockState AIR;
-
         static Block() { AIR = new BlockState(0); }
 
         //ctr
@@ -46,18 +51,21 @@ namespace OurCraft.Blocks
             blockShape = shape;
         }
 
-        public Block()
-        {
-            name = "Empty Block";
-            id = ushort.MaxValue;
-            blockShape = new EmptyBlockShape();
-        }
-
-        //set id of block
+        //required data
         public void SetID(ushort id) { this.id = id; }
-
-        //get the id of the block
         public ushort GetID() { return id; }
+        public virtual bool RequiresScheduledTicks => false;
+        public virtual bool RequiresRandomTicks => false;
+        public virtual bool HasBlockEntity => false;
+        public virtual BlockEntity CreateBlockEntity(BlockState state, Vector3i globalPosition) { throw new InvalidOperationException(); }
+
+        //world and player interactions
+        public virtual void OnInteract(Vector3i pos, ChunkManager world, BlockState state) { }
+        public virtual void RandomTick(Vector3i pos, ChunkManager world, BlockState state) { }
+        public virtual void ScheduledTick(Vector3i pos, ChunkManager world, BlockState state) { }
+        public virtual void OnNeighborChanged(Vector3i pos, ChunkManager world, BlockState state) { }
+        public virtual void OnPlaced(Vector3i pos, ChunkManager world, BlockState state) { }
+        public virtual void OnRemoved(Vector3i pos, ChunkManager world, BlockState state) { }
 
         //determines each block's way of changing the chunk block state data when placed
         public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) { }
@@ -65,29 +73,27 @@ namespace OurCraft.Blocks
         public virtual CollisionShape GetPredictedCollisionShape(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) 
         { return DefaultState.GetCollisionShape(); }
 
-        //determines each block's way of updating
-        public virtual void UpdateBlockState(Vector3 globalPos, BlockState thisBlock, ChunkManager world) { }
-
-        //allows to view current properties of a blockstate
+        //block state
         public virtual void DebugState(BlockState state) { Console.Write("\n" + DefaultState.Name); }
-
-        //properties
         public string GetBlockName() => name;
         public bool HasProperty(IBlockProperty prop) => PropertyLookup.ContainsKey(prop);
 
+        //lighting
         public virtual bool IsLightSource(BlockState state) => false; 
         public virtual bool IsLightPassable(BlockState state) => false;
         public virtual Vector3i GetLightSourceLevel(BlockState state) => Vector3i.Zero;
         public virtual int GetSkyLightAttenuation(BlockState state) => 15;
         public virtual bool AOSolid(BlockState state) => false;
 
+        //physics
         public virtual bool DetectsCollision(BlockState state) => false; //detects collisions
-        public virtual bool IsPhysicsSolid(BlockState state) => false; //cant walk past
+        public virtual bool IsPhysicsSolid(BlockState state) => false;   //cant walk past
         public virtual bool IsFluid(BlockState state) => false;
         public virtual CollisionShape GetCollisionShape(BlockState state) => CollisionShapeData.Empty;
         public virtual BlockPhysics GetBlockPhysics(BlockState state)
         {
-            BlockPhysics physics = new() { friction = this.friction, bounce = this.bounce, wallFriction = this.wallFriction };
+            BlockPhysics physics = new()
+            { friction = this.friction, bounce = this.bounce, wallFriction = this.wallFriction };
             return physics;
         }
     }

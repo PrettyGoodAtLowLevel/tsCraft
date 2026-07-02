@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Blocks.Block_Properties;
+using OurCraft.Blocks;
 using OurCraft.Utility;
 using OurCraft.World;
 

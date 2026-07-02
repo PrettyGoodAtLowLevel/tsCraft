@@ -1,8 +1,8 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Blocks.Block_Properties;
 using System.Collections.Concurrent;
 using OurCraft.Utility;
 using OurCraft.Graphics.Voxel_Lighting;
+using OurCraft.Blocks;
 
 namespace OurCraft.World.ChunkGeneration
 {

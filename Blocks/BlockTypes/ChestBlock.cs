@@ -1,0 +1,29 @@
+﻿using OpenTK.Mathematics;
+using OurCraft.Blocks.Block_Implementations;
+using OurCraft.Blocks.BlockEntities;
+using OurCraft.Blocks.Meshing;
+using OurCraft.World;
+
+namespace OurCraft.Blocks.BlockTypes
+{
+    public class ChestBlock : DefaultBlock
+    {
+        //adds the properties to THIS instance of the block
+        public ChestBlock(string name, BlockShape shape) : base(name, shape) { }
+
+        public override BlockEntity CreateBlockEntity(BlockState state, Vector3i globalPosition)
+        {
+            return new ChestBlockEntity
+            {
+                GlobalPosition = globalPosition,
+            };
+        }
+
+        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        {
+            world.SetBlock(globalPos + hitNormal, DefaultState);
+        }
+
+        public override bool HasBlockEntity => true;
+    }
+}

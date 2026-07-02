@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using OurCraft.World;
 using OurCraft.Terrain_Generation.Noise;
@@ -30,7 +29,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
             //check the center column above is clear
             for (int i = 0; i < MAX_RADIUS * 2; i++)
             {
-                BlockState state = target.GetBlockUnsafe(localX, startPos.Y + i, localZ);
+                BlockState state = target.GetBlockStateUnsafe(localX, startPos.Y + i, localZ);
                 if (state != Block.AIR) return false;
             }
             return true;

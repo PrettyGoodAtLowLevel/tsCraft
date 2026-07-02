@@ -1,7 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation.Noise;
 using OurCraft.Utility;
 using OurCraft.World;
@@ -41,11 +40,11 @@ namespace OurCraft.Entities.Components
             if (orientation == null) return;
 
             ScrollBlocks(ms);
-            HandleBlockInteractions(world, ms, orientation);
+            HandleBlockInteractions(world, ms, orientation, kb);
             DebugInteractions(world, kb, orientation);
         }
 
-        void HandleBlockInteractions(ChunkManager world, MouseState ms, Transform orientation)
+        void HandleBlockInteractions(ChunkManager world, MouseState ms, Transform orientation, KeyboardState kb)
         {
             bool hitBlock = AABBMath.RaycastVoxel(orientation.WorldPosition, orientation.Forward, reach,
             (x, y, z) => world.GetBlockState(new Vector3(x, y, z)) != Block.AIR && world.GetBlockState(new Vector3(x, y, z)) != waterBlock,
@@ -103,6 +102,20 @@ namespace OurCraft.Entities.Components
                     BlockState state = world.GetBlockState(hit.blockPos);
                     Console.WriteLine(state.ToString());
                     state.DebugState();
+                }
+            }
+
+            //interact with block
+            if (kb.IsKeyPressed(Keys.E))
+            {
+                Vector3i pos = hit.blockPos;
+                BlockState state = world.GetBlockState(pos);
+                state.OnInteract(pos, world);
+                
+                if (state.HasBlockEntity)
+                {
+                    BlockEntity? ent = world.TryGetBlockEntity(pos);
+                    ent?.OnInteract(world, state);
                 }
             }
         }
@@ -254,7 +267,9 @@ namespace OurCraft.Entities.Components
 
             Console.WriteLine();
             Console.WriteLine("--------Rendering--------");
-            Console.WriteLine("Average Chunk Render Time: " + (float)Profiler.GetProfileEntry("Chunk Rendering").AverageMs + " ms");
+            Console.WriteLine("Average Render Time: " + (float)Profiler.GetProfileEntry("Rendering").AverageMs + " ms");
+            Console.WriteLine("Average Chunk Render Time: " + (float)Profiler.GetProfileEntry("Chunk Rendering Opaque").AverageMs + " ms");
+            Console.WriteLine("Average Trasnparent Chunk Render Time: " + (float)Profiler.GetProfileEntry("Chunk Rendering Transparent").AverageMs + " ms");
             Console.WriteLine("Average Entity Render Time: " + (float)Profiler.GetProfileEntry("Entity Rendering").AverageMs + " ms");
         }
     }

@@ -1,4 +1,22 @@
 {
   "Name": "Water",
-  "ModelPath": "Natural/WaterBlock.json"
+  "ModelPath": "Natural/WaterBlock.json",
+  "IsOpaque": false,
+  "IsTranslucent": true,
+
+  "DetectsCollision": true,
+  "PhysicsSolid": false,
+  "IsFluid": true,
+
+  "Friction": 0.0,
+  "Bounce": 0.0,
+  "WallFriction": 0.0,
+
+  "LightR": 0,
+  "LightB": 0,
+  "LightG": 0,
+  "SkyLightAttenuation": 1,
+
+  "IsLightSource": false,
+  "IsLightOpaque": false
 }

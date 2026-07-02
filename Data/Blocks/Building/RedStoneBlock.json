@@ -1,7 +1,22 @@
 {
   "Name": "Redstone Block",
   "ModelPath": "Building/RedstoneBlock.json",
+  "IsOpaque": true,
+  "IsTranslucent": false,
+
+  "DetectsCollision": true,
+  "PhysicsSolid": true,
+  "IsFluid": false,
+
+  "Friction": 10.0,
+  "Bounce": 0.0,
+  "WallFriction": 0.0,
+
   "LightR": 15,
+  "LightB": 0,
   "LightG": 0,
-  "LightB": 0
+  "SkyLightAttenuation": 0,
+
+  "IsLightSource": true,
+  "IsLightOpaque": true
 }

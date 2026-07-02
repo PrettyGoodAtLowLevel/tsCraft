@@ -2,82 +2,80 @@
 
 namespace OurCraft.openGL_objects
 {
-    //render texture used for post processing
+    //a texture you can "draw into" and then use post processing on
     public class FBO
     {
-        //gl properties
         public int ID { get; private set; }
         public int ColorTexture { get; private set; }
-        public int DepthRBO { get; private set; }
+        public int DepthTexture { get; private set; }
+        public readonly int width, height;
 
-        private readonly int width, height;
-
-        //creates a new fbo object
+        //creates a framebuffer, optionally with tracking depth of each pixel as well
         public FBO(int width, int height, bool withDepth = true)
         {
+            //set proper height
             this.width = width;
             this.height = height;
 
-            //gen framebuffer and bind
+            //create framebuffer and set as active framebuffer
             ID = GL.GenFramebuffer();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, ID);
 
-            //create framebuffer texture
+            //create color texture
             ColorTexture = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, ColorTexture);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba16f, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 
-            //have texture bounds set correctly
+            //setup color texture to be proper and clamp to screen
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 
-            //send framebuffer to openGL
+            //attach color texture to framebuffer
             GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, ColorTexture, 0);
 
-            //enable depth writes for the frame buffer to the render buffer
+            //optional render to depth buffer as well
             if (withDepth)
             {
-                DepthRBO = GL.GenRenderbuffer();
-                GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, DepthRBO);
-                GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, width, height);
-                GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, DepthRBO);
+                //create depth specific texture
+                DepthTexture = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, DepthTexture);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent32, width, height, 0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+
+                //setup depth texture to be proper and clamp to screen
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+                //attach depth texture to current framebuffer
+                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, DepthTexture, 0);
             }
 
-            //error checking
+            //specify to draw to color buffer
+            GL.DrawBuffers(1, new[] { DrawBuffersEnum.ColorAttachment0 });
+
+            //check if framebuffer works
             var status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
             if (status != FramebufferErrorCode.FramebufferComplete) throw new Exception("Framebuffer not complete: " + status);
 
-            //unbind
+            //unbind framebuffer
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         }
 
-        //delete frame buffer when out of scope
-        public void Delete()
-        {
-            GL.DeleteFramebuffer(ID);
-            GL.DeleteTexture(ColorTexture);
-            if (DepthRBO != 0) GL.DeleteRenderbuffer(DepthRBO);
-        }
-
-        //set as active framebuffer object
+        //set active framebuffer to current id
         public void Bind()
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, ID);
             GL.Viewport(0, 0, width, height);
         }
 
-        //deactivate current frame buffer object
+        //set active framebuffer to none
         public void Unbind(int screenWidth, int screenHeight)
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Viewport(0, 0, screenWidth, screenHeight);
-        }
-
-        public override string ToString()
-        {
-            return $"ID: {ID}, ColorTexture: {ColorTexture}, DepthRBO: {DepthRBO}, Width: {width}, Height: {height}";
         }
     }
 }

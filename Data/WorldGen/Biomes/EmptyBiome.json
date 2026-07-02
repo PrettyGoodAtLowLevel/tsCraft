@@ -4,6 +4,34 @@
   "Humidity": "Dry",
   "Vegetation": "Barren",
 
+  "SkyConfig": {
+    "SkyLightColor": {
+      "R": 0.7,
+      "G": 0.6,
+      "B": 0.7
+    },
+    "ZenithColor": {
+      "R": 0.7,
+      "G": 0.6,
+      "B": 0.7
+    },
+    "MidSkyColor": {
+      "R": 0.7,
+      "G": 0.6,
+      "B": 0.7
+    },
+    "HorizonColor": {
+      "R": 0.7,
+      "G": 0.6,
+      "B": 0.7
+    },
+    "HorizonHazeColor": {
+      "R": 0.7,
+      "G": 0.6,
+      "B": 0.7
+    }
+  },
+
   "Heights": {
     "Regular": 130,
     "Ocean": 100,

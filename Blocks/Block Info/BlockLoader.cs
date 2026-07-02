@@ -1,8 +1,11 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.Block_Properties;
+using OurCraft.Blocks.BlockTypes;
 using OurCraft.Blocks.Meshing;
+using OurCraft.Blocks.Meshing.ModelShapes;
 using OurCraft.Utility;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace OurCraft.Blocks.Block_Info
@@ -12,96 +15,100 @@ namespace OurCraft.Blocks.Block_Info
     {
         private readonly static string blockFilePath = FileConstants.BLOCK_DATA_PATH;
 
-        //example of loading a default cube block into game
-        public static FullBlock RegisterFullBlock(string fileName)
+        //what the air block in our game will be registered as
+        public static AirBlock RegisterAirBlock(string name)
         {
-            string path = blockFilePath + fileName;
-            string json = File.ReadAllText(path);
-
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var result = JsonSerializer.Deserialize<FullBlockJson>(json, options);
-
-            //no invalid block
-            if (result == null) throw new Exception("Block does not exist in file directory: " + path);
-
-            FullBlockModelShape model = new FullBlockModelShape()
-            {
-                IsTranslucent = false, IsFullOpaqueBlock = true,
-                cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load(result.ModelPath))
-            };
+            EmptyBlockShape model = new EmptyBlockShape() { IsFullOpaqueBlock = false, IsTranslucent = false, };
 
             ushort id = (ushort)BlockRegistry.BlockCount;
-            FullBlock block = new FullBlock(result.Name, model);
+            AirBlock block = new AirBlock(name, model);
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
-
-            block.friction = result.Friction;
-            block.bounce = result.Bounce;           
-            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
             return block;
         }
 
-        public static WaterBlock RegisterWaterBlock(string fileName)
+        //most common block in game, full cube block with one state
+        public static DefaultBlock RegisterDefaultBlock(string fileName)
         {
             string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var result = JsonSerializer.Deserialize<FullBlockJson>(json, options);
+            var result = JsonSerializer.Deserialize<DefaultBlockJson>(json, options);
 
-            //no invalid block
             if (result == null) throw new Exception("Block does not exist in file directory: " + path);
 
             FullBlockModelShape model = new FullBlockModelShape()
             {
-                IsTranslucent = true, IsFullOpaqueBlock = false,
+                IsTranslucent = result.IsTranslucent,
+                IsFullOpaqueBlock = !result.IsTranslucent && result.IsOpaque,
                 cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load(result.ModelPath))
             };
 
             ushort id = (ushort)BlockRegistry.BlockCount;
-            WaterBlock block = new WaterBlock(result.Name, model);
+            DefaultBlock block = new DefaultBlock(result.Name, model);
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
+
+            block.detectsCollision = result.DetectsCollision;
+            block.physicsSolid = result.PhysicsSolid;
+            block.isFluid = result.IsFluid;
+
             block.friction = result.Friction;
             block.bounce = result.Bounce;
             block.wallFriction = result.WallFriction;
+
+            block.isLightSource = result.IsLightSource;
+            block.blocksLight = result.IsLightOpaque;
+            block.blockLightLevel = new Vector3i(result.LightR, result.LightG, result.LightB);
+            if (result.IsLightOpaque) block.skyLightAttenuation = LightConstants.MAX_ATTENUATION;
+            else block.skyLightAttenuation = result.SkyLightAttenuation;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
             return block;
         }
 
-        public static FullLightBlock RegisterFullLightBlock(string fileName)
+        public static ChestBlock RegisterChestBlock(string fileName)
         {
             string path = blockFilePath + fileName;
             string json = File.ReadAllText(path);
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var result = JsonSerializer.Deserialize<FullLightBlockJson>(json, options);
-
-            //no invalid block
+            var result = JsonSerializer.Deserialize<DefaultBlockJson>(json, options);
             if (result == null) throw new Exception("Block does not exist in file directory: " + path);
 
             FullBlockModelShape model = new FullBlockModelShape()
             {
-                IsTranslucent = false, IsFullOpaqueBlock = true,
+                IsTranslucent = result.IsTranslucent,
+                IsFullOpaqueBlock = !result.IsTranslucent && result.IsOpaque,
                 cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load(result.ModelPath))
             };
 
             ushort id = (ushort)BlockRegistry.BlockCount;
-            FullLightBlock block = new FullLightBlock(result.Name, model, new Vector3i(result.LightR, result.LightG, result.LightB));
+            ChestBlock block = new ChestBlock(result.Name, model);
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
 
-            block.bounce = result.Bounce;
+            block.detectsCollision = result.DetectsCollision;
+            block.physicsSolid = result.PhysicsSolid;
+            block.isFluid = result.IsFluid;
+
             block.friction = result.Friction;
+            block.bounce = result.Bounce;
             block.wallFriction = result.WallFriction;
+
+            block.isLightSource = result.IsLightSource;
+            block.blocksLight = result.IsLightOpaque;
+            block.blockLightLevel = new Vector3i(result.LightR, result.LightG, result.LightB);
+            if (result.IsLightOpaque) block.skyLightAttenuation = LightConstants.MAX_ATTENUATION;
+            else block.skyLightAttenuation = result.SkyLightAttenuation;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -121,8 +128,9 @@ namespace OurCraft.Blocks.Block_Info
 
             CrossQuadBlockShape model = new CrossQuadBlockShape()
             {
-                IsFullOpaqueBlock = false, IsTranslucent = false,
-                Tex = TextureRegistry.GetTextureID(result.TextureName)
+                IsFullOpaqueBlock = false,
+                IsTranslucent = false,
+                Tex = BlockTextureManager.GetTextureIndex(result.TextureName)
             };
 
             ushort id = (ushort)BlockRegistry.BlockCount;
@@ -130,70 +138,6 @@ namespace OurCraft.Blocks.Block_Info
 
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
-
-            BlockRegistry.AddBlockList(block);
-            BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
-            return block;
-        }
-
-        public static LeavesBlock RegisterLeavesBlock(string fileName)
-        {
-            string path = blockFilePath + fileName;
-            string json = File.ReadAllText(path);
-
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var result = JsonSerializer.Deserialize<FullBlockJson>(json, options);
-
-            //no invalid block
-            if (result == null) throw new Exception("Block does not exist in file directory: " + path);
-
-            FullBlockModelShape model = new FullBlockModelShape()
-            {
-                IsTranslucent = false, IsFullOpaqueBlock = true,
-                cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load(result.ModelPath))
-            };
-
-            ushort id = (ushort)BlockRegistry.BlockCount;
-            LeavesBlock block = new LeavesBlock(result.Name, model);
-
-            block.SetID(id);
-            block.StateContainer = BlockStateExtensions.GenerateStates(block);
-
-            block.friction = result.Friction;
-            block.bounce = result.Bounce;
-            block.wallFriction = result.WallFriction;
-
-            BlockRegistry.AddBlockList(block);
-            BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
-            return block;
-        } 
-
-        public static GlassBlock RegisterGlassBlock(string fileName)
-        {
-            string path = blockFilePath + fileName;
-            string json = File.ReadAllText(path);
-
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var result = JsonSerializer.Deserialize<FullBlockJson>(json, options);
-
-            //no invalid block
-            if (result == null) throw new Exception("Block does not exist in file directory: " + path);
-
-            FullBlockModelShape model = new FullBlockModelShape()
-            {
-                IsTranslucent = false, IsFullOpaqueBlock = false,
-                cachedModel = CachedBlockModel.BakeBlockModel(BlockModel.Load(result.ModelPath))
-            };
-
-            ushort id = (ushort)BlockRegistry.BlockCount;
-            GlassBlock block = new GlassBlock(result.Name, model);
-
-            block.SetID(id);
-            block.StateContainer = BlockStateExtensions.GenerateStates(block);
-
-            block.friction = result.Friction;
-            block.bounce = result.Bounce;
-            block.wallFriction = result.WallFriction;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -225,9 +169,19 @@ namespace OurCraft.Blocks.Block_Info
             block.SetID(id);
             block.StateContainer = BlockStateExtensions.GenerateStates(block);
 
+            block.detectsCollision = result.DetectsCollision;
+            block.physicsSolid = result.PhysicsSolid;
+            block.isFluid = result.IsFluid;
+
             block.friction = result.Friction;
             block.bounce = result.Bounce;
             block.wallFriction = result.WallFriction;
+
+            block.isLightSource = result.IsLightSource;
+            block.blocksLight = result.IsLightOpaque;
+            block.blockLightLevel = new Vector3i(result.LightR, result.LightG, result.LightB);
+            if (result.IsLightOpaque) block.skyLightAttenuation = LightConstants.MAX_ATTENUATION;
+            else block.skyLightAttenuation = result.SkyLightAttenuation;
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
@@ -265,23 +219,6 @@ namespace OurCraft.Blocks.Block_Info
 
             BlockRegistry.AddBlockList(block);
             BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
-            return block;
-        }
-
-        public static AirBlock RegisterAirBlock(string name)
-        {
-            EmptyBlockShape model = new EmptyBlockShape()
-            { IsFullOpaqueBlock = false, IsTranslucent = false, };
-
-            ushort id = (ushort)BlockRegistry.BlockCount;
-            AirBlock block = new AirBlock(name, model);
-
-            block.SetID(id);
-            block.StateContainer = BlockStateExtensions.GenerateStates(block);
-
-            BlockRegistry.AddBlockList(block);
-            BlockRegistry.AddBlockRegistry(block.GetBlockName(), id);
-
             return block;
         }
     }

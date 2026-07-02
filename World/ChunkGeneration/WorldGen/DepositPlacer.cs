@@ -1,4 +1,4 @@
-﻿using OurCraft.Blocks.Block_Properties;
+﻿using OurCraft.Blocks;
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
 
@@ -121,7 +121,7 @@ namespace OurCraft.World.ChunkGeneration.WorldGen
 
                         if (!CanReplace(chunk, localX, worldY, localZ, instance.Deposit)) continue;
 
-                        chunk.SetBlockUnsafe(localX, worldY, localZ, instance.Deposit.block);
+                        chunk.SetBlockStateUnsafe(localX, worldY, localZ, instance.Deposit.block);
                     }
                 }
             }
@@ -130,7 +130,7 @@ namespace OurCraft.World.ChunkGeneration.WorldGen
         //checks if a xyz position's block is replaceable by the deposit
         private static bool CanReplace(Chunk chunk, int x, int y, int z, Deposit deposit)
         {
-            BlockState current = chunk.GetBlockUnsafe(x, y, z);
+            BlockState current = chunk.GetBlockStateUnsafe(x, y, z);
 
             if (deposit.replacementBlocks != null && deposit.replacementBlocks.Count > 0)
             {

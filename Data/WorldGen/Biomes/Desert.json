@@ -4,9 +4,41 @@
   "Humidity": "Arid",
   "Vegetation": "Sparse",
 
+  "SkyConfig": {
+    "SkyLightColor": {
+      "R": 0.85,
+      "G": 0.72,
+      "B": 0.55
+    },
+
+    "ZenithColor": {
+      "R": 0.16,
+      "G": 0.22,
+      "B": 0.42
+    },
+
+    "MidSkyColor": {
+      "R": 0.42,
+      "G": 0.48,
+      "B": 0.62
+    },
+
+    "HorizonColor": {
+      "R": 0.76,
+      "G": 0.64,
+      "B": 0.46
+    },
+
+    "HorizonHazeColor": {
+      "R": 0.82,
+      "G": 0.66,
+      "B": 0.42
+    }
+  },
+
   "Heights": {
     "Regular": 130,
-    "Ocean": 100,
+    "Ocean": 110,
     "Shore": 127,
     "Peak": 230
   },
@@ -20,8 +52,8 @@
     "PeakSubSurface": "Stone",
     "ShoreSurface": "Sand",
     "ShoreSubSurface": "Sand",
-    "OceanSurface": "Sand",
-    "OceanSubSurface": "Sand"
+    "OceanSurface": "Gravel Block",
+    "OceanSubSurface": "Gravel Block"
   },
 
   "SurfaceFeatures": [

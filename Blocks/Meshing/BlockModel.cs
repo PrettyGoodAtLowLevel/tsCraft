@@ -1,0 +1,93 @@
+using OurCraft.Utility;
+using System.Text.Json;
+
+namespace OurCraft.Blocks.Meshing
+{
+    //represents block model json format to c#
+    public class BlockModel
+    {
+        private readonly static string blockModelFilePath = FileConstants.BLOCK_MODEL_PATH;
+
+        //not important
+        public string Name { get; set; } = "";
+
+        //determines which render pass it goes to
+        public bool IsTranslucent { get; set; } = false;
+
+        //which axis matches to which face culling type
+        public Dictionary<string, string> FaceCull { get; set; } = [];
+
+        //cuboids
+        public List<Element> Elements { get; set; } = [];
+
+        //refrences some cuboid shape of a block model
+        public class Element
+        {
+            //should sway or not
+            public bool Sway { get; set; } = false;
+
+            //start pos
+            public float[] From { get; set; } = [];
+
+            //end pos
+            public float[] To { get; set; } = [];
+
+            //face types, cullable or not, textures
+            public Dictionary<string, Face> Faces { get; set; } = [];
+        }
+
+        //represents a face of a cuboid for a block model
+        public class Face
+        {
+            //which texture id
+            public string Texture { get; set; } = "";
+
+            //uv mapping
+            public float[] UV { get; set; } = [];
+
+            //can this face be culled or not
+            public bool Cullable { get; set; } = false;
+
+            //which direction is this face culled on
+            public string CullAxis { get; set; } = "";
+
+            //should use ao? normally true
+            public bool AO { get; set; } = true;
+        }
+
+        //actually load the thing
+        public static BlockModel Load(string fileName)
+        {
+            string path = blockModelFilePath + fileName;
+            string json = File.ReadAllText(path);
+
+            //allow case-insensitive JSON property matching
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }; 
+            var result = JsonSerializer.Deserialize<BlockModel>(json, options);
+
+            //just in case thing doesnt exist return empty model, will break meshing though
+            if (result == null)
+            {
+                Console.WriteLine("Block Model does not exist in file directory: " + path);
+                return new BlockModel();
+            }
+
+            return result;
+        }
+
+        //debug
+        public override string ToString()
+        {
+            string str = "";
+
+            str += $"Name: '{Name}', ";
+            str += $"Is Translucent: {IsTranslucent}, ";
+            str += $"Cuboids: {Elements.Count}";
+
+            return str;
+        }
+    }
+}

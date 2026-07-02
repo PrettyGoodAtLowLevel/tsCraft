@@ -1,15 +1,15 @@
 ﻿{
   "Name": "slime_block",
-  "IsTranslucent": false,
+  "IsTranslucent": true,
   "AOSupport": true,
 
   "FaceCull": {
-    "Bottom": "FullBlock",
-    "Top": "FullBlock",
-    "Front": "FullBlock",
-    "Back": "FullBlock",
-    "Right": "FullBlock",
-    "Left": "FullBlock"
+    "Bottom": "Glass",
+    "Top": "Glass",
+    "Front": "Glass",
+    "Back": "Glass",
+    "Right": "Glass",
+    "Left": "Glass"
   },
 
   "Elements": [

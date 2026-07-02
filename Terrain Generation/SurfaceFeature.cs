@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using OurCraft.World;
 
@@ -37,9 +36,9 @@ namespace OurCraft.Terrain_Generation
             if (lx < 0 || lx >= Chunk.CHUNK_WIDTH) return;            //outside chunk on X
             if (lz < 0 || lz >= Chunk.CHUNK_WIDTH) return;            //outside chunk on Z
             if (ly < 0 || ly >= WorldConstants.CHUNK_HEIGHT) return;  //out of world
-            if (!replaceBlock && target.GetBlockUnsafe(lx, ly, lz) != Block.AIR) return; //cant replace block
+            if (!replaceBlock && target.GetBlockStateUnsafe(lx, ly, lz) != Block.AIR) return; //cant replace block
 
-            target.SetBlockUnsafe(lx, ly, lz, block);
+            target.SetBlockStateUnsafe(lx, ly, lz, block);
         }
 
         //checks if the bounding box of a surface feature intersects with a chunk

@@ -1,4 +1,22 @@
 {
   "Name": "Spruce Leaves",
-  "ModelPath": "Leaves/SpruceLeaves.json"
+  "ModelPath": "Leaves/SpruceLeaves.json",
+  "IsOpaque": false,
+  "IsTranslucent": false,
+
+  "DetectsCollision": true,
+  "PhysicsSolid": true,
+  "IsFluid": false,
+
+  "Friction": 10.0,
+  "Bounce": 0.0,
+  "WallFriction": 0.0,
+
+  "LightR": 0,
+  "LightB": 0,
+  "LightG": 0,
+  "SkyLightAttenuation": 1,
+
+  "IsLightSource": false,
+  "IsLightOpaque": false
 }

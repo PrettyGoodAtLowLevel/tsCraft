@@ -38,7 +38,9 @@ namespace OurCraft.Utility
         public const int SUBCHUNK_SIZE_IN_BLOCKS = 16;
 
         public const int CHUNK_HEIGHT = SUBCHUNK_SIZE_IN_BLOCKS * CHUNK_HEIGHT_IN_SUBCHUNKS;
-        public const int CHUNK_WIDTH = SUBCHUNK_SIZE_IN_BLOCKS * CHUNK_WIDTH_IN_SUBCHUNKS;       
+        public const int CHUNK_WIDTH = SUBCHUNK_SIZE_IN_BLOCKS * CHUNK_WIDTH_IN_SUBCHUNKS;
+
+        public const int DEFAULT_RANDOM_TICK = 3;
     }
 
     public static class PhysicsConstants
@@ -46,6 +48,7 @@ namespace OurCraft.Utility
         public const double DEFAULT_TIME_SCALE = 1.0;      
         public const double MAX_ACCUM = 0.08;
         public const double PHYSICS_TICK = 0.02;
+        public const double BLOCK_TICK = 0.05;
 
         public const double MAX_VEL_Y = 100.0;
         public const double MAX_VEL_XZ = 100.0;

@@ -1,8 +1,8 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.Utility;
+using System.Diagnostics;
 
 namespace OurCraft.World.ChunkGeneration
 {
@@ -160,7 +160,7 @@ namespace OurCraft.World.ChunkGeneration
         static void AddMeshDataToChunk(SubChunk sub, Vector3i pos, Vector3 meshPos, ChunkSectionNeighbors nc)
         {
             BlockState state = sub.GetBlockState(pos.X, pos.Y, pos.Z);
-            if (state == Block.AIR) return;
+            if (state == Block.AIR || state.BlockEntityRenderType == BlockEntityRenderType.SeparateRenderer) return;
             Block block = BlockRegistry.GetBlock(state.BlockID);
 
             //get neighbor blocks
@@ -210,7 +210,7 @@ namespace OurCraft.World.ChunkGeneration
 
             //out of world bounds (vertical)
             if (ny < 0 || ny >= Chunk.CHUNK_HEIGHT) return Block.AIR;
-            if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH) return sub.parent.GetBlockUnsafe(nx, ny, nz);
+            if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH) return sub.parent.GetBlockStateUnsafe(nx, ny, nz);
 
             //start with this chunk as default
             Chunk? targetChunk = sub.parent;
@@ -241,7 +241,7 @@ namespace OurCraft.World.ChunkGeneration
             int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
             int localZ = ((nz & cs) + CHUNK_WIDTH) & cs;
 
-            return targetChunk.GetBlockUnsafe(localX, ny, localZ);
+            return targetChunk.GetBlockStateUnsafe(localX, ny, localZ);
         }
 
         //gets the lighting value of a block safely
@@ -305,7 +305,7 @@ namespace OurCraft.World.ChunkGeneration
             //inside center chunk
             if ((uint)nx < CHUNK_WIDTH && (uint)nz < CHUNK_WIDTH)
             {
-                BlockState bstate = nc.center.GetBlockUnsafe(nx, ny, nz);
+                BlockState bstate = nc.center.GetBlockStateUnsafe(nx, ny, nz);
                 return bstate.AOSolid;
             }
 
@@ -338,7 +338,7 @@ namespace OurCraft.World.ChunkGeneration
             //wrap coordinates into neighbor chunk local space
             int localX = ((nx & cs) + CHUNK_WIDTH) & cs;
             int localZ = ((nz & cs) + CHUNK_WIDTH) & cs;
-            BlockState state = targetChunk.GetBlockUnsafe(localX, ny, localZ);
+            BlockState state = targetChunk.GetBlockStateUnsafe(localX, ny, localZ);
             return state.AOSolid;
         }
     }

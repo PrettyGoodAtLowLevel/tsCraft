@@ -10,8 +10,8 @@ namespace OurCraft.Entities.Components
         public int height = RenderingConstants.SCREEN_HEIGHT;
       
         public int FOV = RenderingConstants.DEFAULT_FOV;
-        readonly float nearPlane = RenderingConstants.DEFAULT_NEAR_PLANE;
-        readonly float farPlane = RenderingConstants.DEFAULT_FAR_PLANE;
+        public readonly float NearPlane = RenderingConstants.DEFAULT_NEAR_PLANE;
+        public readonly float FarPlane = RenderingConstants.DEFAULT_FAR_PLANE;
         public Vector3 offset = Vector3.Zero;
 
         private Matrix4 cameraMatrix;
@@ -37,8 +37,18 @@ namespace OurCraft.Entities.Components
         public void UpdateMatrix()
         {
             var view = Matrix4.LookAt(Vector3.Zero, Transform.Forward, Vector3.UnitY);           
-            var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), (float)width / height, nearPlane, farPlane); 
+            var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), (float)width / height, NearPlane, FarPlane); 
             cameraMatrix = view * projection;
+        } 
+
+        public Matrix4 GetProjectionMatrix()
+        {
+            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), (float)width / height, NearPlane, FarPlane);
+        }
+
+        public Matrix4 GetViewMatrix()
+        {
+            return Matrix4.LookAt(Vector3.Zero, Transform.Forward, Vector3.UnitY);
         }
 
         //updates the uniform matrix value in the shader
@@ -46,6 +56,17 @@ namespace OurCraft.Entities.Components
         {
             shader.Activate();
             shader.SetMatrix4(uniformName, ref cameraMatrix);
+        }
+
+        public void SendViewProjection(Shader shader)
+        {
+            shader.Activate();
+
+            Matrix4 proj = GetProjectionMatrix();
+            Matrix4 view = GetViewMatrix();
+
+            shader.SetMatrix4("projection", ref proj);
+            shader.SetMatrix4("view", ref view);
         }
     }
 }

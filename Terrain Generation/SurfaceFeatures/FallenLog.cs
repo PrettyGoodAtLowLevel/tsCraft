@@ -64,8 +64,8 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
                 if (!Chunk.PosValid(lx, wy, lz)) break;
 
                 //get current and below blocks
-                var current = target.GetBlockUnsafe(lx, wy, lz);
-                var below = target.GetBlockUnsafe(lx, wy - 1, lz);
+                var current = target.GetBlockStateUnsafe(lx, wy, lz);
+                var below = target.GetBlockStateUnsafe(lx, wy - 1, lz);
 
                 //stop placing if space is not valid
                 if (current != Block.AIR || below == Block.AIR) break;
@@ -92,8 +92,8 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
                 if (!Chunk.PosValid(lx, wy, lz)) break;
 
                 //get current and below blocks
-                var current = target.GetBlockUnsafe(lx, wy, lz);
-                var below = target.GetBlockUnsafe(lx, wy - 1, lz);
+                var current = target.GetBlockStateUnsafe(lx, wy, lz);
+                var below = target.GetBlockStateUnsafe(lx, wy - 1, lz);
 
                 //stop placing if space is not valid
                 if (current != Block.AIR || below == Block.AIR) break;

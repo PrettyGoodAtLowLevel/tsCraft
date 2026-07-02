@@ -10,35 +10,41 @@ namespace OurCraft.Graphics
     public struct BlockVertex
     {
         //assumes in local chunk coordinates
-        public BlockVertex(Vector3 pos, Vector2 texUV, ushort lighting = 0, byte normal = 0, byte ao = 0)
+        public BlockVertex(Vector3 pos, Vector2 texUV, ushort lighting = 0, byte ao = 0, byte flags = 0, byte normal = 0, ushort texID = 0)
         {
-            x = EncodeToShort(pos.X);
-            z = EncodeToShort(pos.Z);
-            y = pos.Y;
-            
-            this.texUV = new Vector2h(texUV);
-            this.normal = normal;
+            x = EncodeToShortXZ(pos.X);
+            y = EncodeToShortY(pos.Y);
+            z = EncodeToShortXZ(pos.Z);
 
-            this.lighting = lighting; 
-            this.ao = ao;
+            this.texUV = new Vector2h(texUV);
+            this.texID = texID;
+            this.lighting = lighting;
+
+            byte packed = (byte)((normal << 2) | (ao & 0x3));
+
+            this.ao = packed;
+            this.flags = flags;
         }
 
         //byte location = 0
-        public short x; //since only 0-31 coords, short works fine
-        public float y; //since 0-383 coords, float would be better
-        public short z;
+        public ushort x; //since only 0-31 coords, short works fine
+        public ushort y; //since 0-383 coords, float would be better
+        public ushort z;
 
-        //byte location = 8
+        //byte location = 6    
         public Vector2h texUV; //since only 0-1 coords, half precision float works fine
 
-        //byte location = 12
+        //byte location = 10
         public ushort lighting = 0;
 
-        //byte location = 14
-        public byte normal = 0;
-
-        //byte location = 15
+        //byte location = 12
         public byte ao = 0;
+
+        //byte location = 13
+        public byte flags = 0;
+
+        //byte location = 14
+        public ushort texID = 0;
 
         //always updates when adding new vertex properties
         public static int GetSize()
@@ -47,12 +53,19 @@ namespace OurCraft.Graphics
         }
 
         //converts float values from 0-chunksize to shorts, which are then converted again in the shader
-        static short EncodeToShort(float value, float chunkSize = WorldConstants.CHUNK_WIDTH)
+        static ushort EncodeToShortXZ(float value, float chunkSize = WorldConstants.CHUNK_WIDTH)
         {
             //normalize [0, chunkSize) -> [0, 1)
             float normalized = value / chunkSize;
             //scale to short range
-            return (short)(normalized * short.MaxValue);
+            return (ushort)(normalized * ushort.MaxValue);
+        }
+
+        //converts float values from 0-chunksize to shorts, which are then converted again in the shader, but for y
+        static ushort EncodeToShortY(float value, float chunkHeight = WorldConstants.CHUNK_HEIGHT)
+        {
+            float normalized = value / chunkHeight;
+            return (ushort)(normalized * ushort.MaxValue);
         }
     }
 

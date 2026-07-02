@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using OurCraft.World;
 using OurCraft.Terrain_Generation.Noise;
@@ -26,7 +25,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
             int localX = VoxelMath.ModPow2(startPos.X, Chunk.CHUNK_WIDTH);
             int localZ = VoxelMath.ModPow2(startPos.Z, Chunk.CHUNK_WIDTH);
 
-            var below = chunk.GetBlockUnsafe(localX, startPos.Y - 1, localZ);
+            var below = chunk.GetBlockStateUnsafe(localX, startPos.Y - 1, localZ);
             if (below != placeOn) return false;
 
             for (int i = 0; i < 6; i++)
@@ -37,7 +36,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
                 if (!Chunk.PosValid(localX, wy, localZ)) return false;
 
                 //get current and below blocks stop placing if space is not valid
-                var current = chunk.GetBlockUnsafe(localX, wy, localZ);
+                var current = chunk.GetBlockStateUnsafe(localX, wy, localZ);
                 if (current != Block.AIR) return false;
             }
 

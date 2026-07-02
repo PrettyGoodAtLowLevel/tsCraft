@@ -12,7 +12,6 @@ namespace OurCraft.Graphics
         private readonly BlockVAO vao;
         private readonly BlockVBO vbo;
         private readonly EBO ebo;
-        public static Texture globalBlockTexture = new();
 
         //mesh stats
         private List<uint> indices = new List<uint>();
@@ -41,12 +40,6 @@ namespace OurCraft.Graphics
             vao.Delete();
             vbo.Delete();
             ebo.Delete();
-        }
-
-        //since this is a chunk/blocks, only load block textures 
-        public static void LoadChunkTextures()
-        {
-            globalBlockTexture.Load("Textures/dingledong.png");                    
         }
 
         //build the indices for the chunk
@@ -97,16 +90,18 @@ namespace OurCraft.Graphics
             IntPtr zPosOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.z));
             IntPtr uvOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.texUV));
             IntPtr lightingOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.lighting));
-            IntPtr normalOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.normal));
             IntPtr aoOffset = Marshal.OffsetOf <BlockVertex>(nameof(BlockVertex.ao));
+            IntPtr flagsOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.flags));
+            IntPtr texIDOffset = Marshal.OffsetOf<BlockVertex>(nameof(BlockVertex.texID));
 
-            vao.LinkAttrib(vbo, 0, 1, VertexAttribPointerType.Short, false, stride, xPosOffset);
-            vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.Float, false, stride, yPosOffset);
-            vao.LinkAttrib(vbo, 2, 1, VertexAttribPointerType.Short, false, stride, zPosOffset);
+            vao.LinkAttrib(vbo, 0, 1, VertexAttribPointerType.UnsignedShort, false, stride, xPosOffset);
+            vao.LinkAttrib(vbo, 1, 1, VertexAttribPointerType.UnsignedShort, false, stride, yPosOffset);
+            vao.LinkAttrib(vbo, 2, 1, VertexAttribPointerType.UnsignedShort, false, stride, zPosOffset);
             vao.LinkAttrib(vbo, 3, 2, VertexAttribPointerType.HalfFloat, false, stride, uvOffset);
             vao.LinkAttribInt(vbo, 4, 1, VertexAttribIntegerType.UnsignedShort, stride, lightingOffset); 
-            vao.LinkAttribInt(vbo, 5, 1, VertexAttribIntegerType.UnsignedByte, stride, normalOffset);
-            vao.LinkAttribInt(vbo, 6, 1, VertexAttribIntegerType.UnsignedByte, stride, aoOffset);
+            vao.LinkAttribInt(vbo, 5, 1, VertexAttribIntegerType.UnsignedByte, stride, aoOffset);
+            vao.LinkAttribInt(vbo, 6, 1, VertexAttribIntegerType.UnsignedByte, stride, flagsOffset);
+            vao.LinkAttribInt(vbo, 7, 1, VertexAttribIntegerType.UnsignedShort, stride, texIDOffset);
 
             vao.Unbind();
             vbo.Unbind();
@@ -133,6 +128,7 @@ namespace OurCraft.Graphics
             Vector3 relPos = (Vector3)(chunkWorldPos - camPos);
             Matrix4 model = Matrix4.CreateTranslation(relPos);
             shader.SetMatrix4("model", ref model);
+            shader.SetVector2("uChunkWorldPos", new Vector2((float)chunkWorldPos.X, (float)chunkWorldPos.Z));
 
             //bind vertex data and textures, then draw
             vao.Bind();

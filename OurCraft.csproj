@@ -24,6 +24,7 @@
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.9" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,7 +34,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Resources\Textures\BlockTextures\Logs\" />
     <Folder Include="Terrain Generation\Structures\" />
+    <Folder Include="World\ChunkGeneration\Building\" />
   </ItemGroup>
 
 </Project>

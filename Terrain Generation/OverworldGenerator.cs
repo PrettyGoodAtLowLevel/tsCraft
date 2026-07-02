@@ -1,5 +1,4 @@
 ﻿using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using System.Runtime.CompilerServices;
 using OurCraft.Terrain_Generation.Noise;
@@ -14,7 +13,7 @@ namespace OurCraft.Terrain_Generation
         public const int SEA_LEVEL = WorldGenConstants.DEFAULT_SEA_LEVEL;
         public const int MIN_HEIGHT = WorldGenConstants.DEFAULT_MIN_HEIGHT;
         public const int MAX_HEIGHT = WorldGenConstants.DEFAULT_MAX_HEIGHT;
-        public const float MAX_AMP = 256;
+        public const float MAX_AMP = 128;
 
         static BlockState worldBlock;
         static BlockState emptyBlock;

@@ -81,7 +81,7 @@ namespace OurCraft.Entities
             PlayerController c = player.AddComponent<PlayerController>();
             PlayerInteractions i = player.AddComponent<PlayerInteractions>();
             player.AddComponent<PhysicsObj>();                       
-            player.AddComponent<DayNightCycle>();
+            player.AddComponent<SkyColorChanger>();
 
             camera.AddComponent<CameraRender>();
             viewModel.AddComponent<ViewModelSway>();
@@ -91,7 +91,7 @@ namespace OurCraft.Entities
             i.orientation = camera.Transform;
             c.OnStart();
 
-            playerHand.LoadModel("playerSkin.json", "Textures/Mc Skins/timeBoss.png");
+            playerHand.LoadModel("EntityModels/playerSkin.json", "Textures/Mc Skins/timeBoss.png");
             playerHand.model.root.localScale *= (Vector3.One * 0.65f);
             viewModel.Transform.localPosition = new Vector3d(0.125, -0.6, -0.115);
             viewBobbing.OnStart();
@@ -150,7 +150,7 @@ namespace OurCraft.Entities
     public class PlayerControllerSystem : BaseSystem<PlayerController> { }
     public class PlayerInteractionSystem : BaseSystem<PlayerInteractions> { }
     public class ConstantMovementSystem : BaseSystem<ConstantMovement> { }
-    public class DayNightCycleSystem : BaseSystem<DayNightCycle> { }
+    public class DayNightCycleSystem : BaseSystem<SkyColorChanger> { }
     public class ViewModelSwaySystem : BaseSystem<ViewModelSway> { }
     public class ViewBobbingSystem : BaseSystem<ViewBobbing> { }
 }

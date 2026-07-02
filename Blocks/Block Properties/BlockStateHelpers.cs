@@ -1,0 +1,216 @@
+﻿namespace OurCraft.Blocks.Block_Properties
+{
+    //interface for decoding and encoding block property values into ushort metadata
+    public interface IBlockProperty
+    {
+        //number of bits this property consumes in blockstate metadata
+        int BitCount { get; }
+
+        object Decode(ushort data);
+        ushort Encode(ushort oldData, object value);
+    }
+
+    //generic property interface extends marker
+    public interface IBlockProperty<T> : IBlockProperty
+    {
+        new T Decode(ushort data);
+        ushort Encode(ushort oldData, T newValue);
+    }
+
+    //allows to stack properties ontop of eachother without worrying about order and bit count
+    public class PropertyLayoutBuilder
+    {
+        private int currentOffset = 0;
+        public int BitsUsed => currentOffset;
+
+        //add enum, increase bitcount by how many elements in enum
+        public EnumProperty<T> AddEnum<T>() where T : Enum
+        {
+            int count = Enum.GetValues(typeof(T)).Length;
+            int bitCount = Math.Max(1, (int)Math.Ceiling(Math.Log(count, 2)));
+            var prop = new EnumProperty<T>(currentOffset, bitCount);
+            currentOffset += bitCount;
+            return prop;
+        }
+
+        //add bool property, increase bitcount by 1
+        public BoolProperty AddBool()
+        {
+            var prop = new BoolProperty(currentOffset);
+            currentOffset += 1;
+            return prop;
+        }
+
+        //add byte property, increase bitcount by 8
+        public ByteProperty AddByte()
+        {
+            var prop = new ByteProperty(currentOffset);
+            currentOffset += 8; return prop;
+        }
+    }
+
+    //contains the default block state, state lookup, and all possible state combinations
+    public class BlockStateContainer
+    {
+        //all possible states (ordered by metadata)
+        public BlockState[] States = [];
+
+        //default state (metadata == 0)
+        public BlockState DefaultState;
+
+        //lookup by metadata value (0 .. MetaSize-1)
+        public BlockState[] MetaLookup = [];
+
+        //optional dictionary for quick existence checks or other uses
+        public Dictionary<ushort, BlockState> StateLookup = [];
+    }
+
+    //contains helper methods for easily using blockstates
+    public static class BlockStateExtensions
+    {
+        //fluent wrapper that uses the block's container to return a cached state
+        public static BlockState With<T>(this BlockState state, IBlockProperty<T> property, T value)
+        {
+            var block = state.GetBlock;
+            var container = block.StateContainer;
+
+            //return if property doesnt exist
+            if (!block.HasProperty(property)) return container.DefaultState;
+
+            //compute new metadata using the property's Encode
+            ushort newMeta = property.Encode(state.MetaData, value);
+            if (newMeta < container.MetaLookup.Length) return container.MetaLookup[newMeta];
+
+            return container.DefaultState;
+        }
+
+        //generate all states for a block and return a container, found this code online not mine
+        public static BlockStateContainer GenerateStates(Block block)
+        {
+            //compute total bits used by summing property bit counts
+            int bitsUsed = block.Properties.Sum(p => p.BitCount);
+            int metaSize = 1 << bitsUsed;
+
+            //number of metadata combinations
+            var allStates = new BlockState[metaSize];
+
+            //create every metadata combination
+            for (int meta = 0; meta < metaSize; meta++)
+            {
+                allStates[meta] = new BlockState(block.GetID(), (ushort)meta);
+            }
+            var container = new BlockStateContainer
+            {
+                States = allStates,
+                MetaLookup = allStates,
+                StateLookup = new Dictionary<ushort, BlockState>(metaSize)
+            };
+            //fill dictionary and default state
+            for (ushort i = 0; i < allStates.Length; i++)
+            {
+                container.StateLookup[i] = allStates[i];
+            }
+            container.DefaultState = container.States[0];
+            return container;
+        }
+    }
+
+    //enum property
+    public class EnumProperty<T> : IBlockProperty<T> where T : Enum
+    {
+        private readonly int bitOffset;
+        private readonly int bitCount; private readonly T[] values;
+        public int BitCount => bitCount;
+
+        public EnumProperty(int offset, int bitCount)
+        {
+            values = Enum.GetValues(typeof(T)) as T[] ?? throw new Exception("Enum type invalid.");
+            bitOffset = offset; this.bitCount = bitCount;
+        }
+
+        public T Decode(ushort data)
+        {
+            int mask = (1 << bitCount) - 1;
+            int index = (data >> bitOffset) & mask;
+            if (index < 0 || index >= values.Length)
+                index = 0; return values[index];
+        }
+
+        object IBlockProperty.Decode(ushort data) => Decode(data);
+        public ushort Encode(ushort oldData, T newValue)
+        {
+            int mask = (1 << bitCount) - 1;
+            int index = Array.IndexOf(values, newValue);
+            if (index < 0 || index > mask) throw new Exception($"Invalid value {newValue} for property.");
+
+            //clear the existing bits
+            oldData = (ushort)(oldData & ~(mask << bitOffset));
+
+            //set the new value
+            return (ushort)(oldData | (index << bitOffset));
+        }
+        ushort IBlockProperty<T>.Encode(ushort oldData, T newValue) => Encode(oldData, newValue);
+
+        //boxed encode for non-generic interface
+        ushort IBlockProperty.Encode(ushort oldData, object value)
+        {
+            return Encode(oldData, (T)value);
+        }
+    }
+
+    //bool property
+    public class BoolProperty : IBlockProperty<bool>
+    {
+        private readonly int bitOffset;
+        private readonly int bitCount = 1;
+        public int BitCount => bitCount;
+
+        public BoolProperty(int offset)
+        {
+            bitOffset = offset;
+        }
+
+        public bool Decode(ushort data)
+        {
+            return ((data >> bitOffset) & 1) != 0;
+        }
+
+        object IBlockProperty.Decode(ushort data) => Decode(data);
+
+        public ushort Encode(ushort oldData, bool newValue)
+        {
+            ushort cleared = (ushort)(oldData & ~(1 << bitOffset));
+            return (ushort)(cleared | ((newValue ? 1 : 0) << bitOffset));
+        }
+
+        ushort IBlockProperty<bool>.Encode(ushort oldData, bool newValue) => Encode(oldData, newValue);
+        ushort IBlockProperty.Encode(ushort oldData, object value) => Encode(oldData, (bool)value);
+    }
+
+    //byte property
+    public class ByteProperty : IBlockProperty<byte>
+    {
+        private readonly int bitOffset;
+        private readonly int bitCount = 8;
+        public ByteProperty(int offset)
+        {
+            bitOffset = offset;
+        }
+
+        public int BitCount => bitCount;
+        public byte Decode(ushort data)
+        {
+            return (byte)((data >> bitOffset) & 0xFF);
+        }
+
+        object IBlockProperty.Decode(ushort data) => Decode(data);
+        public ushort Encode(ushort oldData, byte newValue)
+        {
+            ushort cleared = (ushort)(oldData & ~(0xFF << bitOffset));
+            return (ushort)(cleared | (newValue << bitOffset));
+        }
+
+        ushort IBlockProperty<byte>.Encode(ushort oldData, byte newValue) => Encode(oldData, newValue);
+        ushort IBlockProperty.Encode(ushort oldData, object value) => Encode(oldData, (byte)value);
+    }
+}

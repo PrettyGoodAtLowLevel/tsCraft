@@ -4,16 +4,18 @@
   "AOSupport": true,
 
   "FaceCull": {
-    "Bottom": "FullBlock",
-    "Top": "FullBlock",
-    "Front": "FullBlock",
-    "Back": "FullBlock",
-    "Right": "FullBlock",
-    "Left": "FullBlock"
+    "Bottom": "Leaves",
+    "Top": "Leaves",
+    "Front": "Leaves",
+    "Back": "Leaves",
+    "Right": "Leaves",
+    "Left": "Leaves"
   },
+
 
   "Elements": [
     {
+      "Sway": true,
       "From": [ 0, 0, 0 ],
       "To": [ 16, 16, 16 ],
 

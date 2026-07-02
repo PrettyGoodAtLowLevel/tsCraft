@@ -1,7 +1,9 @@
-﻿using OurCraft.Blocks.Block_Properties;
+﻿using OurCraft.Blocks;
+using OurCraft.Blocks.Block_Properties;
 using OurCraft.Graphics;
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
+using System.Runtime.CompilerServices;
 
 namespace OurCraft.World
 {
@@ -11,7 +13,9 @@ namespace OurCraft.World
     {
         public const int SUBCHUNK_SIZE = WorldConstants.SUBCHUNK_SIZE_IN_BLOCKS;
         public const int CHUNK_WIDTH = WorldConstants.CHUNK_WIDTH;
+
         public bool isAllAir = true;
+        public bool hasRandomTick = false;
 
         //world data
         public int ChunkXPos { get; private set; } = 0;
@@ -21,7 +25,7 @@ namespace OurCraft.World
 
         //block storage
         private IBlockIndexStorage blockIndices;
-        public readonly BlockPalette palette;
+        public BlockPalette palette;
         public List<ushort> lightSources = [];
 
         //mesh data
@@ -70,6 +74,7 @@ namespace OurCraft.World
             if (paletteIndex > byte.MaxValue && blockIndices is ByteBlockStorage) UpgradeStorage();
 
             if (state != OverworldGenerator.EmptyBlock) isAllAir = false;
+            if (state.GetBlock.RequiresRandomTicks) hasRandomTick = true;
 
             blockIndices.Set(index, paletteIndex);
         }
@@ -99,16 +104,6 @@ namespace OurCraft.World
 
             for (int i = 0; i < oldStorage.Length; i++) newStorage.Set(i, oldStorage.Get(i));            
             blockIndices = newStorage;
-        }
-
-        public override string ToString()
-        {
-            string str = "";
-
-            str += $"SubChunk in chunk pos: ({ChunkXPos}, {ChunkYPos}, {ChunkZPos}), ";
-            str += $"Light Sources: {lightSources.Count}";
-
-            return str;
         }
     }
 }

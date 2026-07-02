@@ -1,5 +1,4 @@
 ﻿using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
 using OurCraft.Terrain_Generation.Noise;
@@ -30,7 +29,7 @@ namespace OurCraft.World.ChunkGeneration.WorldGen
                     {
                         BlockState current = subChunk.GetBlockState(x, y, z);
                         BlockState above = y + 1 < SUBCHUNK_SIZE ? subChunk.GetBlockState(x, y + 1, z) :
-                        subChunk.parent.GetBlockUnsafe(cxp + x, y + cyp + 1, czp + z);
+                        subChunk.parent.GetBlockStateUnsafe(cxp + x, y + cyp + 1, czp + z);
 
                         bool currentEligible = current != Block.AIR && current != biome.WaterBlock && current != biome.WaterSurfaceBlock;
                         bool aboveEligible = above == Block.AIR || above == biome.WaterBlock || above == biome.WaterSurfaceBlock;

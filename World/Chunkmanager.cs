@@ -1,14 +1,22 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
 using OurCraft.Utility;
-using OurCraft.Blocks.Block_Properties;
 using System.Collections.Concurrent;
 using OurCraft.World.ChunkGeneration;
 using OurCraft.Physics;
 using OurCraft.Entities;
+using OurCraft.World.ChunkUpdates;
+using System.Diagnostics;
 
 namespace OurCraft.World
 {
+    public enum BlockUpdateFlags
+    {
+        INTERNAL,
+        MESH_ONLY,
+        FULL_REBUILD,
+    }
+
     //manages chunk generation, block getting, and block modifiying
     //uses multithreading queues to manage which chunks to generate
     public class ChunkManager
@@ -37,6 +45,7 @@ namespace OurCraft.World
         //rendering
         public int RenderDistance { get; private set; } = 0;
         public int WorldDistance { get => RenderDistance + 1; }
+        public int SimulationDistance { get; private set; } = 0;
 
         //player refrences
         ChunkCoord lastPlayerChunk;
@@ -46,11 +55,15 @@ namespace OurCraft.World
         private readonly ThreadPoolSystem terrainGenThread;
         private readonly ThreadPoolSystem lightThread;
 
+        //block updates
+        private readonly double BlockUpdateTime = PhysicsConstants.BLOCK_TICK;
+        private double chunkRandomTickTimer = 0.0f;
+
         //gl uploading
         private double ChunkBuildTime = 0.01; //changes based on player speed, and chunkmap size
         private double chunkBuildTimer = 0.0f;
 
-        public ChunkManager(int renderDistance, ref ThreadPoolSystem terGen, ref ThreadPoolSystem lighting)
+        public ChunkManager(int renderDistance, int simDistance, ref ThreadPoolSystem terGen, ref ThreadPoolSystem lighting)
         { 
             terrainGenThread = terGen;        
             lightThread = lighting;
@@ -59,6 +72,7 @@ namespace OurCraft.World
             if (playerEnt != null) playerTracking = playerEnt.Transform;
             
             RenderDistance = renderDistance;
+            SimulationDistance = simDistance;
             Generate();
         }
 
@@ -405,6 +419,24 @@ namespace OurCraft.World
             }
         }
 
+        //random ticks all chunks close to player
+        private void ProcessRandomTick()
+        {
+            ChunkCoord playerChunk = GetPlayerChunk();
+
+            for (int x = playerChunk.X - SimulationDistance; x <= playerChunk.X + SimulationDistance; x++)
+            {
+                for (int z = playerChunk.Z - SimulationDistance; z <= playerChunk.Z + SimulationDistance; z++)
+                {
+                    ChunkCoord coord = new(x, z);
+                    Chunk? chunk = GetChunk(coord);
+
+                    if (chunk == null || !ChunkRandomTickable(coord)) continue;
+                    RandomBlockTick.TickChunk(this, chunk);
+                }
+            }
+        }
+
         //load and unload chunks, and do multithreading stuff
         public void Update()
         {        
@@ -420,10 +452,9 @@ namespace OurCraft.World
             //manage chunks
             ProcessTerrainGenQueue();
             ProcessStructureQueue();
-
             ProcessLightQueue();
-            ProcessMeshQueue();
 
+            ProcessMeshQueue();
             ProcessRemeshQueue();
             ProcessChunkUploadQueue();
 
@@ -432,6 +463,13 @@ namespace OurCraft.World
             ProcessDeletedChunks();
 
             chunkBuildTimer += Time.DeltaTime;
+            chunkRandomTickTimer += Time.DeltaTime;
+
+            while(chunkRandomTickTimer >= BlockUpdateTime)
+            {
+                ProcessRandomTick();
+                chunkRandomTickTimer -= BlockUpdateTime;
+            }
         }
 
         //fully deletes a chunk
@@ -651,7 +689,33 @@ namespace OurCraft.World
             return chunk.GetState() == ChunkState.Mesh_Built || chunk.GetState() == ChunkState.Render_Ready;
         }
 
-        //get block state
+        private bool ChunkRandomTickable(ChunkCoord coord)
+        {
+            //get this chunk and adjacent chunks
+            Chunk? thisChunk, left, right, back, front;
+            thisChunk = GetChunk(coord);
+            left = GetChunk(new ChunkCoord(coord.X - 1, coord.Z));
+            right = GetChunk(new ChunkCoord(coord.X + 1, coord.Z));
+            front = GetChunk(new ChunkCoord(coord.X, coord.Z + 1));
+            back = GetChunk(new ChunkCoord(coord.X, coord.Z - 1));
+
+            //if chunks dont exist or dont have block data, then back out
+            if (thisChunk == null || left == null || right == null || front == null || back == null) return false;
+            if (!thisChunk.Modifiyable() || !left.Modifiyable() || !right.Modifiyable() || !front.Modifiyable() || !back.Modifiyable()) return false;
+
+            //get corners as well
+            Chunk? backLeft, backRight, frontLeft, frontRight;
+            backLeft = GetChunk(new ChunkCoord(coord.X - 1, coord.Z - 1));
+            backRight = GetChunk(new ChunkCoord(coord.X + 1, coord.Z - 1));
+            frontLeft = GetChunk(new ChunkCoord(coord.X - 1, coord.Z + 1));
+            frontRight = GetChunk(new ChunkCoord(coord.X + 1, coord.Z + 1));
+
+            if (backLeft == null || backRight == null || frontLeft == null || frontRight == null) return false;
+            if (!backLeft.Modifiyable() || !backRight.Modifiyable() || !frontLeft.Modifiyable() || !frontRight.Modifiyable()) return false;
+
+            return true;
+        }
+
         public BlockState GetBlockState(Vector3d pos)
         {
             //world to chunk coord
@@ -666,7 +730,25 @@ namespace OurCraft.World
             int ly = (int)Math.Floor(pos.Y);
             int lz = ModPow2((int)Math.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
 
-            return chunk.GetBlockSafe(lx, ly, lz);
+            return chunk.GetBlockStateSafe(lx, ly, lz);
+        }
+
+        //helper to try to fetch block entities in a chunk
+        public BlockEntity? TryGetBlockEntity(Vector3d pos)
+        {
+            int chunkX = (int)Math.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)Math.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
+            Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
+            if (chunk == null || chunk.GetState() != ChunkState.Render_Ready) return null;
+
+            //get local coords
+            int lx = ModPow2((int)Math.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
+            int ly = (int)Math.Floor(pos.Y);
+            int lz = ModPow2((int)Math.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
+
+            int localIndex = VoxelMath.ToBlockEntityIndex(lx, ly, lz);
+            chunk.TryGetBlockEntity(localIndex, out BlockEntity? entity);
+            return entity;
         }
 
         //get the light in a chunk
@@ -687,8 +769,26 @@ namespace OurCraft.World
             return chunk.GetLight(lx, ly, lz);
         }
 
-        //try set block in a chunk
-        public void SetBlock(Vector3d pos, BlockState state)
+        //get skylight from global pos
+        public byte GetSkyLight(Vector3d globalPos)
+        {
+            //world to chunk coord
+            int chunkX = (int)Math.Floor(globalPos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)Math.Floor(globalPos.Z / WorldConstants.CHUNK_WIDTH);
+            Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
+
+            if (chunk == null || chunk.GetState() != ChunkState.Render_Ready) return 15;
+
+            //get local coords
+            int lx = ModPow2((int)Math.Floor(globalPos.X), WorldConstants.CHUNK_WIDTH);
+            int ly = (int)Math.Floor(globalPos.Y);
+            int lz = ModPow2((int)Math.Floor(globalPos.Z), WorldConstants.CHUNK_WIDTH);
+            if (ly > WorldConstants.CHUNK_HEIGHT) return 15;
+
+            return VoxelMath.UnpackLight16Sky(chunk.GetLight(lx, ly, lz));
+        }
+
+        public void SetBlockState(Vector3d pos, BlockState state)
         {
             if (pos.Y < 0 || pos.Y >= WorldConstants.CHUNK_HEIGHT) return;
             //world to chunk coord
@@ -703,8 +803,8 @@ namespace OurCraft.World
             if (chunk == null || chunk.GetState() != ChunkState.Render_Ready) return;
 
             //update light
-            BlockState prev = chunk.GetBlockSafe(lx, ly, lz);
-            chunk.SetBlock(lx, ly, lz, state);
+            BlockState prev = chunk.GetBlockStateSafe(lx, ly, lz);
+            chunk.SetBlockState(lx, ly, lz, state);
             
             if (prev.IsLightSource) VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);
             if (!state.LightPassable) VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);              
@@ -714,6 +814,47 @@ namespace OurCraft.World
             if (state.IsLightSource) VoxelLightingEngine.AddBlockLight(this, chunk, state, (Vector3i)pos);
 
             //chunks need to be updated
+            MarkPosDirty((Vector3i)pos, chunk);
+            ModifyEnqueue(chunk);
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX + 1, chunkZ)));
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX - 1, chunkZ)));
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX, chunkZ + 1)));
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX, chunkZ - 1)));
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX + 1, chunkZ + 1)));
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX - 1, chunkZ - 1)));
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX - 1, chunkZ + 1)));
+            ModifyEnqueue(GetChunk(new ChunkCoord(chunkX + 1, chunkZ - 1)));
+        }
+
+        public void SetBlock(Vector3d pos, BlockState state, BlockUpdateFlags updateFlags = BlockUpdateFlags.FULL_REBUILD)
+        {   
+            if (pos.Y < 0 || pos.Y >= WorldConstants.CHUNK_HEIGHT) return;
+            //world to chunk coord
+            int chunkX = (int)Math.Floor(pos.X / WorldConstants.CHUNK_WIDTH);
+            int chunkZ = (int)Math.Floor(pos.Z / WorldConstants.CHUNK_WIDTH);
+            Chunk? chunk = GetChunk(new ChunkCoord(chunkX, chunkZ));
+
+            //get local chunk positions
+            int lx = ModPow2((int)Math.Floor(pos.X), WorldConstants.CHUNK_WIDTH);
+            int ly = (int)Math.Floor(pos.Y);
+            int lz = ModPow2((int)Math.Floor(pos.Z), WorldConstants.CHUNK_WIDTH);
+            if (chunk == null || chunk.GetState() != ChunkState.Render_Ready) return;
+        
+            BlockState prev = chunk.GetBlockStateSafe(lx, ly, lz);
+            chunk.SetBlock(new Vector3i(lx, ly, lz), state);
+            if (updateFlags == BlockUpdateFlags.INTERNAL) return; //opt out if only internal state change, no model/shape change
+
+            //update light if full rebuild
+            if (updateFlags == BlockUpdateFlags.FULL_REBUILD)
+            {
+                if (prev.IsLightSource) VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);
+                if (!state.LightPassable) VoxelLightingEngine.RemoveBlockLight(this, chunk, (Vector3i)pos);
+                if (state.SkyLightAttenuation != VoxelLightingEngine.MIN_LIGHT) VoxelLightingEngine.RemoveSkyLight(this, chunk, (Vector3i)pos);
+                else if (!prev.LightPassable || prev.SkyLightAttenuation != VoxelLightingEngine.MAX_LIGHT) VoxelLightingEngine.RemoveLightBlocker(this, (Vector3i)pos);
+                if (state.IsLightSource) VoxelLightingEngine.AddBlockLight(this, chunk, state, (Vector3i)pos);
+            }
+
+            //if mesh only rebuild or full rebuild update mesh
             MarkPosDirty((Vector3i)pos, chunk);
             ModifyEnqueue(chunk);
             ModifyEnqueue(GetChunk(new ChunkCoord(chunkX + 1, chunkZ)));

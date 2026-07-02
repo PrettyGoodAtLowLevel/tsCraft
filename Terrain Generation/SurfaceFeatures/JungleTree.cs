@@ -34,7 +34,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
 
                     for (int i = 0; i < MAX_JUNGLE_HEIGHT; i++)
                     {
-                        if (target.GetBlockUnsafe(localX, startPos.Y + i, localZ) != Block.AIR) return false;
+                        if (target.GetBlockStateUnsafe(localX, startPos.Y + i, localZ) != Block.AIR) return false;
                     }
                 }
             }

@@ -1,5 +1,4 @@
 ﻿using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation.Registries;
 using OurCraft.Utility;
 using System.Text.Json;

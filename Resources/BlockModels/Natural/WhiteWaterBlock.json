@@ -1,0 +1,66 @@
+﻿{
+  "Name": "white_water_block",
+  "IsTranslucent": true,
+  "AOSupport": true,
+
+  "FaceCull": {
+    "Bottom": "Glass",
+    "Top": "Glass",
+    "Front": "Glass",
+    "Back": "Glass",
+    "Right": "Glass",
+    "Left": "Glass"
+  },
+
+  "Elements": [
+    {
+      "From": [ 0, 0, 0 ],
+      "To": [ 16, 16, 16 ],
+
+      "Faces": {
+        "Top": {
+          "Texture": "WhiteWaterTex",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Top",
+          "AO": true
+        },
+        "Bottom": {
+          "Texture": "WhiteWaterTex",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Bottom",
+          "AO": true
+        },
+        "Front": {
+          "Texture": "WhiteWaterTex",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Front",
+          "AO": true
+        },
+        "Back": {
+          "Texture": "WhiteWaterTex",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Back",
+          "AO": true
+        },
+        "Right": {
+          "Texture": "WhiteWaterTex",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Right",
+          "AO": true
+        },
+        "Left": {
+          "Texture": "WhiteWaterTex",
+          "UV": [ 0, 0, 16, 16 ],
+          "Cullable": true,
+          "CullAxis": "Left",
+          "AO": true
+        }
+      }
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Blocks.Block_Properties;
+using OurCraft.Blocks;
 using OurCraft.Utility;
 using OurCraft.World;
 using System.Collections.Concurrent;
@@ -164,7 +164,7 @@ namespace OurCraft.Graphics.Voxel_Lighting
                     int lz = VoxelMath.ModPow2(wz, CHUNK_SIZE);
 
                     //check if light can pass through block
-                    BlockState state = chunk.GetBlockSafe(lx, wy, lz);
+                    BlockState state = chunk.GetBlockStateSafe(lx, wy, lz);
                     if (!state.LightPassable) continue;
 
                     //decrease light

@@ -38,7 +38,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
 
             for(int i = 0; i < startPos.Y + MAX_TREE_HEIGHT; i++)
             {
-                BlockState state = target.GetBlockUnsafe(localX, startPos.Y + i, localZ);
+                BlockState state = target.GetBlockStateUnsafe(localX, startPos.Y + i, localZ);
                 if (state != Block.AIR) return false;
             }
             return true;

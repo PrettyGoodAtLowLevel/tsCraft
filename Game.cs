@@ -1,13 +1,15 @@
 ﻿using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using OurCraft.Utility;
 using OurCraft.Blocks;
-using OurCraft.World;
-using OurCraft.Graphics;
+using OurCraft.Blocks.Meshing;
 using OurCraft.Entities;
-using OurCraft.Terrain_Generation.Registries;
+using OurCraft.Graphics;
+using OurCraft.Graphics.Settings;
 using OurCraft.Terrain_Generation;
+using OurCraft.Terrain_Generation.Registries;
+using OurCraft.Utility;
+using OurCraft.World;
 
 namespace OurCraft
 {
@@ -21,8 +23,8 @@ namespace OurCraft
 
         //creates block data, entity data, then chunk manager + renderer
         public Game(NativeWindowSettings settings): base(GameWindowSettings.Default, settings)
-        {
-            TextureRegistry.InitTextures();
+        {          
+            BlockTextureManager.LoadAllTextures(FileConstants.RESOURCES_PATH + "/Textures/BlockTextures/", debug:false);       
             BlockRegistry.InitBlocks();
 
             OverworldGenerator.SetGlobalBlocks();
@@ -36,8 +38,9 @@ namespace OurCraft
             terrainGenThreads = new(threadCount: 4);
             lightingThread = new(threadCount: 1);
 
-            world = new ChunkManager(renderDistance:6, ref terrainGenThreads, ref lightingThread);          
+            world = new ChunkManager(renderDistance:6, simDistance:3, ref terrainGenThreads, ref lightingThread);          
             renderer = new Renderer(ref world, RenderingConstants.SCREEN_WIDTH, RenderingConstants.SCREEN_HEIGHT);
+            ShaderLoader.LoadShaders();
         }
 
         //first load, create resources here
@@ -53,7 +56,7 @@ namespace OurCraft
         {
             base.OnRenderFrame(args);
 
-            renderer.RenderSceneFrame();               
+            using (Profiler.Scope("Rendering")) renderer.RenderSceneFrame();               
             SwapBuffers();
         }
 

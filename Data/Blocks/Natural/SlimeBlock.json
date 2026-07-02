@@ -1,7 +1,22 @@
 ﻿{
   "Name": "Slime Block",
   "ModelPath": "Natural/SlimeBlock.json",
-  "Bounce": 0.9,
+  "IsOpaque": false,
+  "IsTranslucent": true,
+
+  "DetectsCollision": true,
+  "PhysicsSolid": true,
+  "IsFluid": false,
+
   "Friction": 25.0,
-  "WallFriction": 10.0
+  "Bounce": 0.9,
+  "WallFriction": 10.0,
+
+  "LightR": 0,
+  "LightB": 0,
+  "LightG": 0,
+  "SkyLightAttenuation": 1,
+
+  "IsLightSource": false,
+  "IsLightOpaque": false
 }

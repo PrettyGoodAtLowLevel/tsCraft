@@ -4,9 +4,41 @@
   "Humidity": "Normal",
   "Vegetation": "Sparse",
 
+  "SkyConfig": {
+    "SkyLightColor": {
+      "R": 0.60,
+      "G": 0.64,
+      "B": 0.74
+    },
+
+    "ZenithColor": {
+      "R": 0.10,
+      "G": 0.12,
+      "B": 0.32
+    },
+
+    "MidSkyColor": {
+      "R": 0.22,
+      "G": 0.28,
+      "B": 0.46
+    },
+
+    "HorizonColor": {
+      "R": 0.48,
+      "G": 0.56,
+      "B": 0.66
+    },
+
+    "HorizonHazeColor": {
+      "R": 0.62,
+      "G": 0.66,
+      "B": 0.72
+    }
+  },
+
   "Heights": {
     "Regular": 130,
-    "Ocean": 100,
+    "Ocean": 110,
     "Shore": 127,
     "Peak": 240
   },

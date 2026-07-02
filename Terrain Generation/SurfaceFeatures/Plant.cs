@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Utility;
 using OurCraft.World;
 
@@ -28,7 +27,7 @@ namespace OurCraft.Terrain_Generation.SurfaceFeatures
             int localZ = VoxelMath.ModPow2(startPos.Z, Chunk.CHUNK_WIDTH);
 
             if (!Chunk.PosValid(localX, startPos.Y - 1, localZ)) return false;
-            BlockState below = target.GetBlockUnsafe(localX, startPos.Y - 1, localZ);
+            BlockState below = target.GetBlockStateUnsafe(localX, startPos.Y - 1, localZ);
             return below == placeOn || below == altPlaceOn;
         }
 

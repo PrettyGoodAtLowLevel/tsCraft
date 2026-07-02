@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
-using OurCraft.Blocks.Block_Properties;
 using OurCraft.Terrain_Generation;
 using OurCraft.Utility;
 using OurCraft.Terrain_Generation.Noise;
@@ -28,8 +27,8 @@ namespace OurCraft.World.ChunkGeneration.WorldGen
 
                     for (int y = CHUNK_HEIGHT - 1; y >= 0; y--)
                     {
-                        BlockState current = chunk.GetBlockUnsafe(x, y, z);
-                        BlockState above = y + 1 < CHUNK_HEIGHT ? chunk.GetBlockUnsafe(x, y + 1, z) : Block.AIR;
+                        BlockState current = chunk.GetBlockStateUnsafe(x, y, z);
+                        BlockState above = y + 1 < CHUNK_HEIGHT ? chunk.GetBlockStateUnsafe(x, y + 1, z) : Block.AIR;
 
                         if (current != OverworldGenerator.GetSurfaceBlock(biome, y) || above != Block.AIR) continue;
 

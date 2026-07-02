@@ -1,6 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OurCraft.Utility;
+using System.Text;
 
 namespace OurCraft
 {
@@ -23,22 +24,30 @@ namespace OurCraft
         }
 
         //tries to load in shader source code from sepcified file paths
-        public void Create(string vertexFile, string fragmentFile)
+        //tries to load in shader source code from specified file paths
+        public void Create(string vertexFile, string fragmentFile, bool debug = false)
         {
             string shaderFilePath = shadersFilePath;
-
             string vertexCode = File.ReadAllText(shaderFilePath + vertexFile);
             string fragmentCode = File.ReadAllText(shaderFilePath + fragmentFile);
 
+            if (debug)
+            {
+                Console.WriteLine(vertexCode);
+                Console.WriteLine(fragmentCode);
+                Console.WriteLine($"Vertex: {vertexCode.Length} chars, {Encoding.UTF8.GetByteCount(vertexCode)} bytes");
+                Console.WriteLine($"Fragment: {fragmentCode.Length} chars, {Encoding.UTF8.GetByteCount(fragmentCode)} bytes");
+            }
+
             //load vshader
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vertexShader, vertexCode); 
+            SetShaderSource(vertexShader, vertexCode);
             GL.CompileShader(vertexShader);
             CheckShaderCompile(vertexShader, "VERTEX");
 
             //load fshader
             int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fragmentShader, fragmentCode);
+            SetShaderSource(fragmentShader, fragmentCode);
             GL.CompileShader(fragmentShader);
             CheckShaderCompile(fragmentShader, "FRAGMENT");
 
@@ -48,10 +57,19 @@ namespace OurCraft
             GL.AttachShader(ID, fragmentShader);
             GL.LinkProgram(ID);
             CheckProgramLink(ID);
-            
+
             //after fully compiled on gpu no reason to keep this extra data
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
+        }
+
+        //sets shader source using an explicit UTF-8 byte length, since GL.ShaderSource(int, string)
+        //uses string.Length (char count) instead of the actual UTF-8 byte count, which truncates
+        //the source if it contains any non-ASCII characters (e.g. smart quotes, en-dashes, etc.)
+        private static void SetShaderSource(int shader, string source)
+        {
+            int byteCount = Encoding.UTF8.GetByteCount(source);
+            GL.ShaderSource(shader, 1, new[] { source }, new[] { byteCount });
         }
 
         //free up vram at end of program
