@@ -14,7 +14,7 @@ using OurCraft.World.WorldData;
 
 namespace OurCraft
 {
-    //base application class
+    //base application thing idk
     public class Game : GameWindow
     {
         //UwU rawr OwO
