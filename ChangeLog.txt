@@ -1,0 +1,67 @@
+﻿-Update 0.5 Total
+
+	-Added Block Entities
+		-Block Entities are Blocks that contain extra data instead of just id and metadata
+		-The extra data can be from an entity refrence, to a whole item inventory, such as some type of container
+		-Each chunk contains a hash map of block entities, the map contains the position in the chunk as a key, then the entity as a value
+		-The Chunk now contains methods for placing blocks that takes into account of block entities
+		-Block Entities also have helper methods just like blocks do, such as on place, on interact, on removed, and on neighbor changed
+		-Block Entities will also be able to support custom rendering, outside of the chunk mesh, but that is yet to be added
+
+		-Overall Difficulty, 5/10 (Mainly a bunch of Boilerplate, no rendering dealt with yet)
+
+	-Added Random Tick Update
+		-Random Tick Update allows for blocks to get randomly updated
+		-In a given range around the player, select chunks to get "Random Ticked"
+		-When a chunk is random ticked, it iterates over its subchunks, each one getting "Random Ticked"
+		-When a subchunk is random ticked, 3 blocks at random will have their "Random Tick" method called
+		-Every Block's random tick method can be implemented differently, most blocks do nothing, some might randomly turn into trees
+		-To optimize, only subchunks with random tickable blocks are checked, and not all loaded chunks are random ticked
+		-Eventually this will probably be put on some worker thread, but for now being on the main thread is fine
+
+		-Overall Difficulty, 5/10 (Small optimization needed, but very simple in practice)
+				
+	-Add Extra features to Block Interface
+		-Added in many more methods for when using and interacting with blocks
+		-Each block may or may not have a custom implementation for the methods listed below
+		-void OnPlaced - called after a block has been placed and set in the world
+		-void OnRemoved - called after a block has been swapped out for a new one, typically air
+		-void OnNeighborChanged - called for the 6 neighbor blocks on any block change
+		-void OnRandomTick - called when random tick hits this block
+		-void OnInteract - called when a player interacts with this block
+		-bool HasBlockEntity - tells whether or not the block requires to spawn in a block entity
+		-BlockEntity CreateBlockEntity - creates a block entity and called when the block is added
+
+		-Overall Difficulty - 4/10 (Very simple Boilerplate changes)
+
+	-Changed Chunk Format 
+		-Original Chunk Format -> 2x24x2 subchunks stored in a chunk
+		-Each Subchunk is 16x16x16 Blocks big.
+		-Subchunks store block and mesh data
+		-Chunks store openGL render object, and lighting data (plus some other metadata, but its not that important)
+
+		-New Chunk Format -> 24 vertically stacked subchunks on top of eachother
+		-Chunks and subchunks still store the same things internally, except for how subchunks were stored in a chunk now
+		
+		-Format allows to mesh and create subchunks without needing to handle neighbor subchunks, only neighbor chunks
+		-chunk creation is also faster, intial chunk loading is quicker
+		-chunk uploads are also much faster, allowing to upload one chunk every frame instead of every 10th of a second
+
+		-only con is chunk manager tracks 4x more chunks, and 4x more draw calls
+		-however this will be optimized later on
+		-overall positive change due to chunk creation speed, and using a better known format that is more scaleable
+
+		-Overall Difficulty - 5/10 (Some Bugs dealt with, and some code changes needed, but only took a day)
+
+	-Reorganized the code base dramatically
+		-Grouped and moved files into more relavant folders
+		-Organized Shaders into respective file for each type of shader
+		-Refactored Chunk Meshing Code to be split into many helper classes
+		-Organized Physics code into their own files
+		-Cleaned up external data and assets into their respective folder for holding block data json and model data json
+		-Seperated Entity System Core logic from Entity System Gameplay logic
+		-Added Readme and changelog to project to help with scaleability
+
+		-Overall Difficulty - 2/10 (Took like less than an hour to clean everything up)
+
+	Overall Update Difficulty - 6/10 (Solid Changes + Moderate Additions, however most features only took a day or two)

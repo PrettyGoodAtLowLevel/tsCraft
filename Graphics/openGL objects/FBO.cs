@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace OurCraft.openGL_objects
+namespace OurCraft.Graphics.OpenGL_Objects
 {
     //a texture you can "draw into" and then use post processing on
     public class FBO

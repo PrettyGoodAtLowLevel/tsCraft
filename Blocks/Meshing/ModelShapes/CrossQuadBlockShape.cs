@@ -1,6 +1,7 @@
-﻿using OurCraft.Graphics;
-using OpenTK.Mathematics;
-using OurCraft.World;
+﻿using OpenTK.Mathematics;
+using OurCraft.Graphics.ChunkRendering;
+using OurCraft.World.WorldData;
+using OurCraft.World.WorldGeneration.Mesh_Building;
 
 namespace OurCraft.Blocks.Meshing.ModelShapes
 {

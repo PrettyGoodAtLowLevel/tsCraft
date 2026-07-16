@@ -1,8 +1,8 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.Meshing;
-using OurCraft.Physics;
-using OurCraft.World;
+using OurCraft.Physics.PhysicsData;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Blocks
 {

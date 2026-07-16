@@ -1,7 +1,8 @@
 ﻿using OpenTK.Mathematics;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
-using OurCraft.Physics;
+using OurCraft.Graphics.OpenGL_Objects;
+using OurCraft.Physics.PhysicsData;
 
 namespace OurCraft.Graphics.SkyRendering
 {

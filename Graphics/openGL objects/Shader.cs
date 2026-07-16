@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 using OurCraft.Utility;
 using System.Text;
 
-namespace OurCraft
+namespace OurCraft.Graphics.OpenGL_Objects
 {
     //compiles .vert and .frag files into shader source code for openGL
     //also allows to set the shader source for the current rendering path, and allows to manipulate currently bound shader uniforms

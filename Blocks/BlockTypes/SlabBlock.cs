@@ -1,9 +1,10 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
-using OurCraft.World;
 using OurCraft.Physics;
 using OurCraft.Utility;
 using OurCraft.Blocks.Meshing;
+using OurCraft.World.WorldData;
+using OurCraft.Physics.PhysicsData;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -28,7 +29,7 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //determines how we place a slab in the world based on the block we hit
-        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState thisBlock, ChunkManager world)
         {
             SlabType thisBlockState = thisBlock.GetProperty(SLAB_TYPE);
             SlabType stateToPlace = SlabType.Bottom;
@@ -44,7 +45,7 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //get the AABB if slab was placed in world spot
-        public override CollisionShape GetPredictedCollisionShape(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        public override CollisionShape GetPredictedCollisionShape(Vector3 globalPos, Vector3 hitNormal, BlockState thisBlock, ChunkManager world)
         {
             SlabType thisBlockState = thisBlock.GetProperty(SLAB_TYPE);
             SlabType stateToPlace = SlabType.Bottom;

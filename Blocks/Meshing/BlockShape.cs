@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Graphics;
-using OurCraft.World;
+using OurCraft.Graphics.ChunkRendering;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Blocks.Meshing
 {

@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
 using OurCraft.Utility;
-using OurCraft.World;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Terrain_Generation
 {

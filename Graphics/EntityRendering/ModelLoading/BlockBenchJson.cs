@@ -7,7 +7,7 @@ namespace OurCraft.Graphics.EntityRendering.ModelLoading
 {
     public class GeoRoot
     {
-        private static readonly string geoFilePath = FileConstants.RESOURCES_PATH;
+        private static readonly string geoFilePath = FileConstants.ASSETS_PATH;
 
         [JsonPropertyName("minecraft:geometry")]
         public GeoGeometry[]? MinecraftGeometry { get; set; }

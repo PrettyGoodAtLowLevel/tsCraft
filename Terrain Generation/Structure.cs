@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Physics;
+using OurCraft.Physics.PhysicsData;
 
 namespace OurCraft.Terrain_Generation
 {

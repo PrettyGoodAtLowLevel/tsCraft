@@ -1,8 +1,8 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.Meshing;
-using OurCraft.Physics;
-using OurCraft.World;
+using OurCraft.Physics.PhysicsData;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Blocks
 {
@@ -68,11 +68,12 @@ namespace OurCraft.Blocks
         public virtual void OnRemoved(Vector3i pos, ChunkManager world, BlockState state) { }
 
         //determines each block's way of changing the chunk block state data when placed
-        public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) { }
+        public virtual void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState thisBlock, ChunkManager world) { }
         //determines which block state will be placed in the world if block was placed by player
-        public virtual CollisionShape GetPredictedCollisionShape(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world) 
+        public virtual CollisionShape GetPredictedCollisionShape(Vector3 globalPos, Vector3 hitNormal, BlockState thisBlock, ChunkManager world) 
         { return DefaultState.GetCollisionShape(); }
 
+        //br br patabim
         //block state
         public virtual void DebugState(BlockState state) { Console.Write("\n" + DefaultState.Name); }
         public string GetBlockName() => name;

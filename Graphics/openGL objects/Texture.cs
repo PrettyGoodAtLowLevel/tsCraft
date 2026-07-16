@@ -1,8 +1,8 @@
 ﻿using OpenTK.Graphics.OpenGL4;
-using OurCraft.Graphics.openGL_objects.OurCraft;
+using OurCraft.Utility;
 using StbImageSharp;
 
-namespace OurCraft
+namespace OurCraft.Graphics.OpenGL_Objects
 {
     //picture data mapped onto mesh vertices
     public class Texture
@@ -18,7 +18,7 @@ namespace OurCraft
         public bool Load(string filename, TextureUnit unit = TextureUnit.Texture0)
         {
             //get correct orientation 
-            string fullPath = "C:/Users/alial/OneDrive/Desktop/OurCraft/Resources/" + filename; 
+            string fullPath = FileConstants.ASSETS_PATH + filename; 
             StbImage.stbi_set_flip_vertically_on_load(1); 
 
             //load image using StbImageSharp

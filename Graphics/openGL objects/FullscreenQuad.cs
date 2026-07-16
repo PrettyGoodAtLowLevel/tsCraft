@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace OurCraft.Graphics
+namespace OurCraft.Graphics.OpenGL_Objects
 {
     //full screen render texture for post processing
     public class FullscreenQuad

@@ -1,5 +1,5 @@
-﻿using OurCraft.Physics;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
+using OurCraft.Physics.PhysicsData;
 
 namespace OurCraft.Graphics.EntityRendering
 {

@@ -20,7 +20,7 @@
         private volatile bool stopFlag = false;
 
         //create a list of set threads and start their worker loop
-        public ThreadPoolSystem(int threadCount)
+        public ThreadPoolSystem(int threadCount, string name)
         {
             workers = new List<Thread>(threadCount);
             taskQueue = new Queue<Action>();
@@ -31,7 +31,7 @@
                 var worker = new Thread(WorkerLoop)
                 {
                     IsBackground = true,
-                    Name = $"ThreadPoolWorker_{i}"
+                    Name = $"ThreadPoolWorker_{name}_{i}"
                 };
                 workers.Add(worker);
                 worker.Start();
