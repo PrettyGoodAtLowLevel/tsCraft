@@ -1,6 +1,7 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.Physics;
 using System.Text.Json;
+using OurCraft.Graphics.OpenGL_Objects;
+using OurCraft.Physics.PhysicsData;
 
 namespace OurCraft.Graphics.EntityRendering.ModelLoading
 {

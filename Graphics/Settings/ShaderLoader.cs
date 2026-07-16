@@ -1,4 +1,6 @@
 ﻿using OpenTK.Mathematics;
+using OurCraft.Utility;
+using OurCraft.Graphics.OpenGL_Objects;
 
 namespace OurCraft.Graphics.Settings
 {   
@@ -21,8 +23,8 @@ namespace OurCraft.Graphics.Settings
         //create all shaders
         private static void CreateShaders()
         {
-            Renderer.blockShader.Create("block.vert", "block.frag");
-            Renderer.transparentBlockShader.Create("block.vert", "blockOIT.frag");
+            Renderer.blockShader.Create("BlockRendering/block.vert", "BlockRendering/block.frag");
+            Renderer.transparentBlockShader.Create("BlockRendering/block.vert", "BlockRendering/blockOIT.frag");
 
             Renderer.debugAABBShader.Create("DebugDrawing/DebugAABB.vert", "DebugDrawing/DebugAABB.frag");
             Renderer.entityShader.Create("EntityDrawing/Entity.vert", "EntityDrawing/Entity.frag");
@@ -99,6 +101,8 @@ namespace OurCraft.Graphics.Settings
         {
             shader.Activate();
             shader.SetVector3("skyColor", Renderer.Settings.Sky.SkyLightColor);
+            shader.SetFloat("uChunkSize", WorldConstants.CHUNK_WIDTH);
+            shader.SetFloat("uChunkHeight", WorldConstants.CHUNK_HEIGHT);
         }
 
         //sets up all sky shader uniforms

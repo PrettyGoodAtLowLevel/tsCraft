@@ -2,7 +2,7 @@
 using OurCraft.Blocks.Block_Implementations;
 using OurCraft.Blocks.BlockEntities;
 using OurCraft.Blocks.Meshing;
-using OurCraft.World;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Blocks.BlockTypes
 {
@@ -19,9 +19,15 @@ namespace OurCraft.Blocks.BlockTypes
             };
         }
 
-        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState thisBlock, ChunkManager world)
         {
             world.SetBlock(globalPos + hitNormal, DefaultState);
+        }
+
+        public override void OnPlaced(Vector3i pos, ChunkManager world, BlockState state)
+        {
+            BlockEntity? ent = world.TryGetBlockEntity(pos);
+            if (ent == null) return;
         }
 
         public override bool HasBlockEntity => true;

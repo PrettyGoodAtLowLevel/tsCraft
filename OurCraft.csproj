@@ -34,9 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\Textures\BlockTextures\Logs\" />
     <Folder Include="Terrain Generation\Structures\" />
-    <Folder Include="World\ChunkGeneration\Building\" />
   </ItemGroup>
 
 </Project>

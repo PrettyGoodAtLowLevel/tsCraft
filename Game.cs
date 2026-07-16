@@ -1,21 +1,23 @@
 ﻿using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+
 using OurCraft.Blocks;
 using OurCraft.Blocks.Meshing;
-using OurCraft.Entities;
+using OurCraft.Entities.Internal;
 using OurCraft.Graphics;
 using OurCraft.Graphics.Settings;
 using OurCraft.Terrain_Generation;
 using OurCraft.Terrain_Generation.Registries;
 using OurCraft.Utility;
-using OurCraft.World;
+using OurCraft.World.WorldData;
 
 namespace OurCraft
 {
-    //base game class, holds all the game data
+    //base application class
     public class Game : GameWindow
     {
+        //UwU rawr OwO
         readonly ThreadPoolSystem terrainGenThreads;
         readonly ThreadPoolSystem lightingThread;
         readonly ChunkManager world;        
@@ -24,21 +26,21 @@ namespace OurCraft
         //creates block data, entity data, then chunk manager + renderer
         public Game(NativeWindowSettings settings): base(GameWindowSettings.Default, settings)
         {          
-            BlockTextureManager.LoadAllTextures(FileConstants.RESOURCES_PATH + "/Textures/BlockTextures/", debug:false);       
+            BlockTextureManager.LoadAllTextures(FileConstants.ASSETS_PATH + "/Textures/BlockTextures/", debug:false);       
             BlockRegistry.InitBlocks();
 
             OverworldGenerator.SetGlobalBlocks();
             SurfaceFeatureRegistry.InitSurfaceFeatures();
             DepositRegistry.InitDeposits();
             BiomeRegistry.Init();       
-
+            
             EntityManager.InitPlayer();
             Time.Reset();
 
-            terrainGenThreads = new(threadCount: 4);
-            lightingThread = new(threadCount: 1);
+            terrainGenThreads = new(threadCount: 4, "chunkGen");
+            lightingThread = new(threadCount: 1, "lighting");
 
-            world = new ChunkManager(renderDistance:6, simDistance:3, ref terrainGenThreads, ref lightingThread);          
+            world = new ChunkManager(renderDistance:10, simDistance:6, ref terrainGenThreads, ref lightingThread);          
             renderer = new Renderer(ref world, RenderingConstants.SCREEN_WIDTH, RenderingConstants.SCREEN_HEIGHT);
             ShaderLoader.LoadShaders();
         }
@@ -47,16 +49,14 @@ namespace OurCraft
         protected override void OnLoad()
         {           
             base.OnLoad();
-
             CursorState = CursorState.Grabbed;    
         }
 
         //rendering one frame, called after update, render things here
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            base.OnRenderFrame(args);
-
-            using (Profiler.Scope("Rendering")) renderer.RenderSceneFrame();               
+            base.OnRenderFrame(args);  
+            using (Profiler.Scope("Rendering")) renderer.RenderSceneFrame();                     
             SwapBuffers();
         }
 
@@ -64,13 +64,11 @@ namespace OurCraft
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             base.OnUpdateFrame(args);
-
             using (Profiler.Scope("Fixed Update")) EntityManager.FixedUpdate(world);
             using (Profiler.Scope("Update")) EntityManager.Update(world, KeyboardState, MouseState);
             using (Profiler.Scope("World Update")) world.Update();
-
             Time.Increment(args);
-
+    
             if (KeyboardState.IsKeyPressed(Keys.Escape)) Close();
         }
 
@@ -86,7 +84,6 @@ namespace OurCraft
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-
             renderer.ResizeScene(Size.X, Size.Y);
         }
     }

@@ -34,7 +34,7 @@ namespace OurCraft.Utility
         public const int REGION_SIZE_IN_CHUNKS = 8;
 
         public const int CHUNK_HEIGHT_IN_SUBCHUNKS = 24;
-        public const int CHUNK_WIDTH_IN_SUBCHUNKS = 2;
+        public const int CHUNK_WIDTH_IN_SUBCHUNKS = 1;
         public const int SUBCHUNK_SIZE_IN_BLOCKS = 16;
 
         public const int CHUNK_HEIGHT = SUBCHUNK_SIZE_IN_BLOCKS * CHUNK_HEIGHT_IN_SUBCHUNKS;
@@ -98,13 +98,14 @@ namespace OurCraft.Utility
         public const string POST_PROCESSING_PATH = SHADERS_PATH + "Post Processing/";
 
         public const string RESOURCES_PATH = DEFAULT_PATH + "Resources/";
-        public const string DATA_PATH = DEFAULT_PATH + "Data/";
+        public const string DATA_PATH = RESOURCES_PATH + "Data/";
+        public const string ASSETS_PATH = RESOURCES_PATH + "Assets/";
 
         public const string BLOCK_DATA_PATH = DATA_PATH + "Blocks/";
         public const string WORLD_GEN_DATA_PATH = DATA_PATH + "WorldGen/";
 
-        public const string BLOCK_MODEL_PATH = RESOURCES_PATH + "BlockModels/";
-        public const string TEXTURES_PATH = RESOURCES_PATH + "Textures/";
+        public const string BLOCK_MODEL_PATH = ASSETS_PATH + "BlockModels/";
+        public const string TEXTURES_PATH = ASSETS_PATH + "Textures/";
     }
 
 }

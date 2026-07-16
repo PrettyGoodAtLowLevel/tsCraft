@@ -1,6 +1,6 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.World;
-using OurCraft.World.ChunkGeneration;
+using OurCraft.World.WorldData;
+using OurCraft.World.WorldGeneration;
 using System.Runtime.CompilerServices;
 
 namespace OurCraft.Utility

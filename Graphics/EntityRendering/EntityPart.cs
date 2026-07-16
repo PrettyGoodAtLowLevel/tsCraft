@@ -1,7 +1,8 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OurCraft.Physics;
 using System.Runtime.InteropServices;
+using OurCraft.Graphics.OpenGL_Objects;
+using OurCraft.Physics.PhysicsData;
 
 namespace OurCraft.Graphics.EntityRendering
 {

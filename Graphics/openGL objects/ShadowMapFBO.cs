@@ -1,6 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 
-namespace OurCraft.Graphics.openGL_objects
+namespace OurCraft.Graphics.OpenGL_Objects
 {
     //fbo specifically for rendering shadows
     public class ShadowMapFBO

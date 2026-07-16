@@ -1,8 +1,8 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks;
 using OurCraft.Utility;
-using OurCraft.World;
 using OurCraft.Terrain_Generation.Noise;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Terrain_Generation.SurfaceFeatures
 {

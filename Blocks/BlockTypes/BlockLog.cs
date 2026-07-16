@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.Meshing;
-using OurCraft.World;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -26,7 +26,7 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //just add regular block to chunk, switch axis based on hit normal
-        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState thisBlock, ChunkManager world)
         {
             Axis axis = Axis.Y;
             if (Math.Abs(hitNormal.Y) > 0.5f) axis = Axis.Y;
@@ -35,7 +35,7 @@ namespace OurCraft.Blocks.Block_Implementations
 
             var stateToPlace = DefaultState.With(AXIS, axis); 
             world.SetBlockState(globalPos + hitNormal, stateToPlace);
-        }       
+        }
 
         //interprets the axis of the log block
         public override void DebugState(BlockState thisBlock)

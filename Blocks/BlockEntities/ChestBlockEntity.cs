@@ -1,5 +1,5 @@
 ﻿using OpenTK.Mathematics;
-using OurCraft.World;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Blocks.BlockEntities
 {

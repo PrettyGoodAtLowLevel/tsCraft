@@ -1,0 +1,22 @@
+﻿{
+  "Name": "Surface Dirt",
+  "Block": "Dirt",
+
+  "MinY": 128,
+  "MaxY": 256,
+
+  "SpawnChance": 8,
+  "SpawnAttempts": 2,
+
+  "MinSize": 8,
+  "MaxSize": 15,
+
+  "PlacementType": "DISC",
+
+  "ReplacementBlocks": [
+    "Stone",
+    "Grass Block",
+    "Sand",
+    "Snowy Grass Block"
+  ]
+}

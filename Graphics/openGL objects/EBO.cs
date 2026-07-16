@@ -1,7 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using System.Runtime.InteropServices;
 
-namespace OurCraft
+namespace OurCraft.Graphics.OpenGL_Objects
 {
     //specifies order of verticies to be drawn in
     public class EBO
@@ -19,7 +19,7 @@ namespace OurCraft
         }
 
         //free up vram
-        public void Delete()
+        public void Delete() 
         {
             if (ID != 0)
             {

@@ -1,7 +1,7 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OurCraft.Graphics.openGL_objects.OurCraft;
-using OurCraft.Physics;
+using OurCraft.Graphics.OpenGL_Objects;
+using OurCraft.Physics.PhysicsData;
 
 namespace OurCraft.Graphics.EntityRendering.ModelLoading
 {

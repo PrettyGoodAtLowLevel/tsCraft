@@ -1,15 +1,15 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using OurCraft.Entities;
-using OurCraft.Entities.Components;
-using OurCraft.Graphics.openGL_objects;
+using OurCraft.Entities.Components.Rendering;
+using OurCraft.Entities.Internal;
+using OurCraft.Graphics.ChunkRendering;
+using OurCraft.Graphics.OpenGL_Objects;
 using OurCraft.Graphics.Settings;
 using OurCraft.Graphics.SkyRendering;
-using OurCraft.openGL_objects;
-using OurCraft.Physics;
+using OurCraft.Physics.System;
 using OurCraft.Utility;
-using OurCraft.World;
-using OurCraft.World.ChunkGeneration;
+using OurCraft.World.WorldData;
+using OurCraft.World.WorldGeneration;
 
 namespace OurCraft.Graphics
 {
@@ -151,7 +151,7 @@ namespace OurCraft.Graphics
         {
             sunScreenPos = ComputeSunScreenPosition(sceneCamera, out float screenVisibility);
 
-            bool blocked = AABBMath.RaycastVoxel(sceneCamera.Transform.WorldPosition, dir: -sunDirection, maxDistance: 1000.0f,
+            bool blocked = PhysicsHelpers.RaycastVoxel(sceneCamera.Transform.WorldPosition, dir: -sunDirection, maxDistance: 1000.0f,
             (x, y, z) => world.GetBlockState(new Vector3(x, y, z)).BlockShape.IsFullOpaqueBlock, out _);
             float occlusionVisibility = blocked ? 0.0f : 1.0f;
 

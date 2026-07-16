@@ -1,7 +1,7 @@
 ﻿using OpenTK.Mathematics;
 using OurCraft.Blocks.Block_Properties;
 using OurCraft.Blocks.Meshing;
-using OurCraft.World;
+using OurCraft.World.WorldData;
 
 namespace OurCraft.Blocks.Block_Implementations
 {
@@ -14,7 +14,7 @@ namespace OurCraft.Blocks.Block_Implementations
         }
 
         //nothing special just add the block on the face the player is looking at
-        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState bottom, BlockState top, BlockState front, BlockState back, BlockState right, BlockState left, BlockState thisBlock, ChunkManager world)
+        public override void PlaceBlockState(Vector3 globalPos, Vector3 hitNormal, BlockState thisBlock, ChunkManager world)
         {
             world.SetBlockState(globalPos + hitNormal, DefaultState);
         }
